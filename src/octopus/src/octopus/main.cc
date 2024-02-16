@@ -61,6 +61,7 @@ void set_no_op(Zombie::Memento &v)
     v.no_op = true;
 }
 
+
 } // octopus
 
 int main(int, char *[]) {
@@ -93,26 +94,24 @@ int main(int, char *[]) {
             zm.old = z.data;
             zm.cur = z.data;
 
-            long long i = long(p.x.to_int());
-            long long j = long(p.y.to_int());
+            long long i = long(p.vec.x.to_int());
+            long long j = long(p.vec.y.to_int());
 
-            for(long long x = std::max<long long>(0, i - z.data.range) ; x < i+z.data.range && x < 2048 ; ++ x)
+            for(long long x = std::max<long long>(0, i - z.data.range) ; x < i+z.data.range && x < grid_l.x ; ++ x)
             {
-                for(long long y = std::max<long long>(0, j - z.data.range) ; y < j+z.data.range && y < 2048 ; ++ y)
+                for(long long y = std::max<long long>(0, j - z.data.range) ; y < j+z.data.range && y < grid_l.y ; ++ y)
                 {
                     if(!is_free(grid_l, x, y))
                     {
-                        zm.cur.target.x = x;
-                        zm.cur.target.y = y;
+                        zm.cur.target.vec.x = x;
+                        zm.cur.target.vec.y = y;
                     }
                 }
             }
 
-            v.x = zm.cur.target.x - p.x;
-            v.y = zm.cur.target.y - p.y;
-			Fixed l = numeric::square_root(v.x*v.x+v.y*v.y);
-            v.x /= l;
-            v.y /= l;
+            v.vec = zm.cur.target.vec - p.vec;
+			Fixed l = length(v.vec);
+            v.vec /= l;
 
             zm.no_op = false;
         });
@@ -121,22 +120,22 @@ int main(int, char *[]) {
     ecs.system<Position const, Velocity>()
         // .multi_threaded()
         .kind<Iteration>()
-        .each([&target_l, &grid_l](Position const & p, Velocity &v) {
-            size_t old_i = size_t(p.x.to_int());
-            size_t old_j = size_t(p.y.to_int());
-            size_t i = size_t((p.x+v.x).to_int());
-            size_t j = size_t((p.y+v.y).to_int());
+        .each([&target_l, &grid_l](flecs::entity &e, Position const & p, Velocity &v) {
+            size_t old_i = size_t(p.vec.x.to_int());
+            size_t old_j = size_t(p.vec.y.to_int());
+            size_t i = size_t((p.vec.x+v.vec.x).to_int());
+            size_t j = size_t((p.vec.y+v.vec.y).to_int());
 
             if((old_i != i || old_j != j)
             && !is_free(grid_l, i, j))
             {
-                v.x = 0;
-                v.y = 0;
+                v.vec.x = 0;
+                v.vec.y = 0;
             }
             else if(old_i != i || old_j != j)
             {
-				set(grid_l, old_i, old_j, false);
-				set(grid_l, i, j, true);
+				set(grid_l, old_i, old_j, flecs::entity());
+				set(grid_l, i, j, e);
             }
         });
 
@@ -182,8 +181,10 @@ int main(int, char *[]) {
 
     for(size_t i = 0 ; i < nb_l ; ++ i)
     {
-        // Create a few test entities for a Position, Velocity query
-        add<Position, Zombie>(ecs, ecs_step, {10, 20}, Zombie());
+		Position pos;
+		pos.vec.x = 10;
+		pos.vec.y = 20;
+        add<Position, Zombie>(ecs, ecs_step, pos, Zombie());
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -201,7 +202,7 @@ int main(int, char *[]) {
 
     diff = end - start;
 
-    std::cout << "Time move\t" << diff.count()*1000. << "ms" << std::endl;
+    std::cout << "Time iter\t" << diff.count()*1000. << "ms" << std::endl;
 
     start = std::chrono::high_resolution_clock::now();
 

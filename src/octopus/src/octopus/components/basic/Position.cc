@@ -5,21 +5,19 @@ namespace octopus
 template<>
 void apply(Position &p, Position::Memento const &v)
 {
-    p.x += v.x;
-    p.y += v.y;
+    p.vec += v.vec;
 }
 
 template<>
 void revert(Position &p, Position::Memento const &v)
 {
-    p.x -= v.x;
-    p.y -= v.y;
+    p.vec -= v.vec;
 }
 
 template<>
 void set_no_op(Position::Memento &v)
 {
-    v.x = 0;
-    v.y = 0;
+    v.vec.x = 0;
+    v.vec.y = 0;
 }
 }

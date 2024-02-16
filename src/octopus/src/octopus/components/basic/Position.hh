@@ -1,18 +1,18 @@
 #pragma once
 
 #include "octopus/components/generic/Components.hh"
-#include "octopus/utils/FixedPoint.hh"
+#include "octopus/utils/Vector.hh"
 // Position
 
 namespace octopus
 {
 
 struct Velocity {
-    Fixed x, y;
+	Vector vec;
 };
 
 struct Position {
-    Fixed x, y;
+	Vector vec;
 
     typedef Velocity Memento;
 };
