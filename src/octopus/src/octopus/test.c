@@ -78,8 +78,6 @@ int main(int, char *[]) {
 		}
     });
 
-
-
 	flecs::system sys_check_move = ecs.system<Position const, Velocity>("Check_Move")
 	.multi_threaded()
     .each([&grid_l](flecs::entity e, Position const & p, Velocity &v) {
