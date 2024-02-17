@@ -16,7 +16,7 @@ typename T::Memento memento(T const &)
 }
 
 template<typename... T>
-void add(flecs::world &ecs, flecs::world &step, T... data)
+flecs::entity add(flecs::world &ecs, flecs::world &step, T... data)
 {
     flecs::entity ent_l = ecs.entity();
     flecs::entity ent_s_l = step.entity();
@@ -27,6 +27,8 @@ void add(flecs::world &ecs, flecs::world &step, T... data)
         ent_l.set(memento(data));
         ent_s_l.set(memento(data));
     } (), ...);
+
+    return ent_l;
 }
 
 template<typename T>

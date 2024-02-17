@@ -61,7 +61,7 @@ void target_system(Grid const &grid_p, Position const & p, Velocity &v, Target c
 		}
 	}
 
-	if(best_diff >= 0)
+	if(ent_target)
 	{
 		zm.cur.target = ent_target;
 	}
