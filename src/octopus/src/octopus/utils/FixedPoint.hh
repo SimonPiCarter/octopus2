@@ -207,6 +207,18 @@ namespace octopus
 		long long _data;
 	};
 
+	template<typename Fixed>
+	double to_double(Fixed const &f)
+	{
+		return f.to_double();
+	}
+
+	template<typename Fixed>
+	long long to_int(Fixed const &f)
+	{
+		return f.to_int();
+	}
+
 	namespace numeric
 	{
 
