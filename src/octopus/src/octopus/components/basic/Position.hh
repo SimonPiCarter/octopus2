@@ -18,6 +18,7 @@ struct Velocity {
 
 struct Position {
 	Vector vec;
+	Fixed speed = 1;
 
     typedef Velocity Memento;
 };

@@ -18,7 +18,10 @@ namespace octopus
 
 		template<class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		FixedPoint(Number const &val, bool internal_p=false) : _data(internal_p?val:val*e) {}
-		FixedPoint(FixedPoint<e> const &f) : _data(f._data) {}
+		FixedPoint(FixedPoint<e> const &f) = default;
+		FixedPoint(FixedPoint<e> &&f) = default;
+		FixedPoint &operator=(FixedPoint<e> const &f) = default;
+		FixedPoint &operator=(FixedPoint<e> &&f) = default;
 		FixedPoint() : _data(0) {}
 
 		FixedPoint<e> operator*(FixedPoint<e> const &f) const

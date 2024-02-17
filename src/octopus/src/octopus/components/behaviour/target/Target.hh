@@ -3,6 +3,17 @@
 #include <flecs.h>
 #include "octopus/components/generic/Components.hh"
 
+///
+/// State       To State            Note
+/// Lookup      Chasing             found target
+/// Chasing     Attacking           in range
+/// Chasing     Lookup              target dead or out of sight
+/// Attacking   Lookup              target dead or out of sight
+/// Attacking   Chasing             target our of range
+/// None        All                 other state running
+/// All         None                other state running
+///
+
 namespace octopus
 {
 
@@ -27,6 +38,6 @@ struct Target {
     typedef TargetMemento Memento;
 };
 
-void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t);
+void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, TargetMemento& zm, Team const &t);
 
 } // octopus

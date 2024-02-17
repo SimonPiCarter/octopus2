@@ -27,7 +27,7 @@ void set_no_op(Target::Memento &v)
     v.no_op = true;
 }
 
-void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t)
+void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, TargetMemento& zm, Team const &t)
 {
 	zm.old = z.data;
 	zm.cur = z.data;
@@ -38,7 +38,6 @@ void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Velo
 	flecs::entity ent_target;
 	Vector target;
 	Fixed best_diff = -1;
-
 	for(long long x = std::max<long long>(0, i - z.data.range) ; x < i+z.data.range && x < grid_p.x ; ++ x)
 	{
 		for(long long y = std::max<long long>(0, j - z.data.range) ; y < j+z.data.range && y < grid_p.y ; ++ y)
@@ -67,16 +66,6 @@ void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Velo
 	if(ent_target)
 	{
 		zm.cur.target = ent_target;
-	}
-
-	if(zm.cur.target)
-	{
-		Position const *target_pos = zm.cur.target.get<Position>();
-		if(target_pos)
-		{
-			v.vec = target_pos->vec - p.vec;
-			v.vec /= length(v.vec);
-		}
 	}
 
 	zm.no_op = zm.cur.target == zm.old.target;

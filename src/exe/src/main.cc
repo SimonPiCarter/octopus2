@@ -11,9 +11,11 @@
 #include <sstream>
 #include <cmath>
 #include <limits>
+#include <mutex>
 
 #include "octopus/components/generic/Components.hh"
 #include "octopus/components/generic/Toolbox.hh"
+#include "octopus/components/basic/Attack.hh"
 #include "octopus/components/basic/Position.hh"
 #include "octopus/components/basic/HitPoint.hh"
 #include "octopus/components/basic/Team.hh"
@@ -28,6 +30,62 @@ namespace octopus
 
 } // octopus
 
+struct Zombie {};
+
+void zombie(
+    std::mutex &m_p,
+    Grid const &grid_p,
+    flecs::entity e,
+    Position const & p,
+    Velocity &v,
+    Target const& z,
+    TargetMemento& zm,
+    Team const &t,
+    int32_t timestamp_p,
+    Attack const &a,
+    Attack::Memento &am
+)
+{
+    // aquire target
+    target_system(grid_p, e, p, z, zm, t);
+
+    if(z.data.target)
+    {
+        Position const *target_pos = z.data.target.get<Position>();
+        if(target_pos)
+        {
+            Vector diff = target_pos->vec - p.vec;
+            /// @todo use range and size of entity
+            bool in_range = square_length(diff) < 1;
+            // if in range or already started prepare attack
+            if((a.state == AttackState::Idle && in_range)
+            || a.state != AttackState::Idle)
+            {
+                attack_system(timestamp_p, a, am);
+            }
+
+            // if we just ended wind up
+            if(timestamp_p == a.data.winddown_timestamp+1)
+            {
+                // deal damage
+                HitPoint const *hp_target = z.data.target.get<HitPoint>();
+                // mutex protection is mandatory to avoid loss of information
+                std::lock_guard lock(m_p);
+                Damage *dmg = z.data.target.get_mut<Damage>();
+                dmg->dmg += 10;
+            }
+
+            // if not in wind up/down
+            if(a.state == AttackState::Idle && !in_range)
+            {
+                // move to target if any
+                v.vec = diff;
+                v.vec /= length(v.vec) * p.speed;
+            }
+        }
+    }
+}
+
 int main(int, char *[]) {
     flecs::world ecs;
     ecs.set_threads(12);
@@ -39,10 +97,13 @@ int main(int, char *[]) {
     flecs::query<Position, const Velocity> q = ecs.query<Position, const Velocity>();
 
     MementoQuery<Position> queries = create_memento_query<Position>(ecs, ecs_step);
+    MementoQuery<Attack> queries_attack = create_memento_query<Attack>(ecs, ecs_step);
 
     double target_l = 10;
 	octopus::Grid grid_l;
 	init(grid_l, 2048, 2048);
+    int32_t timestamp_l = 0;
+    std::mutex mutex_l;
 
     // System declaration
 
@@ -50,12 +111,13 @@ int main(int, char *[]) {
     ///     Iteration          ///
     //////////////////////////////
 
-    // move computation
-    ecs.system<Position const, Velocity, Target const, TargetMemento, const Team>()
+    // zombie computation
+    ecs.system<Position const, Velocity, Target const, TargetMemento, const Team, const Attack, Attack::Memento, Zombie const>()
         .multi_threaded()
         .kind<Iteration>()
-        .each([&grid_l](flecs::entity e, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t) {
-            target_system(grid_l, e, p, v, z, zm, t);
+        .each([&grid_l, &mutex_l, &timestamp_l](flecs::entity e, Position const & p, Velocity &v, Target const& z,
+            TargetMemento& zm, Team const &t, Attack const &a, Attack::Memento &am, Zombie const &) {
+            zombie(mutex_l, grid_l, e, p, v, z, zm, t, timestamp_l, a, am);
         });
 
     // move computation
@@ -80,6 +142,7 @@ int main(int, char *[]) {
     create_applying_system<Position>(ecs);
     create_applying_system<HitPoint>(ecs);
     create_applying_system<Target>(ecs);
+    create_applying_system<Attack>(ecs);
 
     // Create applying pipeline
     flecs::entity apply = ecs.pipeline()
@@ -95,6 +158,7 @@ int main(int, char *[]) {
     create_reverting_system<Target>(ecs);
     create_reverting_system<HitPoint>(ecs);
     create_reverting_system<Position>(ecs);
+    create_reverting_system<Attack>(ecs);
 
     // Create reverting pipeline
     flecs::entity revert = ecs.pipeline()
@@ -111,8 +175,9 @@ int main(int, char *[]) {
 		Position pos;
 		pos.vec.x = (10+i)%grid_l.x;
 		pos.vec.y = (20+i)%grid_l.y;
-        flecs::entity ent = add<Position, Target, Team>(ecs, ecs_step, pos, Target(), Team());
+        flecs::entity ent = add<Position, Target, Team, Attack, HitPoint>(ecs, ecs_step, pos, Target(), Team(), Attack(), HitPoint());
         set(grid_l, pos.vec.x.to_int(), pos.vec.y.to_int(), ent);
+        ent.set(Zombie());
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -121,35 +186,39 @@ int main(int, char *[]) {
 
     std::cout << "Time init\t" << diff.count()*1000. << "ms" << std::endl;
 
-    start = std::chrono::high_resolution_clock::now();
+    for( ; timestamp_l < 30 ; ++ timestamp_l)
+    {
+        start = std::chrono::high_resolution_clock::now();
 
-    ecs.set_pipeline(iteration);
-    ecs.progress();
+        ecs.set_pipeline(iteration);
+        ecs.progress();
 
-    end = std::chrono::high_resolution_clock::now();
+        end = std::chrono::high_resolution_clock::now();
 
-    diff = end - start;
+        diff = end - start;
 
-    std::cout << "Time iter\t" << diff.count()*1000. << "ms" << std::endl;
+        std::cout << "Time iter\t" << diff.count()*1000. << "ms" << std::endl;
 
-    start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
 
-    ecs.set_pipeline(apply);
-    ecs.progress();
+        ecs.set_pipeline(apply);
+        ecs.progress();
 
-    end = std::chrono::high_resolution_clock::now();
+        end = std::chrono::high_resolution_clock::now();
 
-    diff = end - start;
+        diff = end - start;
 
-	std::cout << "Time apply\t" << diff.count()*1000. << "ms" << std::endl;
+        std::cout << "Time apply\t" << diff.count()*1000. << "ms" << std::endl;
 
-    start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
 
-    queries.register_to_step();
+        queries.register_to_step();
+        queries_attack.register_to_step();
 
-    end = std::chrono::high_resolution_clock::now();
+        end = std::chrono::high_resolution_clock::now();
 
-    diff = end - start;
+        diff = end - start;
 
-    std::cout << "Time register\t" << diff.count()*1000. << "ms" << std::endl;
+        std::cout << "Time register\t" << diff.count()*1000. << "ms" << std::endl;
+    }
 }
