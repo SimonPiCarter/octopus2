@@ -4,6 +4,8 @@
 #include "octopus/components/basic/Position.hh"
 #include "octopus/components/basic/Team.hh"
 
+#include <iostream>
+
 namespace octopus
 {
 
@@ -25,7 +27,7 @@ void set_no_op(Target::Memento &v)
     v.no_op = true;
 }
 
-void target_system(Grid const &grid_p, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t)
+void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t)
 {
 	zm.old = z.data;
 	zm.cur = z.data;
@@ -41,12 +43,11 @@ void target_system(Grid const &grid_p, Position const & p, Velocity &v, Target c
 	{
 		for(long long y = std::max<long long>(0, j - z.data.range) ; y < j+z.data.range && y < grid_p.y ; ++ y)
 		{
-			if(x == i && y == j) { continue; }
-			flecs::entity e = get(grid_p, x, y);
-			if(e)
+			flecs::entity ent = get(grid_p, x, y);
+			if(ent && ent != e)
 			{
-				Position const *pos = e.get<Position>();
-				Team const *team = e.get<Team>();
+				Position const *pos = ent.get<Position>();
+				Team const *team = ent.get<Team>();
 				if(pos && team
 				&& team->id != t.id)
 				{
@@ -55,7 +56,7 @@ void target_system(Grid const &grid_p, Position const & p, Velocity &v, Target c
 					{
 						std::swap(diff, best_diff);
 						target = pos->vec;
-						ent_target = e;
+						ent_target = ent;
 					}
 				}
 			}

@@ -27,6 +27,6 @@ struct Target {
     typedef TargetMemento Memento;
 };
 
-void target_system(Grid const &grid_p, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t);
+void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t);
 
 } // octopus
