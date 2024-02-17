@@ -54,8 +54,8 @@ int main(int, char *[]) {
     ecs.system<Position const, Velocity, Target const, TargetMemento, const Team>()
         .multi_threaded()
         .kind<Iteration>()
-        .each([&grid_l](Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t) {
-            target_system(grid_l, p, v, z, zm, t);
+        .each([&grid_l](flecs::entity e, Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t) {
+            target_system(grid_l, e, p, v, z, zm, t);
         });
 
     // move computation
@@ -109,8 +109,8 @@ int main(int, char *[]) {
     for(size_t i = 0 ; i < nb_l ; ++ i)
     {
 		Position pos;
-		pos.vec.x = 10;
-		pos.vec.y = 20;
+		pos.vec.x = (10+i)%grid_l.x;
+		pos.vec.y = (20+i)%grid_l.y;
         flecs::entity ent = add<Position, Target, Team>(ecs, ecs_step, pos, Target(), Team());
         set(grid_l, pos.vec.x.to_int(), pos.vec.y.to_int(), ent);
     }
