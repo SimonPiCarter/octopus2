@@ -14,7 +14,7 @@ struct Damage {
 };
 
 struct HitPoint {
-    Fixed hp;
+    Fixed hp = 10;
 
     typedef Damage Memento;
 };

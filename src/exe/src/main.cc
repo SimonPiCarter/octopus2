@@ -98,6 +98,7 @@ int main(int, char *[]) {
 
     MementoQuery<Position> queries = create_memento_query<Position>(ecs, ecs_step);
     MementoQuery<Attack> queries_attack = create_memento_query<Attack>(ecs, ecs_step);
+    MementoQuery<HitPoint> queries_hp = create_memento_query<HitPoint>(ecs, ecs_step);
 
     double target_l = 10;
 	octopus::Grid grid_l;
@@ -118,6 +119,25 @@ int main(int, char *[]) {
         .each([&grid_l, &mutex_l, &timestamp_l](flecs::entity e, Position const & p, Velocity &v, Target const& z,
             TargetMemento& zm, Team const &t, Attack const &a, Attack::Memento &am, Zombie const &) {
             zombie(mutex_l, grid_l, e, p, v, z, zm, t, timestamp_l, a, am);
+        });
+
+    // destruct entities when hp < 0
+    ecs.system<HitPoint const>()
+        .multi_threaded()
+        .kind<Iteration>()
+        .each([&grid_l](flecs::entity e, HitPoint const &hp) {
+            if(hp.hp <= 0)
+            {
+                // free grid if necessary
+                if(e.has<Position>())
+                {
+                    const Position * pos_l = e.get<Position const>();
+                    size_t x = size_t(pos_l->vec.x.to_int());
+                    size_t y = size_t(pos_l->vec.y.to_int());
+                    set(grid_l, x, y, flecs::entity());
+                }
+                e.destruct();
+            }
         });
 
     // move computation
@@ -175,7 +195,8 @@ int main(int, char *[]) {
 		Position pos;
 		pos.vec.x = (10+i)%grid_l.x;
 		pos.vec.y = (20+i)%grid_l.y;
-        flecs::entity ent = add<Position, Target, Team, Attack, HitPoint>(ecs, ecs_step, pos, Target(), Team(), Attack(), HitPoint());
+        Team team {i%2};
+        flecs::entity ent = add<Position, Target, Team, Attack, HitPoint>(ecs, ecs_step, pos, Target(), team, Attack(), HitPoint());
         set(grid_l, pos.vec.x.to_int(), pos.vec.y.to_int(), ent);
         ent.set(Zombie());
     }
@@ -214,6 +235,7 @@ int main(int, char *[]) {
 
         queries.register_to_step();
         queries_attack.register_to_step();
+        queries_hp.register_to_step();
 
         end = std::chrono::high_resolution_clock::now();
 
