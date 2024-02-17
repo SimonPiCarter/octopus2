@@ -20,6 +20,7 @@
 #include "octopus/components/basic/HitPoint.hh"
 #include "octopus/components/basic/Team.hh"
 #include "octopus/components/behaviour/target/Target.hh"
+#include "octopus/systems/GenericSystems.hh"
 
 #include "octopus/utils/Grid.hh"
 
@@ -96,9 +97,10 @@ int main(int, char *[]) {
     // iterate entities as they cache results.
     flecs::query<Position, const Velocity> q = ecs.query<Position, const Velocity>();
 
-    MementoQuery<Position> queries = create_memento_query<Position>(ecs, ecs_step);
-    MementoQuery<Attack> queries_attack = create_memento_query<Attack>(ecs, ecs_step);
-    MementoQuery<HitPoint> queries_hp = create_memento_query<HitPoint>(ecs, ecs_step);
+    MementoQuery<Position> queries = setup_generic_systems_for_memento<Position>(ecs, ecs_step);
+    MementoQuery<Attack> queries_attack = setup_generic_systems_for_memento<Attack>(ecs, ecs_step);
+    MementoQuery<HitPoint> queries_hp = setup_generic_systems_for_memento<HitPoint>(ecs, ecs_step);
+    MementoQuery<Target> queries_target = setup_generic_systems_for_memento<Target>(ecs, ecs_step);
 
     double target_l = 10;
 	octopus::Grid grid_l;
@@ -158,12 +160,6 @@ int main(int, char *[]) {
     ///      Apply             ///
     //////////////////////////////
 
-    // applying changes
-    create_applying_system<Position>(ecs);
-    create_applying_system<HitPoint>(ecs);
-    create_applying_system<Target>(ecs);
-    create_applying_system<Attack>(ecs);
-
     // Create applying pipeline
     flecs::entity apply = ecs.pipeline()
         .with(flecs::System)
@@ -173,12 +169,6 @@ int main(int, char *[]) {
     //////////////////////////////
     ///      Revert            ///
     //////////////////////////////
-
-    // reverting changes
-    create_reverting_system<Target>(ecs);
-    create_reverting_system<HitPoint>(ecs);
-    create_reverting_system<Position>(ecs);
-    create_reverting_system<Attack>(ecs);
 
     // Create reverting pipeline
     flecs::entity revert = ecs.pipeline()
@@ -236,6 +226,7 @@ int main(int, char *[]) {
         queries.register_to_step();
         queries_attack.register_to_step();
         queries_hp.register_to_step();
+        queries_target.register_to_step();
 
         end = std::chrono::high_resolution_clock::now();
 
