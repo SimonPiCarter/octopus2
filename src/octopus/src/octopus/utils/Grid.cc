@@ -21,7 +21,7 @@ void set(Grid &grid_p, size_t x, size_t y, flecs::entity set_p)
 	grid_p.data[x*grid_p.y+y] = set_p;
 }
 
-flecs::entity get(Grid &grid_p, size_t x, size_t y)
+flecs::entity get(Grid const &grid_p, size_t x, size_t y)
 {
 	return grid_p.data[x*grid_p.y+y];
 }

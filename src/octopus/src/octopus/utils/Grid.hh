@@ -17,6 +17,6 @@ void init(Grid &grid_p, size_t x, size_t y);
 bool is_free(Grid const &grid_p, size_t x, size_t y);
 
 void set(Grid &grid_p, size_t x, size_t y, flecs::entity set_p);
-flecs::entity get(Grid &grid_p, size_t x, size_t y);
+flecs::entity get(Grid const &grid_p, size_t x, size_t y);
 
 } // namespace octopus
