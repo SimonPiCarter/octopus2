@@ -126,7 +126,8 @@ int main(int, char *[]) {
 		Position pos;
 		pos.vec.x = 10;
 		pos.vec.y = 20;
-        add<Position, Target, Team>(ecs, ecs_step, pos, Target(), Team());
+        flecs::entity ent = add<Position, Target, Team>(ecs, ecs_step, pos, Target(), Team());
+        set(grid_l, pos.vec.x.to_int(), pos.vec.y.to_int(), ent);
     }
 
     auto end = std::chrono::high_resolution_clock::now();
