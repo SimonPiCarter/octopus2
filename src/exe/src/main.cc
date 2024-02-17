@@ -10,11 +10,14 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
+#include <limits>
 
 #include "octopus/components/generic/Components.hh"
 #include "octopus/components/generic/Toolbox.hh"
 #include "octopus/components/basic/Position.hh"
 #include "octopus/components/basic/HitPoint.hh"
+#include "octopus/components/basic/Team.hh"
+#include "octopus/components/behaviour/target/Target.hh"
 
 #include "octopus/utils/Grid.hh"
 
@@ -22,45 +25,6 @@ using namespace octopus;
 
 namespace octopus
 {
-
-///////
-/////// Specific
-///////
-
-struct ZombieData {
-    Position target;
-    long long range = 3;
-};
-
-struct ZombieMemento {
-    ZombieData old;
-    ZombieData cur;
-    bool no_op = true;
-};
-
-struct Zombie {
-    ZombieData data;
-    typedef ZombieMemento Memento;
-};
-
-template<>
-void apply(Zombie &p, Zombie::Memento const &v)
-{
-    if(!v.no_op) p.data = v.cur;
-}
-
-template<>
-void revert(Zombie &p, Zombie::Memento const &v)
-{
-    if(!v.no_op) p.data = v.old;
-}
-
-template<>
-void set_no_op(Zombie::Memento &v)
-{
-    v.no_op = true;
-}
-
 
 } // octopus
 
@@ -87,33 +51,11 @@ int main(int, char *[]) {
     //////////////////////////////
 
     // move computation
-    ecs.system<Position const, Velocity, Zombie const, ZombieMemento>()
+    ecs.system<Position const, Velocity, Target const, TargetMemento, const Team>()
         .multi_threaded()
         .kind<Iteration>()
-        .each([&grid_l](Position const & p, Velocity &v, Zombie const& z, ZombieMemento& zm) {
-            zm.old = z.data;
-            zm.cur = z.data;
-
-            long long i = long(p.vec.x.to_int());
-            long long j = long(p.vec.y.to_int());
-
-            for(long long x = std::max<long long>(0, i - z.data.range) ; x < i+z.data.range && x < grid_l.x ; ++ x)
-            {
-                for(long long y = std::max<long long>(0, j - z.data.range) ; y < j+z.data.range && y < grid_l.y ; ++ y)
-                {
-                    if(!is_free(grid_l, x, y))
-                    {
-                        zm.cur.target.vec.x = x;
-                        zm.cur.target.vec.y = y;
-                    }
-                }
-            }
-
-            v.vec = zm.cur.target.vec - p.vec;
-			Fixed l = length(v.vec);
-            v.vec /= l;
-
-            zm.no_op = false;
+        .each([&grid_l](Position const & p, Velocity &v, Target const& z, TargetMemento& zm, Team const &t) {
+            target_system(grid_l, p, v, z, zm, t);
         });
 
     // move computation
@@ -152,7 +94,7 @@ int main(int, char *[]) {
     // applying changes
     create_applying_system<Position>(ecs);
     create_applying_system<HitPoint>(ecs);
-    create_applying_system<Zombie>(ecs);
+    create_applying_system<Target>(ecs);
 
     // Create applying pipeline
     flecs::entity apply = ecs.pipeline()
@@ -165,7 +107,7 @@ int main(int, char *[]) {
     //////////////////////////////
 
     // reverting changes
-    create_reverting_system<Zombie>(ecs);
+    create_reverting_system<Target>(ecs);
     create_reverting_system<HitPoint>(ecs);
     create_reverting_system<Position>(ecs);
 
@@ -184,7 +126,7 @@ int main(int, char *[]) {
 		Position pos;
 		pos.vec.x = 10;
 		pos.vec.y = 20;
-        add<Position, Zombie>(ecs, ecs_step, pos, Zombie());
+        add<Position, Target, Team>(ecs, ecs_step, pos, Target(), Team());
     }
 
     auto end = std::chrono::high_resolution_clock::now();
