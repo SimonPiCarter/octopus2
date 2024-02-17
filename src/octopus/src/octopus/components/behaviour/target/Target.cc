@@ -43,6 +43,7 @@ void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Velo
 	{
 		for(long long y = std::max<long long>(0, j - z.data.range) ; y < j+z.data.range && y < grid_p.y ; ++ y)
 		{
+			if(x == i && y == j) { continue; }
 			flecs::entity ent = get(grid_p, x, y);
 			if(ent && ent != e)
 			{
