@@ -77,3 +77,25 @@ void enqueue_and_wait(ThreadPool &pool_p, std::vector<std::function<void()>> con
 		termination_l.wait(lock_l, [&]{ return finished_l >= nbJobs_l ; });
 	}
 }
+
+void threading(size_t size, ThreadPool &pool, std::function<void(size_t, size_t, size_t)> &&func)
+{
+	size_t step_l = size / pool.size();
+	std::vector<std::function<void()>> jobs_l;
+
+	for(size_t i = 0 ; i < pool.size() ; ++ i)
+	{
+		size_t s = step_l*i;
+		size_t e = step_l*(i+1);
+		if(i==pool.size()-1) { e = size; }
+
+		jobs_l.push_back(
+			[i, s, e, &func]()
+			{
+				func(i, s, e);
+			}
+		);
+	}
+
+	enqueue_and_wait(pool, jobs_l);
+}
