@@ -65,7 +65,6 @@ void create_reverting_system(flecs::world &ecs)
         });
 }
 
-
 template<typename T>
 struct MementoQuery
 {
