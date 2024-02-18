@@ -2,6 +2,7 @@
 
 #include <flecs.h>
 #include "octopus/components/generic/Components.hh"
+#include "octopus/components/step/Step.hh"
 
 ///
 /// State       To State            Note
@@ -27,7 +28,7 @@ struct TargetData {
     uint32_t range = 6;
 };
 
-struct TargetMemento {
+struct TargetMemento2 {
     TargetData old;
     TargetData cur;
     bool no_op = true;
@@ -35,9 +36,26 @@ struct TargetMemento {
 
 struct Target {
     TargetData data;
-    typedef TargetMemento Memento;
+    typedef TargetMemento2 Memento;
 };
 
-void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, TargetMemento& zm, Team const &t);
+void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, Target::Memento& zm, Team const &t);
+
+struct TargetStep {
+	TargetData data;
+};
+
+struct TargetMemento {
+	TargetData data;
+
+	typedef Target Data;
+	typedef TargetStep Step;
+};
+
+template<>
+void apply_step(TargetMemento &m, TargetMemento::Data &d, TargetMemento::Step const &s);
+
+template<>
+void revert_memento(TargetMemento::Data &d, TargetMemento const &memento);
 
 } // octopus

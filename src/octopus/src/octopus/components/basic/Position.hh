@@ -3,6 +3,7 @@
 #include "flecs.h"
 
 #include "octopus/components/generic/Components.hh"
+#include "octopus/components/step/Step.hh"
 #include "octopus/utils/Vector.hh"
 
 // Position
@@ -33,5 +34,22 @@ template<>
 void set_no_op(Position::Memento &v);
 
 void position_system(Grid &grid_p, flecs::entity e, Position const & p, Velocity &v);
+
+struct PositionStep {
+	Vector vec;
+};
+
+struct PositionMemento {
+	Vector vec;
+
+	typedef Position Data;
+	typedef PositionStep Step;
+};
+
+template<>
+void apply_step(PositionMemento &m, PositionMemento::Data &d, PositionMemento::Step const &s);
+
+template<>
+void revert_memento(PositionMemento::Data &d, PositionMemento const &memento);
 
 } // octopus

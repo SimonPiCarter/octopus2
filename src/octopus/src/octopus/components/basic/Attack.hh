@@ -2,6 +2,7 @@
 #pragma once
 
 #include "octopus/components/generic/Components.hh"
+#include "octopus/components/step/Step.hh"
 #include "octopus/utils/FixedPoint.hh"
 
 // HP
@@ -37,8 +38,8 @@ struct AttackData {
 	int32_t winddown_time = 1;
 };
 
-struct AttackMemento {
-	AttackMemento();
+struct AttackMemento2 {
+	AttackMemento2();
     AttackData delta;
 	AttackState old_state = AttackState::None;
 	AttackState new_state = AttackState::None;
@@ -48,10 +49,29 @@ struct Attack {
 	AttackData data;
 	AttackState state = AttackState::Idle;
 
-    typedef AttackMemento Memento;
+    typedef AttackMemento2 Memento;
 };
 
 /// @brief return true if done
 bool attack_system(int32_t timestamp_p, Attack const &a, Attack::Memento &am);
+
+struct AttackStep {
+	AttackData data;
+	AttackState state = AttackState::None;
+};
+
+struct AttackMemento {
+	AttackData data;
+	AttackState state = AttackState::None;
+
+	typedef Attack Data;
+	typedef AttackStep Step;
+};
+
+template<>
+void apply_step(AttackMemento &m, AttackMemento::Data &d, AttackMemento::Step const &s);
+
+template<>
+void revert_memento(AttackMemento::Data &d, AttackMemento const &memento);
 
 }

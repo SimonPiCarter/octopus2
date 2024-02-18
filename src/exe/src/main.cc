@@ -40,7 +40,7 @@ void zombie(
     Position const & p,
     Velocity &v,
     Target const& z,
-    TargetMemento& zm,
+    Target::Memento& zm,
     Team const &t,
     int32_t timestamp_p,
     Attack const &a,
@@ -115,11 +115,11 @@ int main(int, char *[]) {
     //////////////////////////////
 
     // zombie computation
-    ecs.system<Position const, Velocity, Target const, TargetMemento, const Team, const Attack, Attack::Memento, Zombie const>()
+    ecs.system<Position const, Velocity, Target const, Target::Memento, const Team, const Attack, Attack::Memento, Zombie const>()
         .multi_threaded()
         .kind<Iteration>()
         .each([&grid_l, &mutex_l, &timestamp_l](flecs::entity e, Position const & p, Velocity &v, Target const& z,
-            TargetMemento& zm, Team const &t, Attack const &a, Attack::Memento &am, Zombie const &) {
+            Target::Memento& zm, Team const &t, Attack const &a, Attack::Memento &am, Zombie const &) {
             zombie(mutex_l, grid_l, e, p, v, z, zm, t, timestamp_l, a, am);
         });
 

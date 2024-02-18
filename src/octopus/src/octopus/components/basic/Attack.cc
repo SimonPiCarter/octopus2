@@ -42,7 +42,7 @@ void set_no_op(Attack::Memento &m)
 	m.new_state = AttackState::None;
 }
 
-AttackMemento::AttackMemento() { set_no_op(*this); }
+AttackMemento2::AttackMemento2() { set_no_op(*this); }
 
 
 bool attack_system(int32_t timestamp_p, Attack const &a, Attack::Memento &am)
@@ -70,6 +70,22 @@ bool attack_system(int32_t timestamp_p, Attack const &a, Attack::Memento &am)
 	}
 
 	return false;
+}
+template<>
+void apply_step(AttackMemento &m, AttackMemento::Data &d, AttackMemento::Step const &s)
+{
+	std::swap(m.data, d.data);
+	m.state = d.state;
+	d.data = s.data;
+	if(AttackState::None != d.state)
+		d.state = d.state;
+}
+
+template<>
+void revert_memento(AttackMemento::Data &d, AttackMemento const &memento)
+{
+	d.data = memento.data;
+	d.state = memento.state;
 }
 
 }

@@ -43,4 +43,17 @@ void position_system(Grid &grid_p, flecs::entity e, Position const & p, Velocity
     }
 }
 
+template<>
+void apply_step(PositionMemento &m, PositionMemento::Data &d, PositionMemento::Step const &s)
+{
+	m.vec = d.vec;
+	d.vec += s.vec;
+}
+
+template<>
+void revert_memento(PositionMemento::Data &d, PositionMemento const &m)
+{
+	d.vec = m.vec;
+}
+
 } // octopus

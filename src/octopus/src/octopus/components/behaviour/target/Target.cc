@@ -27,7 +27,7 @@ void set_no_op(Target::Memento &v)
     v.no_op = true;
 }
 
-void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, TargetMemento& zm, Team const &t)
+void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, Target::Memento& zm, Team const &t)
 {
 	zm.old = z.data;
 	zm.cur = z.data;
@@ -69,6 +69,19 @@ void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Targ
 	}
 
 	zm.no_op = zm.cur.target == zm.old.target;
+}
+
+template<>
+void apply_step(TargetMemento &m, TargetMemento::Data &d, TargetMemento::Step const &s)
+{
+	std::swap(m.data, d.data);
+	d.data = s.data;
+}
+
+template<>
+void revert_memento(TargetMemento::Data &d, TargetMemento const &memento)
+{
+	d.data = memento.data;
 }
 
 } // octopus
