@@ -24,7 +24,7 @@ template<typename T>
 struct StepVector {
 	typename std::vector<typename StepPair<T> > steps;
 
-	void add_step(flecs::entity &ent, typename T::Step && step_p)
+	void add_step(flecs::entity ent, typename T::Step && step_p)
 	{
 		steps.push_back({ent.get_ref<typename T::Data>(), step_p, T()});
 	}
