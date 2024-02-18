@@ -19,6 +19,7 @@ namespace octopus
 {
 
 class Grid;
+struct StepContainer;
 struct Position;
 struct Team;
 struct Velocity;
@@ -39,7 +40,7 @@ struct Target {
     typedef TargetMemento2 Memento;
 };
 
-void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, Target::Memento& zm, Team const &t);
+void target_system(StepContainer &step, Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, Team const &t);
 
 struct TargetStep {
 	TargetData data;

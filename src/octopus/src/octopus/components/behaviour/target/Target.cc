@@ -3,6 +3,7 @@
 #include "octopus/utils/Grid.hh"
 #include "octopus/components/basic/Position.hh"
 #include "octopus/components/basic/Team.hh"
+#include "octopus/components/step/StepContainer.hh"
 
 #include <iostream>
 
@@ -27,20 +28,16 @@ void set_no_op(Target::Memento &v)
     v.no_op = true;
 }
 
-void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Target const& z, Target::Memento& zm, Team const &t)
+void target_system(StepContainer &step, Grid const &grid_p, flecs::entity e, Position const & p, Target const& target, Team const &t)
 {
-	zm.old = z.data;
-	zm.cur = z.data;
-
 	long long i = long(p.vec.x.to_int());
 	long long j = long(p.vec.y.to_int());
 
 	flecs::entity ent_target;
-	Vector target;
 	Fixed best_diff = -1;
-	for(long long x = std::max<long long>(0, i - z.data.range) ; x < i+z.data.range && x < grid_p.x ; ++ x)
+	for(long long x = std::max<long long>(0, i - target.data.range) ; x < i+target.data.range && x < grid_p.x ; ++ x)
 	{
-		for(long long y = std::max<long long>(0, j - z.data.range) ; y < j+z.data.range && y < grid_p.y ; ++ y)
+		for(long long y = std::max<long long>(0, j - target.data.range) ; y < j+target.data.range && y < grid_p.y ; ++ y)
 		{
 			if(x == i && y == j) { continue; }
 			flecs::entity ent = get(grid_p, x, y);
@@ -55,7 +52,6 @@ void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Targ
 					if(best_diff < 0 || diff < best_diff)
 					{
 						std::swap(diff, best_diff);
-						target = pos->vec;
 						ent_target = ent;
 					}
 				}
@@ -65,10 +61,8 @@ void target_system(Grid const &grid_p, flecs::entity e, Position const & p, Targ
 
 	if(ent_target)
 	{
-		zm.cur.target = ent_target;
+		step.targets.add_step(e, {{ent_target, target.data.range}});
 	}
-
-	zm.no_op = zm.cur.target == zm.old.target;
 }
 
 template<>

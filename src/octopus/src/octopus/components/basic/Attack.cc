@@ -1,5 +1,6 @@
 
 #include "Attack.hh"
+#include "octopus/components/step/StepContainer.hh"
 
 namespace octopus
 {
@@ -45,28 +46,33 @@ void set_no_op(Attack::Memento &m)
 AttackMemento2::AttackMemento2() { set_no_op(*this); }
 
 
-bool attack_system(int32_t timestamp_p, Attack const &a, Attack::Memento &am)
+bool attack_system(StepContainer &step, int32_t timestamp_p, flecs::entity e, Attack const &a)
 {
-	am.old_state = a.state;
-	am.new_state = a.state;
+	AttackStep attack_step { a.data, AttackState::None };
 	// wind down is over return true because attack is finished
-	if(a.state == AttackState::WindDown && timestamp_p > a.data.winddown_time + a.data.winddown_timestamp)
+	if(a.state == AttackState::WindDown && timestamp_p >= a.data.winddown_time + a.data.winddown_timestamp)
 	{
-		am.new_state = AttackState::Idle;
+		attack_step.state = AttackState::Idle;
+		step.attacks.add_step(e, std::move(attack_step));
 		return true;
 	}
 	// wind up is over start wind down
-	if(a.state == AttackState::WindUp && timestamp_p > a.data.windup_time + a.data.windup_timestamp)
+	if(a.state == AttackState::WindUp && timestamp_p >= a.data.windup_time + a.data.windup_timestamp)
 	{
-		am.new_state = AttackState::WindDown;
-		am.delta.winddown_timestamp = timestamp_p - a.data.winddown_timestamp;
-		am.delta.reload_timestamp = timestamp_p - a.data.reload_timestamp;
+		attack_step.state = AttackState::WindDown;
+		attack_step.data.winddown_timestamp = timestamp_p;
+		attack_step.data.reload_timestamp = timestamp_p;
 	}
 	// reload is over start wind up
-	if(a.state == AttackState::Idle && timestamp_p > a.data.reload_time + a.data.reload_timestamp)
+	if(a.state == AttackState::Idle && timestamp_p >= a.data.reload_time + a.data.reload_timestamp)
 	{
-		am.new_state = AttackState::WindUp;
-		am.delta.windup_timestamp = timestamp_p - a.data.windup_timestamp;
+		attack_step.state = AttackState::WindUp;
+		attack_step.data.windup_timestamp = timestamp_p;
+	}
+
+	if(attack_step.state != AttackState::None)
+	{
+		step.attacks.add_step(e, std::move(attack_step));
 	}
 
 	return false;
@@ -77,8 +83,8 @@ void apply_step(AttackMemento &m, AttackMemento::Data &d, AttackMemento::Step co
 	std::swap(m.data, d.data);
 	m.state = d.state;
 	d.data = s.data;
-	if(AttackState::None != d.state)
-		d.state = d.state;
+	if(AttackState::None != s.state)
+		d.state = s.state;
 }
 
 template<>

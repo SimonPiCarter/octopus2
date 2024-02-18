@@ -21,6 +21,10 @@ struct StepContainer
 	StepVector<TargetMemento> targets;
 };
 
+void reserve(StepContainer &container, size_t size);
+void clear_container(StepContainer &container);
+
+
 void declare_apply_system(flecs::world &ecs, std::vector<StepContainer> &container_p, ThreadPool &pool);
 void declare_revert_system(flecs::world &ecs, std::vector<StepContainer> &container_p, ThreadPool &pool);
 

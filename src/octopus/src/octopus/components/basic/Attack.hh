@@ -9,6 +9,7 @@
 
 namespace octopus
 {
+struct StepContainer;
 
 enum class AttackState {
 	Idle,
@@ -25,13 +26,13 @@ enum class AttackState {
 struct AttackData {
 	/// @brief time stamp of last reload start point
 	/// attack can start after reload_timestamp + reload_time
-    int32_t reload_timestamp = 0;
+    int32_t reload_timestamp = -1000;
 	/// @brief time stamp of last wind up start point
 	/// damage will occur after windup_timestamp + windup_time
-    int32_t windup_timestamp = 0;
+    int32_t windup_timestamp = -1000;
 	/// @brief time stamp of last wind down start point
 	/// attack will end after windown_timestamp + winddown_time
-    int32_t winddown_timestamp = 0;
+    int32_t winddown_timestamp = -1000;
 
 	int32_t reload_time = 10;
 	int32_t windup_time = 1;
@@ -53,7 +54,7 @@ struct Attack {
 };
 
 /// @brief return true if done
-bool attack_system(int32_t timestamp_p, Attack const &a, Attack::Memento &am);
+bool attack_system(StepContainer &step, int32_t timestamp_p, flecs::entity e, Attack const &a);
 
 struct AttackStep {
 	AttackData data;

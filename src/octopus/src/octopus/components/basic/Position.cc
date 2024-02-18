@@ -23,18 +23,18 @@ void set_no_op(Position::Memento &v)
     v.vec.y = 0;
 }
 
-void position_system(Grid &grid_p, flecs::entity e, Position const & p, Velocity &v)
+void position_system(Grid &grid_p, flecs::entity const &e, PositionMemento::Data const &p, PositionMemento::Step &s)
 {
     size_t old_i = size_t(p.vec.x.to_int());
     size_t old_j = size_t(p.vec.y.to_int());
-    size_t i = size_t((p.vec.x+v.vec.x).to_int());
-    size_t j = size_t((p.vec.y+v.vec.y).to_int());
+    size_t i = size_t((p.vec.x+s.vec.x).to_int());
+    size_t j = size_t((p.vec.y+s.vec.y).to_int());
 
     if((old_i != i || old_j != j)
     && !is_free(grid_p, i, j))
     {
-        v.vec.x = 0;
-        v.vec.y = 0;
+        s.vec.x = 0;
+        s.vec.y = 0;
     }
     else if(old_i != i || old_j != j)
     {

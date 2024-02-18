@@ -3,6 +3,22 @@
 namespace octopus
 {
 
+void reserve(StepContainer &container, size_t size)
+{
+	container.positions.steps.reserve(size);
+	container.hitpoints.steps.reserve(size);
+	container.attacks.steps.reserve(size);
+	container.targets.steps.reserve(size);
+}
+
+void clear_container(StepContainer &container)
+{
+	container.positions.steps.clear();
+	container.hitpoints.steps.clear();
+	container.attacks.steps.clear();
+	container.targets.steps.clear();
+}
+
 void declare_apply_system(flecs::world &ecs, std::vector<StepContainer> &container, ThreadPool &pool)
 {
 	ecs.system()

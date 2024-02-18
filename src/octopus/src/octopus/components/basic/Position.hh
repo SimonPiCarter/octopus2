@@ -33,8 +33,6 @@ void revert(Position &p, Position::Memento const &v);
 template<>
 void set_no_op(Position::Memento &v);
 
-void position_system(Grid &grid_p, flecs::entity e, Position const & p, Velocity &v);
-
 struct PositionStep {
 	Vector vec;
 };
@@ -45,6 +43,8 @@ struct PositionMemento {
 	typedef Position Data;
 	typedef PositionStep Step;
 };
+
+void position_system(Grid &grid_p, flecs::entity const &e, PositionMemento::Data const &p, PositionMemento::Step &s);
 
 template<>
 void apply_step(PositionMemento &m, PositionMemento::Data &d, PositionMemento::Step const &s);
