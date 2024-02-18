@@ -11,7 +11,7 @@
 namespace octopus
 {
 
-class Grid;
+struct Grid;
 
 struct Velocity {
 	Vector vec;

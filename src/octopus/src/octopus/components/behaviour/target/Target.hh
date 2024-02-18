@@ -18,7 +18,7 @@
 namespace octopus
 {
 
-class Grid;
+struct Grid;
 struct StepContainer;
 struct Position;
 struct Team;
