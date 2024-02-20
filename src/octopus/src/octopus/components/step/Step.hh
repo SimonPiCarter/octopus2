@@ -28,6 +28,11 @@ struct StepVector {
 	{
 		steps.push_back({ent.get_ref<typename T::Data>(), step_p, T()});
 	}
+
+	void add_step(flecs::ref<typename T::Data> ref, typename T::Step && step_p)
+	{
+		steps.push_back({ref, step_p, T()});
+	}
 };
 
 
