@@ -42,6 +42,7 @@ void zombie(
     int32_t timestamp_p,
     flecs::entity e,
     Position const & p,
+    Speed const & speed,
     Target const& target,
     Team const &team,
     Attack const &a
@@ -76,7 +77,8 @@ void zombie(
             // if not in wind up/down
             if(a.state == AttackState::Idle && !in_range)
             {
-                diff /= length(diff) * p.speed;
+                diff /= length(diff);
+				diff *= speed.speed;
 				step.positions.add_step(e, PositionStep {diff});
             }
         }
@@ -99,15 +101,15 @@ int main(int, char *[]) {
     int32_t timestamp_l = 0;
 
 	/// ITERATION
-	ecs.system<Position const, Target const, Team const, Attack const>()
+	ecs.system<Position const, Target const, Team const, Attack const, Speed const>()
 		.kind<Iteration>()
-		.iter([&pool_l, &steps, &grid_l, &timestamp_l](flecs::iter& it, Position const *pos, Target const *target, Team const *team, Attack const* attack) {
-			threading(it.count(), pool_l, [&it, &pos, &target, &team, &attack, &steps, &grid_l, timestamp_l](size_t t, size_t s, size_t e) {
+		.iter([&pool_l, &steps, &grid_l, &timestamp_l](flecs::iter& it, Position const *pos, Target const *target, Team const *team, Attack const* attack, Speed const* speed) {
+			threading(it.count(), pool_l, [&it, &pos, &target, &team, &attack, &speed, &steps, &grid_l, timestamp_l](size_t t, size_t s, size_t e) {
 				// set up memory
 				reserve(steps[t], e-s);
 				for (size_t j = s; j < e; j ++) {
 					flecs::entity &ent = it.entity(j);
-					zombie(steps[t], grid_l, timestamp_l, ent, pos[j], target[j], team[j], attack[j]);
+					zombie(steps[t], grid_l, timestamp_l, ent, pos[j], speed[j], target[j], team[j], attack[j]);
 				}
 			}
 			);
@@ -182,6 +184,7 @@ int main(int, char *[]) {
 			.add<Attack>()
 			.set<Team>({int8_t(i%2)})
 			.set<HitPoint>({50})
+			.set<Speed>({0.1})
 			.add<Zombie>();
 
 		set(grid_l, pos.vec.x.to_int(), pos.vec.y.to_int(), ent);
