@@ -23,7 +23,7 @@ void set_no_op(Position::Memento &v)
     v.vec.y = 0;
 }
 
-template<bool final>
+template<bool final, bool alt>
 void position_subsystem(Grid &grid_p, flecs::entity const &e, PositionMemento::Data const &p, PositionMemento::Step &s)
 {
     size_t old_i = size_t(p.vec.x.to_int());
@@ -39,11 +39,17 @@ void position_subsystem(Grid &grid_p, flecs::entity const &e, PositionMemento::D
 			s.vec.x = 0;
 			s.vec.y = 0;
 		}
-		else
+		else if(!alt)
 		{
 			std::swap(s.vec.x, s.vec.y);
 			s.vec.x = -s.vec.x;
-			position_subsystem<true>(grid_p, e, p, s);
+			position_subsystem<false, true>(grid_p, e, p, s);
+		}
+		else
+		{
+			std::swap(s.vec.x, s.vec.y);
+			s.vec.y = -s.vec.y;
+			position_subsystem<true, false>(grid_p, e, p, s);
 		}
     }
     else if(old_i != i || old_j != j)
@@ -55,7 +61,7 @@ void position_subsystem(Grid &grid_p, flecs::entity const &e, PositionMemento::D
 
 void position_system(Grid &grid_p, flecs::entity const &e, PositionMemento::Data const &p, PositionMemento::Step &s)
 {
-	position_subsystem<false>(grid_p, e, p, s);
+	position_subsystem<false, false>(grid_p, e, p, s);
 }
 
 template<>

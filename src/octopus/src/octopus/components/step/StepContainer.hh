@@ -7,6 +7,7 @@
 #include "octopus/components/basic/HitPoint.hh"
 #include "octopus/components/basic/Attack.hh"
 #include "octopus/components/behaviour/target/Target.hh"
+#include "octopus/components/behaviour/move/Move.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -19,6 +20,7 @@ struct StepContainer
 	StepVector<HitPointMemento> hitpoints;
 	StepVector<AttackMemento> attacks;
 	StepVector<TargetMemento> targets;
+	StepVector<MoveMemento> moves;
 };
 
 void reserve(StepContainer &container, size_t size);
