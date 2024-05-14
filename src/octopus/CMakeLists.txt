@@ -21,6 +21,8 @@ target_include_directories(octopus
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/>
 )
 
+add_subdirectory(test)
+
 # ============================================================================
 # Installation
 # ============================================================================
