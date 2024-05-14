@@ -14,7 +14,6 @@ struct Walk : public Command {
 
 	char const * const naming() const override  { return "walk"; }
 	void set(flecs::entity e) const override { e.set(*this); }
-	Command* clone() const override { return new Walk(*this); }
 };
 
 struct Attack : public Command {
@@ -24,7 +23,6 @@ struct Attack : public Command {
 
 	virtual char const * const naming() const override { return "attack"; }
 	virtual void set(flecs::entity e) const { e.set(*this); }
-	Command* clone() const override { return new Attack(*this); }
 };
 
 void set_up_walk_systems(flecs::world &ecs)

@@ -12,10 +12,9 @@ namespace octopus
 struct Command {
 	virtual char const * const naming() const = 0;
 	virtual void set(flecs::entity e) const = 0;
-	virtual Command* clone() const = 0;
 };
 
-// System enablings commands should be part of the OnUpdate phase
+// System running commands should be part of the OnUpdate phase
 // System cleaning up commands should be part of the PreUpdate phase
 
 struct NewCommand
@@ -49,70 +48,18 @@ struct CommandQueue
 
 	// PostLoad (1)
 	// mark current has done if new command clean
-	void set_current_done(NewCommand const &new_p)
-	{
-		if(new_p.clear)
-		{
-			_done = true;
-		}
-	}
+	void set_current_done(NewCommand const &new_p);
 
 	// PostLoad (2)
 	// set clean up state
-	void clean_up_current(flecs::world &ecs, flecs::entity &e)
-	{
-		if(_done && _current)
-		{
-			// reset state
-			e.remove(state(ecs), ecs.entity(_current->naming()));
-			// add clean up
-			e.add(cleanup(ecs), ecs.entity(_current->naming()));
-			// reset pointer
-			_current.reset();
-		}
-		_done = false;
-	}
+	void clean_up_current(flecs::world &ecs, flecs::entity &e);
 
 	// OnUpdate (1)
 	// update the current
-	void update_from_new_command(NewCommand const &new_p)
-	{
-		// update queue
-		if(!new_p.commands.empty())
-		{
-			// clear queue if necessary
-			if(new_p.clear)
-			{
-				_queued.clear();
-			}
-			// update queue
-			for(std::shared_ptr<Command> const &ptr_l : new_p.commands)
-			{
-				if(new_p.front)
-				{
-					_queued.push_front(ptr_l);
-				}
-				else
-				{
-					_queued.push_back(ptr_l);
-				}
-			}
-		}
-	}
+	void update_from_new_command(NewCommand const &new_p);
 
 	// OnUpdate (2)
-	void update_current(flecs::world &ecs, flecs::entity &e)
-	{
-		e.remove(cleanup(ecs), flecs::Wildcard);
-		if(!_current && !_queued.empty())
-		{
-			std::shared_ptr<Command> next_l = _queued.front();
-			_queued.pop_front();
-			_current = next_l;
-			e.add(state(ecs), ecs.entity(_current->naming()));
-			_current->set(e);
-		}
-	}
+	void update_current(flecs::world &ecs, flecs::entity &e);
 
 	static flecs::entity state(flecs::world &ecs) { return ecs.entity("state"); }
 	static flecs::entity cleanup(flecs::world &ecs) { return ecs.entity("cleanup"); }
