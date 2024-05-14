@@ -2,17 +2,19 @@
 
 #include "octopus/commands/queue/CommandQueue.hh"
 
+using namespace octopus;
+
 namespace
 {
 
-struct Walk : public Com {
+struct Walk : public Command {
 	Walk() = default;
 	Walk(uint32_t a) : t(a) {}
 	uint32_t t = 0;
 
 	char const * const naming() const override  { return "walk"; }
 	void set(flecs::entity e) const override { e.set(*this); }
-	Com* clone() const override { return new Walk(*this); }
+	Command* clone() const override { return new Walk(*this); }
 };
 
 void set_up_walk_systems(flecs::world &ecs)
@@ -41,14 +43,14 @@ void set_up_walk_systems(flecs::world &ecs)
 		});
 }
 
-struct Attack : public Com {
+struct Attack : public Command {
 	Attack() = default;
 	Attack(uint32_t a) : t(a) {}
 	uint32_t t = 0;
 
 	virtual char const * const naming() const override { return "attack"; }
 	virtual void set(flecs::entity e) const { e.set(*this); }
-	Com* clone() const override { return new Attack(*this); }
+	Command* clone() const override { return new Attack(*this); }
 };
 
 void set_up_attack_systems(flecs::world &ecs)
@@ -101,7 +103,7 @@ TEST(command_queue, simple)
 	{
 		if(i == 2)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Walk(2))}, false, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Walk(2))}, false, false};
 			e1.set(cmd_l);
 		}
 		ecs.progress();
@@ -126,7 +128,7 @@ TEST(command_queue, simple_multiple)
 	{
 		if(i == 2)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Walk(5)), std::shared_ptr<Com>(new Attack(0))}, false, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Walk(5)), std::shared_ptr<Command>(new Attack(0))}, false, false};
 			e1.set(cmd_l);
 		}
 		ecs.progress();
@@ -151,12 +153,12 @@ TEST(command_queue, simple_multiple_queuing_front)
 	{
 		if(i == 2)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Walk(4)), std::shared_ptr<Com>(new Attack(0))}, false, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Walk(4)), std::shared_ptr<Command>(new Attack(0))}, false, false};
 			e1.set(cmd_l);
 		}
 		if(i == 3)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Attack(11))}, true, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Attack(11))}, true, false};
 			e1.set(cmd_l);
 		}
 		ecs.progress();
@@ -181,12 +183,12 @@ TEST(command_queue, simple_multiple_queuing_back)
 	{
 		if(i == 2)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Walk(4)), std::shared_ptr<Com>(new Attack(10))}, false, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Walk(4)), std::shared_ptr<Command>(new Attack(10))}, false, false};
 			e1.set(cmd_l);
 		}
 		if(i == 3)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Attack(0))}, false, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Attack(0))}, false, false};
 			e1.set(cmd_l);
 		}
 		ecs.progress();
@@ -211,12 +213,12 @@ TEST(command_queue, simple_replaced)
 	{
 		if(i == 2)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Walk(2))}, false, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Walk(2))}, false, false};
 			e1.set(cmd_l);
 		}
 		if(i == 5)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Attack(1))}, false, true};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Attack(1))}, false, true};
 			e1.set(cmd_l);
 		}
 		ecs.progress();

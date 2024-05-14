@@ -1,5 +1,8 @@
 #include "CommandQueue.hh"
 
+namespace octopus
+{
+
 void set_up_command_queue_systems(flecs::world &ecs)
 {
 	// set up relations
@@ -34,4 +37,6 @@ void set_up_command_queue_systems(flecs::world &ecs)
 		.each([](flecs::entity e, CommandQueue &queue_p) {
 			queue_p.update_current(e.world(), e);
 		});
+}
+
 }

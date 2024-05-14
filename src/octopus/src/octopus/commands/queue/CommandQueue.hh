@@ -6,10 +6,13 @@
 
 #include "flecs.h"
 
-struct Com {
+namespace octopus
+{
+
+struct Command {
 	virtual char const * const naming() const = 0;
 	virtual void set(flecs::entity e) const = 0;
-	virtual Com* clone() const = 0;
+	virtual Command* clone() const = 0;
 };
 
 // System enablings commands should be part of the OnUpdate phase
@@ -18,7 +21,7 @@ struct Com {
 struct NewCommand
 {
 	/// @brief the commands to be added
-	std::list<std::shared_ptr<Com>> commands;
+	std::list<std::shared_ptr<Command>> commands;
 	/// @brief true if we place the command in front of the queue
 	bool front = false;
 	/// @brief true if we clear completely the queue
@@ -39,8 +42,8 @@ struct CommandQueue
 {
 	/// @warning this is just an out of date pointer
 	/// to get the type information of the current action
-	std::shared_ptr<Com> _current;
-	std::list<std::shared_ptr<Com>> _queued;
+	std::shared_ptr<Command> _current;
+	std::list<std::shared_ptr<Command>> _queued;
 	/// @brief true if the current command is done
 	bool _done = false;
 
@@ -83,7 +86,7 @@ struct CommandQueue
 				_queued.clear();
 			}
 			// update queue
-			for(std::shared_ptr<Com> const &ptr_l : new_p.commands)
+			for(std::shared_ptr<Command> const &ptr_l : new_p.commands)
 			{
 				if(new_p.front)
 				{
@@ -103,7 +106,7 @@ struct CommandQueue
 		e.remove(cleanup(ecs), flecs::Wildcard);
 		if(!_current && !_queued.empty())
 		{
-			std::shared_ptr<Com> next_l = _queued.front();
+			std::shared_ptr<Command> next_l = _queued.front();
 			_queued.pop_front();
 			_current = next_l;
 			e.add(state(ecs), ecs.entity(_current->naming()));
@@ -116,3 +119,5 @@ struct CommandQueue
 };
 
 void set_up_command_queue_systems(flecs::world &ecs);
+
+}

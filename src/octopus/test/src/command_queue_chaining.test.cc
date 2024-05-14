@@ -2,27 +2,29 @@
 
 #include "octopus/commands/queue/CommandQueue.hh"
 
+using namespace octopus;
+
 namespace
 {
 
-struct Walk : public Com {
+struct Walk : public Command {
 	Walk() = default;
 	Walk(uint32_t a) : t(a) {}
 	uint32_t t = 0;
 
 	char const * const naming() const override  { return "walk"; }
 	void set(flecs::entity e) const override { e.set(*this); }
-	Com* clone() const override { return new Walk(*this); }
+	Command* clone() const override { return new Walk(*this); }
 };
 
-struct Attack : public Com {
+struct Attack : public Command {
 	Attack() = default;
 	Attack(uint32_t a) : t(a) {}
 	uint32_t t = 0;
 
 	virtual char const * const naming() const override { return "attack"; }
 	virtual void set(flecs::entity e) const { e.set(*this); }
-	Com* clone() const override { return new Attack(*this); }
+	Command* clone() const override { return new Attack(*this); }
 };
 
 void set_up_walk_systems(flecs::world &ecs)
@@ -39,7 +41,7 @@ void set_up_walk_systems(flecs::world &ecs)
 				walk_p.t = 0;
 				cQueue_p._done = true;
 				// adding attack next
-				cQueue_p._queued.push_front(std::shared_ptr<Com> {new Attack(0)});
+				cQueue_p._queued.push_front(std::shared_ptr<Command> {new Attack(0)});
 			}
 		});
 
@@ -105,7 +107,7 @@ TEST(command_queue_chaining, simple)
 	{
 		if(i == 2)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Com>(new Walk(2))}, false, false};
+			NewCommand cmd_l {{std::shared_ptr<Command>(new Walk(2))}, false, false};
 			e1.set(cmd_l);
 		}
 		ecs.progress();
