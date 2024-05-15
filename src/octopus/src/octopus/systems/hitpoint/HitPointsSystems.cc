@@ -1,6 +1,6 @@
-#include "HitPointsValidator.hh"
+#include "HitPointsSystems.hh"
 
-#include "octopus/systems/Systems.hh"
+#include "octopus/systems/Validator.hh"
 
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "octopus/commands/queue/CommandQueue.hh"
+#include <variant>
 
 using namespace octopus;
 using vString = std::stringstream;
@@ -26,13 +27,17 @@ struct Attack : public Command {
 	virtual void set(flecs::entity e) const { e.set(*this); }
 };
 
+using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
+using CustomCommandQueue = CommandQueue<custom_variant>;
+using CustomNewCommand = NewCommand<custom_variant>;
+
 void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
 	// Walk : walk for 7 progress then done
-	ecs.system<Walk, CommandQueue>()
+	ecs.system<Walk, CustomCommandQueue>()
 		.kind(flecs::OnValidate)
-		.with(CommandQueue::state(ecs), Walk().naming())
-		.each([&res](flecs::entity& e, Walk &walk_p, CommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::state(ecs), Walk().naming())
+		.each([&res](flecs::entity& e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
 			++walk_p.t;
 			res<<" w"<<walk_p.t;
 			if(walk_p.t >= 7)
@@ -40,15 +45,15 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 				walk_p.t = 0;
 				cQueue_p._done = true;
 				// adding attack next
-				cQueue_p._queued.push_front(std::shared_ptr<Command> {new Attack(0)});
+				cQueue_p._queued.push_front(Attack(0));
 			}
 		});
 
 	// clean up
-	ecs.system<Walk, CommandQueue>()
+	ecs.system<Walk, CustomCommandQueue>()
 		.kind(flecs::PreUpdate)
-		.with(CommandQueue::cleanup(ecs), Walk().naming())
-		.each([&res](flecs::entity& e, Walk &walk_p, CommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::cleanup(ecs), Walk().naming())
+		.each([&res](flecs::entity& e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
 			res<<" cw"<<walk_p.t;
 			walk_p.t = 0;
 		});
@@ -57,10 +62,10 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 void set_up_attack_systems(flecs::world &ecs, vString &res)
 {
 	// Attack : walk for 12 progress then done
-	ecs.system<Attack, CommandQueue>()
+	ecs.system<Attack, CustomCommandQueue>()
 		.kind(flecs::OnValidate)
-		.with(CommandQueue::state(ecs), Attack().naming())
-		.each([&res](flecs::entity& e, Attack &attack_p, CommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::state(ecs), Attack().naming())
+		.each([&res](flecs::entity& e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.t;
 			res<<" a"<<attack_p.t;
 			if(attack_p.t >= 12)
@@ -71,10 +76,10 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 		});
 
 	// clean up
-	ecs.system<Attack, CommandQueue>()
+	ecs.system<Attack, CustomCommandQueue>()
 		.kind(flecs::PreUpdate)
-		.with(CommandQueue::cleanup(ecs), Attack().naming())
-		.each([&res](flecs::entity& e, Attack &attack_p, CommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::cleanup(ecs), Attack().naming())
+		.each([&res](flecs::entity& e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			res<<" ca"<<attack_p.t;
 			attack_p.t = 0;
 		});
@@ -101,12 +106,12 @@ TEST(command_queue_chaining, simple)
 	ecs.entity(Walk().naming());
 	ecs.entity(Attack().naming());
 
-	set_up_command_queue_systems(ecs);
+	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
 	auto e1 = ecs.entity()
-		.add<CommandQueue>();
+		.add<CustomCommandQueue>();
 
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
@@ -114,7 +119,7 @@ TEST(command_queue_chaining, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			NewCommand cmd_l {{std::shared_ptr<Command>(new Walk(2))}, false, false};
+			CustomNewCommand cmd_l {{Walk(2)}, false, false};
 			e1.set(cmd_l);
 		}
 		ecs.progress();
