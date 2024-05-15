@@ -8,36 +8,32 @@ namespace octopus
 {
 
 template<typename T>
-void apply_step(T &m, typename T::Data &d, typename T::Step const &s);
-
-template<typename T>
-void revert_memento(typename T::Data &d, T const &m);
-
-template<typename T>
-struct StepPair {
+struct StepTuple {
 	typename flecs::ref<typename T::Data> data;
-	typename T::Step step;
-	typename T memento;
+	typename T step;
+	typename T::Memento memento;
 };
 
 template<typename T>
 struct StepVector {
-	typename std::vector<typename StepPair<T> > steps;
+	typename std::vector<typename StepTuple<T> > steps;
 
-	void add_step(flecs::entity ent, typename T::Step && step_p)
+	void add_step(flecs::entity ent, typename T && step_p)
 	{
-		steps.push_back({ent.get_ref<typename T::Data>(), step_p, T()});
+		steps.push_back({ent.get_ref<typename T::Data>(), step_p, T::Memento()});
 	}
 
-	void add_step(flecs::ref<typename T::Data> ref, typename T::Step && step_p)
+	void add_step(flecs::ref<typename T::Data> ref, typename T && step_p)
 	{
-		steps.push_back({ref, step_p, T()});
+		steps.push_back({ref, step_p, T::Memento()});
 	}
 };
 
+template<typename T>
+void apply_step(typename T::Memento &memento, typename T::Data &d, typename T const &s);
 
 template<typename T>
-void apply_step(typename StepPair<T> &s)
+void apply_step_tuple(typename StepTuple<T> &s)
 {
 	typename T::Data * d = s.data.try_get();
 	if(d)
@@ -47,25 +43,9 @@ void apply_step(typename StepPair<T> &s)
 }
 
 template<typename T>
-void revert_memento(typename StepPair<T> &s)
-{
-	typename T::Data * d = s.data.try_get();
-	if(d)
-	{
-		revert_memento(*d, s.memento);
-	}
-}
-
-template<typename T>
 void apply(StepVector<T> &vec, size_t i)
 {
-	apply_step<T>(vec.steps[i]);
-}
-
-template<typename T>
-void revert(StepVector<T> &vec, size_t i)
-{
-	revert_memento<T>(vec.steps[i]);
+	apply_step_tuple<T>(vec.steps[i]);
 }
 
 template<typename T>
@@ -75,6 +55,25 @@ void apply_all(StepVector<T> &vec)
 	{
 		apply(vec, i);
 	}
+}
+
+template<typename T>
+void revert_step(typename T::Data &d, typename T::Memento const &memento);
+
+template<typename T>
+void revert_step_tuple(typename StepTuple<T> &s)
+{
+	typename T::Data * d = s.data.try_get();
+	if(d)
+	{
+		revert_step<T>(*d, s.memento);
+	}
+}
+
+template<typename T>
+void revert(StepVector<T> &vec, size_t i)
+{
+	revert_step_tuple<T>(vec.steps[i]);
 }
 
 template<typename T>

@@ -4,34 +4,16 @@ namespace octopus
 {
 
 template<>
-void apply(HitPoint &p, HitPoint::Memento const &v)
+void apply_step(HitPointStep::Memento &memento, HitPointStep::Data &d, HitPointStep const &s)
 {
-    p.hp -= v.dmg;
+	memento.hp = d.qty;
+	d.qty += s.delta;
 }
 
 template<>
-void revert(HitPoint &p, HitPoint::Memento const &v)
+void revert_step<HitPointStep>(HitPointStep::Data &d, HitPointStep::Memento const &memento)
 {
-    p.hp += v.dmg;
-}
-
-template<>
-void set_no_op(HitPoint::Memento &v)
-{
-    v.dmg = 0;
-}
-
-template<>
-void apply_step(HitPointMemento &m, HitPointMemento::Data &d, HitPointMemento::Step const &s)
-{
-	m.hp = d.hp;
-	d.hp += s.delta;
-}
-
-template<>
-void revert_memento(HitPointMemento::Data &d, HitPointMemento const &m)
-{
-	d.hp = m.hp;
+	d.qty = memento.hp;
 }
 
 }

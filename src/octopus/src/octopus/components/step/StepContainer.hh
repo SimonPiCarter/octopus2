@@ -3,11 +3,7 @@
 #include <vector>
 #include "Step.hh"
 
-#include "octopus/components/basic/Position.hh"
 #include "octopus/components/basic/HitPoint.hh"
-#include "octopus/components/basic/Attack.hh"
-#include "octopus/components/behaviour/target/Target.hh"
-#include "octopus/components/behaviour/move/Move.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -16,11 +12,7 @@ namespace octopus
 
 struct StepContainer
 {
-	StepVector<PositionMemento> positions;
-	StepVector<HitPointMemento> hitpoints;
-	StepVector<AttackMemento> attacks;
-	StepVector<TargetMemento> targets;
-	StepVector<MoveMemento> moves;
+	StepVector<HitPointStep> hitpoints;
 };
 
 void reserve(StepContainer &container, size_t size);
