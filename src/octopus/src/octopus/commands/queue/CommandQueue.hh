@@ -11,12 +11,10 @@ namespace octopus
 
 struct Command {
 	virtual char const * const naming() const = 0;
-	virtual void set(flecs::entity e) const = 0;
 };
 
 struct NoOpCommand {
 	virtual char const * const naming() const { return "no_op"; }
-	virtual void set(flecs::entity e) const {}
 };
 
 // System running commands should be part of the OnUpdate phase
@@ -122,7 +120,7 @@ struct CommandQueue
 			e.add(state(ecs), state_ent);
 
 			// set component
-			std::visit([&e](auto&& arg) { arg.set(e); }, _current);
+			std::visit([&e](auto&& arg) { e.set(arg); }, _current);
 		}
 	}
 

@@ -17,7 +17,6 @@ struct Walk : public Command {
 	uint32_t t = 0;
 
 	char const * const naming() const override  { return "walk"; }
-	void set(flecs::entity e) const override { e.set(*this); }
 };
 
 struct Attack : public Command {
@@ -26,7 +25,6 @@ struct Attack : public Command {
 	uint32_t t = 0;
 
 	virtual char const * const naming() const override { return "attack"; }
-	virtual void set(flecs::entity e) const { e.set(*this); }
 };
 
 using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
