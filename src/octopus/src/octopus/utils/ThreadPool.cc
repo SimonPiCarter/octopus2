@@ -9,6 +9,11 @@ ThreadPool::ThreadPool(uint32_t num_threads) {
     }
 }
 
+ThreadPool::~ThreadPool()
+{
+	stop();
+}
+
 void ThreadPool::ThreadLoop() {
     while (true) {
         std::function<void()> job;

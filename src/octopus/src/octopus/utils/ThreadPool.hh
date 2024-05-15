@@ -12,6 +12,7 @@
 class ThreadPool {
 public:
 	ThreadPool(uint32_t num_threads);
+	~ThreadPool();
     void queueJob(const std::function<void()>& job);
     void stop();
     bool busy();
