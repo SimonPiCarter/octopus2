@@ -4,8 +4,8 @@
 #include <iostream>
 
 struct State {};
-struct Runn { struct State {}; };
-struct Walk { struct State {}; };
+struct Runn { int a = 12; struct State {}; };
+struct Walk { int x = 4; struct State {}; };
 
 TEST(sandbox, test)
 {
@@ -13,9 +13,14 @@ TEST(sandbox, test)
 
 	ecs.component<State>().add(flecs::Exclusive);
 
-	auto e1 = ecs.entity();
+	auto e1 = ecs.entity("e1");
 	e1.add<State, Runn::State>();
 	e1.add<Runn>();
+	e1.add<Walk>();
+	auto e2 = ecs.entity("e2");
+	e2.add<State, Runn::State>();
+	e2.set<Runn>({1234});
+	e2.set<Walk>({7894});
 
 	ecs.system<Runn>()
 		.with<State, Runn::State>()
@@ -43,4 +48,5 @@ TEST(sandbox, test)
 	std::cout<<"3"<<std::endl;
 	ecs.progress();
 
+	std::cout<<ecs.to_json()<<std::endl;
 }
