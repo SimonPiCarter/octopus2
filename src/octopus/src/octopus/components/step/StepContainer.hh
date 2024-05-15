@@ -5,7 +5,9 @@
 
 #include "Step.hh"
 
-#include "octopus/components/basic/HitPoint.hh"
+#include "octopus/components/basic/hitpoint/HitPoint.hh"
+#include "octopus/components/basic/hitpoint/HitPointMax.hh"
+#include "octopus/components/basic/position/Position.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -15,6 +17,8 @@ namespace octopus
 struct StepContainer
 {
 	StepVector<HitPointStep> hitpoints;
+	StepVector<HitPointMaxStep> hitpointsMax;
+	StepVector<PositionStep> positions;
 };
 
 void reserve(StepContainer &container, size_t size);

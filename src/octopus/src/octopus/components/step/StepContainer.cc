@@ -1,5 +1,18 @@
 #include "StepContainer.hh"
 
+#define APPLY(storage) 							\
+{												\
+	jobs_l.push_back([i, &container]() {		\
+			apply_all(container[i].storage);	\
+	});											\
+}
+#define REVERT(storage) 						\
+{												\
+	jobs_l.push_back([i, &container]() {		\
+			revert_all(container[i].storage);	\
+	});											\
+}
+
 namespace octopus
 {
 
@@ -19,9 +32,9 @@ void dispatch_apply(std::vector<StepContainer> &container, ThreadPool &pool)
 	{
 		std::vector<std::function<void()>> jobs_l;
 
-		jobs_l.push_back([i, &container]() {
-			apply_all(container[i].hitpoints);
-		});
+		APPLY(hitpoints);
+		APPLY(hitpointsMax);
+		APPLY(positions);
 
 		enqueue_and_wait(pool, jobs_l);
 	}
@@ -33,9 +46,9 @@ void dispatch_revert(std::vector<StepContainer> &container, ThreadPool &pool)
 	{
 		std::vector<std::function<void()>> jobs_l;
 
-		jobs_l.push_back([i, &container]() {
-			revert_all(container[i].hitpoints);
-		});
+		REVERT(positions);
+		REVERT(hitpointsMax);
+		REVERT(hitpoints);
 
 		enqueue_and_wait(pool, jobs_l);
 	}
