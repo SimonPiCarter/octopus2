@@ -9,6 +9,7 @@ namespace octopus
 /////// Generic
 ///////
 
+/// @brief helper method to get memento type from data component type
 template<typename T>
 typename T::Memento memento(T const &)
 {
@@ -43,6 +44,7 @@ flecs::query<T, typename T::Memento const> create_stepping_query(flecs::world &e
     return ecs.query<T, typename T::Memento const>();
 }
 
+/// @brief create a system that will apply changes to every components in the state
 template<typename T>
 void create_applying_system(flecs::world &ecs)
 {
@@ -54,6 +56,7 @@ void create_applying_system(flecs::world &ecs)
         });
 }
 
+/// @brief create a system that will revert changes to every components in the state
 template<typename T>
 void create_reverting_system(flecs::world &ecs)
 {

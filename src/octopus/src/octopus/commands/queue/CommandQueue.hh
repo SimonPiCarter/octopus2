@@ -33,7 +33,7 @@ struct NewCommand
 // 	PreUpdate - all clean ups from commands
 // 	OnUpdate (loading new commands) : updating state based on queue
 // 	OnValidate - all actions from commands
-// 	PostUpdate
+// 	PostUpdate - apply all steps
 // 	PreStore
 // 	OnStore
 
