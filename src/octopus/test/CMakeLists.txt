@@ -23,13 +23,14 @@ add_executable (unit_tests)
 
 target_sources (unit_tests
 	PRIVATE
-	src/command_queue_chaining.test
+	src/command_queue_chaining.test.cc
 	src/command_queue.test.cc
 	src/comp_exclusion_bench.cc
 	src/state_exclusion_bench.cc
 	src/state_exclusive.test.cc
 	src/state_extension.test.cc
 	src/state.test.cc
+	src/step_container_hitpoint.test.cc
 )
 
 target_link_libraries (unit_tests
