@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "octopus/components/generic/Components.hh"
 #include "octopus/components/step/Step.hh"
 #include "octopus/utils/FixedPoint.hh"
 
