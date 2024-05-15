@@ -17,6 +17,7 @@ struct Walk : public Command {
 	uint32_t t = 0;
 
 	char const * const naming() const override  { return "walk"; }
+	struct State {};
 };
 
 struct Attack : public Command {
@@ -24,7 +25,8 @@ struct Attack : public Command {
 	Attack(uint32_t a) : t(a) {}
 	uint32_t t = 0;
 
-	virtual char const * const naming() const override { return "attack"; }
+	char const * const naming() const override  { return "attack"; }
+	struct State {};
 };
 
 using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
@@ -36,7 +38,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 	// Walk : walk for 7 progress then done
 	ecs.system<Walk, CustomCommandQueue>()
 		.kind(flecs::OnValidate)
-		.with(CustomCommandQueue::state(ecs), Walk().naming())
+		.with(CustomCommandQueue::state(ecs), ecs.component<Walk::State>())
 		.each([&res](flecs::entity& e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
 			++walk_p.t;
 			res<<" w"<<walk_p.t;
@@ -50,7 +52,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 	// clean up
 	ecs.system<Walk, CustomCommandQueue>()
 		.kind(flecs::PreUpdate)
-		.with(CustomCommandQueue::cleanup(ecs), Walk().naming())
+		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Walk::State>())
 		.each([&res](flecs::entity& e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
 			res<<" cw"<<walk_p.t;
 			walk_p.t = 0;
@@ -62,7 +64,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 	// Attack : walk for 12 progress then done
 	ecs.system<Attack, CustomCommandQueue>()
 		.kind(flecs::OnValidate)
-		.with(CustomCommandQueue::state(ecs), Attack().naming())
+		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
 		.each([&res](flecs::entity& e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.t;
 			res<<" a"<<attack_p.t;
@@ -76,7 +78,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 	// clean up
 	ecs.system<Attack, CustomCommandQueue>()
 		.kind(flecs::PreUpdate)
-		.with(CustomCommandQueue::cleanup(ecs), Attack().naming())
+		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
 		.each([&res](flecs::entity& e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			res<<" ca"<<attack_p.t;
 			attack_p.t = 0;
@@ -101,7 +103,6 @@ TEST(command_queue, simple)
 {
 	vString res;
 	flecs::world ecs;
-	ecs.entity(Walk().naming());
 
 	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
@@ -130,8 +131,6 @@ TEST(command_queue, simple_multiple)
 {
 	vString res;
 	flecs::world ecs;
-	ecs.entity(Walk().naming());
-	ecs.entity(Attack().naming());
 
 	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
@@ -162,8 +161,6 @@ TEST(command_queue, simple_multiple_queuing_front)
 {
 	vString res;
 	flecs::world ecs;
-	ecs.entity(Walk().naming());
-	ecs.entity(Attack().naming());
 
 	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
@@ -199,8 +196,6 @@ TEST(command_queue, simple_multiple_queuing_back)
 {
 	vString res;
 	flecs::world ecs;
-	ecs.entity(Walk().naming());
-	ecs.entity(Attack().naming());
 
 	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
@@ -236,8 +231,6 @@ TEST(command_queue, simple_replaced)
 {
 	vString res;
 	flecs::world ecs;
-	ecs.entity(Walk().naming());
-	ecs.entity(Attack().naming());
 
 	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
