@@ -104,9 +104,7 @@ TEST(command_queue_chaining, simple)
 	vString res;
 	flecs::world ecs;
 
-	CommandStepContainer<custom_variant> stepContainer_l;
-
-	set_up_command_queue_systems<custom_variant>(ecs, stepContainer_l);
+	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 

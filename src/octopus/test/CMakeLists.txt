@@ -23,7 +23,7 @@ add_executable (unit_tests)
 
 target_sources (unit_tests
 	PRIVATE
-	src/serialization/ser_command_queue.test.cc
+	#src/serialization/ser_command_queue.test.cc
 	src/serialization/ser_list.test.cc
 	src/serialization/ser_variant.test.cc
 	src/serialization/ser_vector.test.cc

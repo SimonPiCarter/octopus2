@@ -5,7 +5,6 @@
 
 #include "flecs.h"
 
-#include "step/CommandQueueStep.hh"
 
 namespace octopus
 {
@@ -42,19 +41,21 @@ struct NewCommand
 // 	PreStore
 // 	OnStore
 
+template<typename type_t>
+void add(flecs::entity &e, flecs::entity &state, type_t const &)
+{
+	e.add_second<typename type_t::State>(state);
+}
+
+template<typename type_t>
+void remove(flecs::entity &e, flecs::entity &state, type_t const &)
+{
+	e.remove_second<typename type_t::State>(state);
+}
+
 template<typename variant_t>
 struct CommandQueue
 {
-	typedef std::variant<
-		CommandQueueDoneStep<variant_t>,
-		CommandQueueAddStateStep<variant_t>,
-		CommandQueueRemoveStateStep<variant_t>,
-		CommandQueueSetCurrentStep<variant_t>,
-		CommandQueueUpdateQueueStep<variant_t>,
-		CommandQueuePopFrontQueueStep<variant_t>,
-		CommandQueueUpdateComponentStep<variant_t>
-	> CommandQueueStep;
-
 	/// @warning this is just an out of date pointer
 	/// to get the type information of the current action
 	variant_t _current;
@@ -62,115 +63,82 @@ struct CommandQueue
 	/// @brief true if the current command is done
 	bool _done = false;
 
-	/// @brief internal container for the old current
-	/// value used to remove clean once current has been
-	/// done
-	variant_t _old = NoOpCommand();
-
 	// PostLoad (1)
 	// mark current has done if new command clean
-	std::list<CommandQueueStep> set_current_done(NewCommand<variant_t> const &new_p)
+	void set_current_done(NewCommand<variant_t> const &new_p)
 	{
-		std::list<CommandQueueStep> steps;
-		if(new_p.clear && !_done)
-		{
-			steps.push_back(CommandQueueDoneStep<variant_t> {_done, true});
-		}
-		return steps;
+		_done |= new_p.clear;
 	}
 
 	// PostLoad (2)
 	// set clean up state
-	std::list<CommandQueueStep> clean_up_current(flecs::world &ecs, flecs::entity &e)
+	void clean_up_current(flecs::world &ecs, flecs::entity &e)
 	{
-		_old = NoOpCommand();
-		std::list<CommandQueueStep> steps;
 		if(_done && !std::holds_alternative<NoOpCommand>(_current))
 		{
 			// reset state
-			steps.push_back(CommandQueueRemoveStateStep<variant_t> {state(ecs), _current, e});
+			std::visit([this, &ecs, &e](auto&& arg) { remove(e, state(ecs), arg); }, _current);
 			// add clean up
-			steps.push_back(CommandQueueAddStateStep<variant_t> {cleanup(ecs), _current, e});
+			std::visit([this, &ecs, &e](auto&& arg) { add(e, cleanup(ecs), arg); }, _current);
 			// reset variant
-			steps.push_back(CommandQueueSetCurrentStep<variant_t> {_current, NoOpCommand()});
-			_old = _current;
+			_current = NoOpCommand();
 		}
-		if(_done)
-		{
-			steps.push_back(CommandQueueDoneStep<variant_t> {_done, false});
-		}
-		return steps;
+		// reset done
+		_done = false;
 	}
 
 	// OnUpdate (1)
 	// update the current
-	std::list<CommandQueueStep> update_from_new_command(NewCommand<variant_t> const &new_p)
+	void update_from_new_command(NewCommand<variant_t> const &new_p)
 	{
-		std::list<CommandQueueStep> steps;
 		// update queue
 		if(!new_p.commands.empty())
 		{
-			CommandQueueUpdateQueueStep<variant_t> queue_update;
-			queue_update.old_queue = _queued;
 			// clear queue if necessary
-			if(!new_p.clear)
+			if(new_p.clear)
 			{
-				queue_update.new_queue = _queued;
+				_queued = new_p.commands;
 			}
-			// update queue
-			for(variant_t const &var_l : new_p.commands)
+			else
 			{
-				if(new_p.front)
+				// update queue
+				for(variant_t const &var_l : new_p.commands)
 				{
-					queue_update.new_queue.push_front(var_l);
-				}
-				else
-				{
-					queue_update.new_queue.push_back(var_l);
+					if(new_p.front)
+					{
+						_queued.push_front(var_l);
+					}
+					else
+					{
+						_queued.push_back(var_l);
+					}
 				}
 			}
-			steps.push_back(queue_update);
 		}
-		return steps;
 	}
 
 	template<typename type_t>
-	CommandQueueUpdateComponentStep<variant_t> update_comp(flecs::entity &e, type_t const &new_comp)
+	void update_comp(flecs::entity &e, type_t const &new_comp)
 	{
-		CommandQueueUpdateComponentStep<variant_t> step;
-		type_t const * comp_l = e.get<type_t>();
-		if(comp_l)
-		{
-			step.old_comp = *comp_l;
-		}
-		else
-		{
-			step.old_comp = NoOpCommand();
-		}
-		step.new_comp = new_comp;
-		step.ent = e;
-
-		return step;
+		/// @todo use step here
+		e.set(new_comp);
 	}
 
 	// OnUpdate (2)
-	std::list<CommandQueueStep> update_current(flecs::world &ecs, flecs::entity &e)
+	void update_current(flecs::world &ecs, flecs::entity &e)
 	{
-		std::list<CommandQueueStep> steps;
-		/// @todo warning here (may not work)
-		steps.push_back(CommandQueueRemoveStateStep<variant_t> {cleanup(ecs), _old, e});
+		e.remove(cleanup(ecs), flecs::Wildcard);
 		if(std::holds_alternative<NoOpCommand>(_current) && !_queued.empty())
 		{
-			steps.push_back(CommandQueueSetCurrentStep<variant_t> {_current, _queued.front()});
-			steps.push_back(CommandQueuePopFrontQueueStep<variant_t> {_queued.front()});
+			_current = _queued.front();
+			_queued.pop_front();
 
 			// set state
-			steps.push_back(CommandQueueAddStateStep<variant_t> {state(ecs), _queued.front(), e});
+			std::visit([this, &ecs, &e](auto&& arg) { add(e, state(ecs), arg); }, _current);
 
 			// set component
-			std::visit([this, &e, &steps](auto&& arg) { steps.push_back(update_comp(e, arg)); }, _queued.front());
+			std::visit([this, &e](auto&& arg) { update_comp(e, arg); }, _current);
 		}
-		return steps;
 	}
 
 	static flecs::entity state(flecs::world &ecs) { return ecs.entity("state"); }
@@ -178,105 +146,40 @@ struct CommandQueue
 };
 
 template<typename variant_t>
-void apply_all_command_queue_steps(
-	std::list<typename CommandQueue<variant_t>::CommandQueueStep> &list_p,
-	CommandQueue<variant_t> &queue_p)
-{
-	for(auto && step : list_p)
-	{
-		std::visit([&queue_p](auto&& arg) { arg.apply(queue_p); }, step);
-	}
-}
-
-template<typename variant_t>
-void revert_all_command_queue_steps(
-	std::list<typename CommandQueue<variant_t>::CommandQueueStep> &list_p,
-	CommandQueue<variant_t> &queue_p)
-{
-	for(auto it_l = list_p.rbegin() ; it_l != list_p.rend() ; ++ it_l)
-	{
-		auto &&step = *it_l;
-		std::visit([&queue_p](auto&& arg) { arg.revert(queue_p); }, step);
-	}
-}
-
-template<typename variant_t>
-struct CommandStepContainer {
-	using ListStep = std::list<typename CommandQueue<variant_t>::CommandQueueStep>;
-
-	std::list<ListStep> _listSteps;
-
-	void splice(ListStep &list_p)
-	{
-		_listSteps.back().splice(_listSteps.back().end(), list_p);
-	}
-};
-
-template<typename variant_t>
-void set_up_command_queue_systems(flecs::world &ecs, CommandStepContainer<variant_t> &stepContainer_p)
+void set_up_command_queue_systems(flecs::world &ecs)
 {
 	// set up relations
     CommandQueue<variant_t>::state(ecs).add(flecs::Exclusive);
     CommandQueue<variant_t>::cleanup(ecs).add(flecs::Exclusive);
 
-
-	ecs.system("new_command_step")
-		.kind(flecs::PostLoad)
-		.iter([&stepContainer_p](flecs::iter& it) {
-			// add a step
-			stepContainer_p._listSteps.push_back(CommandStepContainer<variant_t>::ListStep());
-		});
-
 	ecs.system<NewCommand<variant_t> const, CommandQueue<variant_t>>()
 		.kind(flecs::PostLoad)
-		.each([&stepContainer_p](NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
-			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.set_current_done(new_p);
-			apply_all_command_queue_steps(list, queue_p);
-			stepContainer_p.splice(list);
+		.each([](NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
+			queue_p.set_current_done(new_p);
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
 		.kind(flecs::PostLoad)
 		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([&ecs, &stepContainer_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.clean_up_current(ecs, e);
-			apply_all_command_queue_steps(list, queue_p);
-			stepContainer_p.splice(list);
+		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			queue_p.clean_up_current(ecs, e);
 		});
 
 	ecs.system<NewCommand<variant_t> const, CommandQueue<variant_t>>()
 		.kind(flecs::OnUpdate)
-		.each([&stepContainer_p](flecs::entity e, NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
-			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.update_from_new_command(new_p);
+		.each([](flecs::entity e, NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
+			queue_p.update_from_new_command(new_p);
 			e.remove<NewCommand<variant_t>>();
-			apply_all_command_queue_steps(list, queue_p);
-			stepContainer_p.splice(list);
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
 		.kind(flecs::OnUpdate)
 		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([&ecs, &stepContainer_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.update_current(ecs, e);
-			apply_all_command_queue_steps(list, queue_p);
-			stepContainer_p.splice(list);
-		});
-
-
-	// check after commands if the current command is done to store the step
-	// this is done after commands have been executed
-	ecs.system<CommandQueue<variant_t> const >()
-		.kind(flecs::PostUpdate)
-		.each([&ecs, &stepContainer_p](flecs::entity e, CommandQueue<variant_t> const &queue_p) {
-			if(queue_p._done)
-			{
-				stepContainer_p._listSteps.back().push_back(CommandQueueDoneStep<variant_t> {false, true});
-			}
+		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			queue_p.update_current(ecs, e);
 		});
 }
 
 }
-
-#include "step/CommandQueueStep.defs.hh"
