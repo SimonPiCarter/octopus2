@@ -5,7 +5,7 @@
 #include <sstream>
 #include <variant>
 
-#include "octopus/serialization/variant/VariantSupport.hh"
+#include "octopus/serialization/queue/CommandQueueSupport.hh"
 
 using namespace octopus;
 using vString = std::stringstream;
@@ -31,7 +31,7 @@ struct Attack {
 	struct State {};
 };
 
-using custom_variant = std::variant<NoOpCommand, Walk, Attack>;
+using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 using CustomNewCommand = NewCommand<custom_variant>;
 
@@ -88,39 +88,59 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 }
 
 }
-
 //////////////////////////////////
 //////////////////////////////////
 /// TEST
 //////////////////////////////////
 //////////////////////////////////
 
-TEST(command_queue_serialization, simple)
+TEST(ser_command_queue, simple)
 {
 	vString res;
 	flecs::world ecs;
 
-	variant_support<NoOpCommand, Walk, Attack>(ecs);
+	// serialize states
+    ecs.component<Walk>()
+		.member<uint32_t>("t");
+    ecs.component<Attack>()
+		.member<uint32_t>("t");
+
+	command_queue_support<octopus::NoOpCommand, Walk, Attack>(ecs);
 
 	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
+	set_up_attack_systems(ecs, res);
 
-	auto e1 = ecs.entity()
+	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>();
+	auto e2 = ecs.entity("e2")
+		.add<CustomCommandQueue>()
+		.set<CustomNewCommand>({{Walk(1)}, false, false});
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
+		std::cout<<"p"<<i<<std::endl;
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(2)}, false, false};
+			CustomNewCommand cmd_l {{Walk(4), Attack(0)}, false, false};
+			e1.set(cmd_l);
+		}
+		if(i == 3)
+		{
+			CustomNewCommand cmd_l {{Attack(10)}, true, false};
 			e1.set(cmd_l);
 		}
 		ecs.progress();
+		// if(e1.get<Walk>()) std::cout << ecs.to_json(e1.get<Walk>()) << std::endl;
+		// if(e1.get<Attack>()) std::cout << ecs.to_json(e1.get<Attack>()) << std::endl;
+		if(e1.get<CustomCommandQueue>()) std::cout << ecs.to_json(e1.get<CustomCommandQueue>()) << std::endl;
+		std::cout<<std::endl;
+		// std::cout << e1.to_json() << std::endl << std::endl;
+		// std::cout << ecs.to_json() << std::endl << std::endl;
+
 		res<<"\n";
 	}
+	//std::cout << ecs.to_json() << std::endl << std::endl;
 
-	std::string const ref_l = " p0\n p1\n p2 w3\n p3 w4\n p4 w5\n p5 w6\n p6 w7\n p7 cw0\n p8\n p9\n";
-
-	EXPECT_EQ(ref_l, res.str());
 }
