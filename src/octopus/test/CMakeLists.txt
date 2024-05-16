@@ -23,11 +23,12 @@ add_executable (unit_tests)
 
 target_sources (unit_tests
 	PRIVATE
+	src/serialization/command_queue_serialization.test.cc
+	src/serialization/ser_variant.test.cc
 	src/command_queue_chaining.test.cc
 	src/command_queue.test.cc
 	src/comp_exclusion_bench.cc
 	src/sandbox.test.cc
-	src/ser_variant.test.cc
 	src/state_exclusion_bench.cc
 	src/state_exclusive.test.cc
 	src/state_extension.test.cc

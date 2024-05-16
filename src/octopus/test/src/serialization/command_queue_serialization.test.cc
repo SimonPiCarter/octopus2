@@ -1,7 +1,11 @@
 #include <gtest/gtest.h>
 
 #include "octopus/commands/queue/CommandQueue.hh"
+
+#include <sstream>
 #include <variant>
+
+#include "octopus/serialization/variant/VariantSupport.hh"
 
 using namespace octopus;
 using vString = std::stringstream;
@@ -27,7 +31,7 @@ struct Attack {
 	struct State {};
 };
 
-using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
+using custom_variant = std::variant<NoOpCommand, Walk, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 using CustomNewCommand = NewCommand<custom_variant>;
 
@@ -44,8 +48,6 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 			{
 				walk_p.t = 0;
 				cQueue_p._done = true;
-				// adding attack next
-				cQueue_p._queued.push_front(Attack(0));
 			}
 		});
 
@@ -85,7 +87,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 		});
 }
 
-} // namespace
+}
 
 //////////////////////////////////
 //////////////////////////////////
@@ -93,24 +95,18 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 //////////////////////////////////
 //////////////////////////////////
 
-/// Those test test two commands in the command queue
-/// Attack and Walk
-/// systems associated with those commands write in a string stream each action
-/// We test that the string stream has the expected value with different usage of the
-/// queue
-
-TEST(command_queue_chaining, simple)
+TEST(command_queue_serialization, simple)
 {
 	vString res;
 	flecs::world ecs;
 
+	variant_support<NoOpCommand, Walk, Attack>(ecs);
+
 	set_up_command_queue_systems<custom_variant>(ecs);
 	set_up_walk_systems(ecs, res);
-	set_up_attack_systems(ecs, res);
 
 	auto e1 = ecs.entity()
 		.add<CustomCommandQueue>();
-
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
@@ -124,7 +120,7 @@ TEST(command_queue_chaining, simple)
 		res<<"\n";
 	}
 
-	std::string const ref_l = " p0\n p1\n p2 w3\n p3 w4\n p4 w5\n p5 w6\n p6 w7\n p7 cw0 a1\n p8 a2\n p9 a3\n";
+	std::string const ref_l = " p0\n p1\n p2 w3\n p3 w4\n p4 w5\n p5 w6\n p6 w7\n p7 cw0\n p8\n p9\n";
 
 	EXPECT_EQ(ref_l, res.str());
 }

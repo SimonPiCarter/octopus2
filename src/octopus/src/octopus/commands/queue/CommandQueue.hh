@@ -10,13 +10,9 @@
 namespace octopus
 {
 
-struct Command {
-	virtual char const * const naming() const = 0;
-};
-
+/// @brief minimal implementation for a command that can be in the queue
 struct NoOpCommand {
-	virtual char const * const naming() const { return "no_op"; }
-
+	static constexpr char const * const naming()  { return "no_op"; }
 	struct State {};
 };
 

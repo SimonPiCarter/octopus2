@@ -11,21 +11,21 @@ using vString = std::stringstream;
 namespace
 {
 
-struct Walk : public Command {
+struct Walk {
 	Walk() = default;
 	Walk(uint32_t a) : t(a) {}
 	uint32_t t = 0;
 
-	char const * const naming() const override  { return "walk"; }
+	static constexpr char const * const naming()  { return "walk"; }
 	struct State {};
 };
 
-struct Attack : public Command {
+struct Attack {
 	Attack() = default;
 	Attack(uint32_t a) : t(a) {}
 	uint32_t t = 0;
 
-	char const * const naming() const override  { return "attack"; }
+	static constexpr char const * const naming()  { return "attack"; }
 	struct State {};
 };
 
