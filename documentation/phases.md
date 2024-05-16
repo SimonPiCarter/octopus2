@@ -27,6 +27,7 @@ Setting up from intput.
 
 ## PostUpdate
 
+- CommandQueue : register potential done step
 - Step : apply all
 
 ## PreStore

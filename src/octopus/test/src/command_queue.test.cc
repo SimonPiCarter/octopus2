@@ -104,7 +104,9 @@ TEST(command_queue, simple)
 	vString res;
 	flecs::world ecs;
 
-	set_up_command_queue_systems<custom_variant>(ecs);
+	CommandStepContainer<custom_variant> stepContainer_l;
+
+	set_up_command_queue_systems<custom_variant>(ecs, stepContainer_l);
 	set_up_walk_systems(ecs, res);
 
 	auto e1 = ecs.entity()
@@ -132,7 +134,9 @@ TEST(command_queue, simple_multiple)
 	vString res;
 	flecs::world ecs;
 
-	set_up_command_queue_systems<custom_variant>(ecs);
+	CommandStepContainer<custom_variant> stepContainer_l;
+
+	set_up_command_queue_systems<custom_variant>(ecs, stepContainer_l);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -162,7 +166,9 @@ TEST(command_queue, simple_multiple_queuing_front)
 	vString res;
 	flecs::world ecs;
 
-	set_up_command_queue_systems<custom_variant>(ecs);
+	CommandStepContainer<custom_variant> stepContainer_l;
+
+	set_up_command_queue_systems<custom_variant>(ecs, stepContainer_l);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -197,7 +203,9 @@ TEST(command_queue, simple_multiple_queuing_back)
 	vString res;
 	flecs::world ecs;
 
-	set_up_command_queue_systems<custom_variant>(ecs);
+	CommandStepContainer<custom_variant> stepContainer_l;
+
+	set_up_command_queue_systems<custom_variant>(ecs, stepContainer_l);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -232,7 +240,9 @@ TEST(command_queue, simple_replaced)
 	vString res;
 	flecs::world ecs;
 
-	set_up_command_queue_systems<custom_variant>(ecs);
+	CommandStepContainer<custom_variant> stepContainer_l;
+
+	set_up_command_queue_systems<custom_variant>(ecs, stepContainer_l);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
