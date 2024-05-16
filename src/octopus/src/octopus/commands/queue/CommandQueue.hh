@@ -5,6 +5,7 @@
 
 #include "flecs.h"
 
+#include "action/CommandQueueAction.hh"
 
 namespace octopus
 {
@@ -19,17 +20,6 @@ struct NoOpCommand {
 
 // System running commands should be part of the OnUpdate phase
 // System cleaning up commands should be part of the PreUpdate phase
-
-template<typename variant_t>
-struct NewCommand
-{
-	/// @brief the commands to be added
-	std::list<variant_t> commands;
-	/// @brief true if we place the command in front of the queue
-	bool front = false;
-	/// @brief true if we clear completely the queue
-	bool clear = false;
-};
 
 // phases order :
 // 	OnLoad (loading input)
@@ -63,14 +53,16 @@ struct CommandQueue
 	/// @brief true if the current command is done
 	bool _done = false;
 
-	// PostLoad (1)
-	// mark current has done if new command clean
-	void set_current_done(NewCommand<variant_t> const &new_p)
-	{
-		_done |= new_p.clear;
-	}
+	typedef std::variant<
+		CommandQueueActionDone,
+		CommandQueueActionReplace<variant_t>,
+		CommandQueueActionAddFront<variant_t>,
+		CommandQueueActionAddBack<variant_t>
+	> CommandQueueAction;
 
-	// PostLoad (2)
+	std::list<CommandQueueAction> _queuedActions;
+
+	// PostLoad (1)
 	// set clean up state
 	void clean_up_current(flecs::world &ecs, flecs::entity &e)
 	{
@@ -87,36 +79,6 @@ struct CommandQueue
 		_done = false;
 	}
 
-	// OnUpdate (1)
-	// update the current
-	void update_from_new_command(NewCommand<variant_t> const &new_p)
-	{
-		// update queue
-		if(!new_p.commands.empty())
-		{
-			// clear queue if necessary
-			if(new_p.clear)
-			{
-				_queued = new_p.commands;
-			}
-			else
-			{
-				// update queue
-				for(variant_t const &var_l : new_p.commands)
-				{
-					if(new_p.front)
-					{
-						_queued.push_front(var_l);
-					}
-					else
-					{
-						_queued.push_back(var_l);
-					}
-				}
-			}
-		}
-	}
-
 	template<typename type_t>
 	void update_comp(flecs::entity &e, type_t const &new_comp)
 	{
@@ -124,7 +86,7 @@ struct CommandQueue
 		e.set(new_comp);
 	}
 
-	// OnUpdate (2)
+	// OnUpdate (1)
 	void update_current(flecs::world &ecs, flecs::entity &e)
 	{
 		e.remove(cleanup(ecs), flecs::Wildcard);
@@ -145,41 +107,6 @@ struct CommandQueue
 	static flecs::entity cleanup(flecs::world &ecs) { return ecs.entity("cleanup"); }
 };
 
-template<typename variant_t>
-void set_up_command_queue_systems(flecs::world &ecs)
-{
-	// set up relations
-    CommandQueue<variant_t>::state(ecs).add(flecs::Exclusive);
-    CommandQueue<variant_t>::cleanup(ecs).add(flecs::Exclusive);
-
-	ecs.system<NewCommand<variant_t> const, CommandQueue<variant_t>>()
-		.kind(flecs::PostLoad)
-		.each([](NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
-			queue_p.set_current_done(new_p);
-		});
-
-	ecs.system<CommandQueue<variant_t>>()
-		.kind(flecs::PostLoad)
-		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
-		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			queue_p.clean_up_current(ecs, e);
-		});
-
-	ecs.system<NewCommand<variant_t> const, CommandQueue<variant_t>>()
-		.kind(flecs::OnUpdate)
-		.each([](flecs::entity e, NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
-			queue_p.update_from_new_command(new_p);
-			e.remove<NewCommand<variant_t>>();
-		});
-
-	ecs.system<CommandQueue<variant_t>>()
-		.kind(flecs::OnUpdate)
-		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
-		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			queue_p.update_current(ecs, e);
-		});
 }
 
-}
+#include "CommandQueueSystems.hh"

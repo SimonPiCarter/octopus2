@@ -31,7 +31,6 @@ struct Attack {
 
 using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
-using CustomNewCommand = NewCommand<custom_variant>;
 
 void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
@@ -115,8 +114,9 @@ TEST(command_queue, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(2)}, false, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddBack<custom_variant> action_l;
+			action_l._queued.push_back(Walk(2));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		ecs.progress();
 		res<<"\n";
@@ -145,8 +145,10 @@ TEST(command_queue, simple_multiple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(5), Attack(0)}, false, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddBack<custom_variant> action_l;
+			action_l._queued.push_back(Walk(5));
+			action_l._queued.push_back(Attack(0));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		ecs.progress();
 		res<<"\n";
@@ -175,13 +177,16 @@ TEST(command_queue, simple_multiple_queuing_front)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(4), Attack(0)}, false, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddBack<custom_variant> action_l;
+			action_l._queued.push_back(Walk(4));
+			action_l._queued.push_back(Attack(0));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		if(i == 3)
 		{
-			CustomNewCommand cmd_l {{Attack(11)}, true, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddFront<custom_variant> action_l;
+			action_l._queued.push_back(Attack(11));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		ecs.progress();
 		res<<"\n";
@@ -210,13 +215,16 @@ TEST(command_queue, simple_multiple_queuing_back)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(4), Attack(10)}, false, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddBack<custom_variant> action_l;
+			action_l._queued.push_back(Walk(4));
+			action_l._queued.push_back(Attack(10));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		if(i == 3)
 		{
-			CustomNewCommand cmd_l {{Attack(0)}, false, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddBack<custom_variant> action_l;
+			action_l._queued.push_back(Attack(0));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		ecs.progress();
 		res<<"\n";
@@ -245,13 +253,16 @@ TEST(command_queue, simple_replaced)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(2)}, false, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddBack<custom_variant> action_l;
+			action_l._queued.push_back(Walk(2));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		if(i == 5)
 		{
-			CustomNewCommand cmd_l {{Attack(1)}, false, true};
-			e1.set(cmd_l);
+			CommandQueueActionReplace<custom_variant> action_l;
+			action_l._queued.push_back(Attack(1));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionDone());
 		}
 		ecs.progress();
 		res<<"\n";

@@ -29,7 +29,6 @@ struct Attack {
 
 using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
-using CustomNewCommand = NewCommand<custom_variant>;
 
 void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
@@ -117,8 +116,9 @@ TEST(command_queue_chaining, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(2)}, false, false};
-			e1.set(cmd_l);
+			CommandQueueActionAddBack<custom_variant> action_l;
+			action_l._queued.push_back(Walk(2));
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
 		}
 		ecs.progress();
 		res<<"\n";
