@@ -9,31 +9,31 @@ namespace octopus
 
 template<typename T>
 struct StepTuple {
-	typename flecs::ref<typename T::Data> data;
-	typename T step;
+	flecs::ref<typename T::Data> data;
+	T step;
 	typename T::Memento memento;
 };
 
 template<typename T>
 struct StepVector {
-	typename std::vector<typename StepTuple<T> > steps;
+	std::vector<StepTuple<T> > steps;
 
-	void add_step(flecs::entity ent, typename T && step_p)
+	void add_step(flecs::entity ent, T && step_p)
 	{
-		steps.push_back({ent.get_ref<typename T::Data>(), step_p, T::Memento()});
+		steps.push_back({ent.get_ref<typename T::Data>(), step_p, typename T::Memento()});
 	}
 
-	void add_step(flecs::ref<typename T::Data> ref, typename T && step_p)
+	void add_step(flecs::ref<typename T::Data> ref, T && step_p)
 	{
 		steps.push_back({ref, step_p, T::Memento()});
 	}
 };
 
 template<typename T>
-void apply_step(typename T::Memento &memento, typename T::Data &d, typename T const &s);
+void apply_step(typename T::Memento &memento, typename T::Data &d, T const &s);
 
 template<typename T>
-void apply_step_tuple(typename StepTuple<T> &s)
+void apply_step_tuple(StepTuple<T> &s)
 {
 	typename T::Data * d = s.data.try_get();
 	if(d)
@@ -61,7 +61,7 @@ template<typename T>
 void revert_step(typename T::Data &d, typename T::Memento const &memento);
 
 template<typename T>
-void revert_step_tuple(typename StepTuple<T> &s)
+void revert_step_tuple(StepTuple<T> &s)
 {
 	typename T::Data * d = s.data.try_get();
 	if(d)

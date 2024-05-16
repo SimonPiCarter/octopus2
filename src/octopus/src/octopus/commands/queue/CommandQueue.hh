@@ -197,7 +197,7 @@ void set_up_command_queue_systems(flecs::world &ecs)
 	ecs.system<NewCommand<variant_t> const, CommandQueue<variant_t>>()
 		.kind(flecs::PostLoad)
 		.each([](NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
-			std::list<CommandQueue<variant_t>::CommandQueueStep> list = queue_p.set_current_done(new_p);
+			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.set_current_done(new_p);
 			apply_all_command_queue_steps(list, queue_p);
 		});
 
@@ -205,15 +205,15 @@ void set_up_command_queue_systems(flecs::world &ecs)
 		.kind(flecs::PostLoad)
 		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			std::list<CommandQueue<variant_t>::CommandQueueStep> list = queue_p.clean_up_current(e.world(), e);
+		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.clean_up_current(ecs, e);
 			apply_all_command_queue_steps(list, queue_p);
 		});
 
 	ecs.system<NewCommand<variant_t> const, CommandQueue<variant_t>>()
 		.kind(flecs::OnUpdate)
 		.each([](flecs::entity e, NewCommand<variant_t> const &new_p, CommandQueue<variant_t> &queue_p) {
-			std::list<CommandQueue<variant_t>::CommandQueueStep> list = queue_p.update_from_new_command(new_p);
+			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.update_from_new_command(new_p);
 			e.remove<NewCommand<variant_t>>();
 			apply_all_command_queue_steps(list, queue_p);
 		});
@@ -222,8 +222,8 @@ void set_up_command_queue_systems(flecs::world &ecs)
 		.kind(flecs::OnUpdate)
 		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			std::list<CommandQueue<variant_t>::CommandQueueStep> list = queue_p.update_current(e.world(), e);
+		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			std::list<typename CommandQueue<variant_t>::CommandQueueStep> list = queue_p.update_current(ecs, e);
 			apply_all_command_queue_steps(list, queue_p);
 		});
 }

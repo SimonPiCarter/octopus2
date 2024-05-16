@@ -32,7 +32,7 @@ TEST(step_container, hit_point_simple)
 
 	ecs.system<HitPoint>()
 		.kind(flecs::OnValidate)
-		.each([&res, &containers_l](flecs::entity& e, HitPoint &hp_p) {
+		.each([&res, &containers_l](flecs::entity e, HitPoint &hp_p) {
 			containers_l.back().hitpoints.add_step(e, {Fixed(-1)});
 			res<<" h"<<hp_p.qty.to_int();
 		});
@@ -72,7 +72,7 @@ TEST(step_container, hit_point_revert)
 
 	ecs.system<HitPoint>()
 		.kind(flecs::OnValidate)
-		.each([&res, &containers_l](flecs::entity& e, HitPoint &hp_p) {
+		.each([&res, &containers_l](flecs::entity e, HitPoint &hp_p) {
 			containers_l.back().hitpoints.add_step(e, {Fixed(-1)});
 			res<<" h"<<hp_p.qty.to_int();
 		});
