@@ -22,14 +22,14 @@ struct CommandQueueActionReplace
 template<typename variant_t>
 struct CommandQueueActionAddFront
 {
-	std::list<variant_t> _queued;
+	variant_t _queued;
 };
 
 /// @brief Add the action to the queue in back
 template<typename variant_t>
 struct CommandQueueActionAddBack
 {
-	std::list<variant_t> _queued;
+	variant_t _queued;
 };
 
 }

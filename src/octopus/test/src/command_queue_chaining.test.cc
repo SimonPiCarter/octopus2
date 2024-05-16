@@ -42,9 +42,9 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 			if(walk_p.t >= 7)
 			{
 				walk_p.t = 0;
-				cQueue_p._done = true;
 				// adding attack next
-				cQueue_p._queued.push_front(Attack(0));
+				cQueue_p._queuedActions.push_back(CommandQueueActionDone());
+				cQueue_p._queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {Attack(0)});
 			}
 		});
 
@@ -70,7 +70,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 			if(attack_p.t >= 12)
 			{
 				attack_p.t = 0;
-				cQueue_p._done = true;
+				cQueue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 		});
 
@@ -116,9 +116,7 @@ TEST(command_queue_chaining, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CommandQueueActionAddBack<custom_variant> action_l;
-			action_l._queued.push_back(Walk(2));
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Walk(2)});
 		}
 		ecs.progress();
 		res<<"\n";

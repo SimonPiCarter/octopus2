@@ -29,15 +29,13 @@ void handle_action(CommandQueue<variant_t> &queue_p, CommandQueueActionReplace<v
 template<typename variant_t>
 void handle_action(CommandQueue<variant_t> &queue_p, CommandQueueActionAddFront<variant_t> const &action_p)
 {
-	for(auto && action : action_p._queued)
-		queue_p._queued.push_front(action);
+	queue_p._queued.push_front(action_p._queued);
 }
 
 template<typename variant_t>
 void handle_action(CommandQueue<variant_t> &queue_p, CommandQueueActionAddBack<variant_t> const &action_p)
 {
-	for(auto &&action : action_p._queued)
-		queue_p._queued.push_back(action);
+	queue_p._queued.push_back(action_p._queued);
 }
 
 template<typename variant_t>
