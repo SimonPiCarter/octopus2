@@ -27,6 +27,7 @@ target_sources (unit_tests
 	src/command_queue.test.cc
 	src/comp_exclusion_bench.cc
 	src/sandbox.test.cc
+	src/ser_variant.test.cc
 	src/state_exclusion_bench.cc
 	src/state_exclusive.test.cc
 	src/state_extension.test.cc
