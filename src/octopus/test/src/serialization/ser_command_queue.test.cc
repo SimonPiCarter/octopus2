@@ -46,7 +46,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 			if(walk_p.t >= 7)
 			{
 				walk_p.t = 0;
-				cQueue_p._done = true;
+				cQueue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 		});
 
@@ -72,7 +72,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 			if(attack_p.t >= 12)
 			{
 				attack_p.t = 0;
-				cQueue_p._done = true;
+				cQueue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 		});
 
@@ -118,7 +118,6 @@ TEST(ser_command_queue, simple)
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
-		std::cout<<"p"<<i<<std::endl;
 		res<<" p"<<i;
 		if(i == 2)
 		{
