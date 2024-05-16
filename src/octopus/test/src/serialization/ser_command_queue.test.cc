@@ -33,7 +33,6 @@ struct Attack {
 
 using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
-using CustomNewCommand = NewCommand<custom_variant>;
 
 void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
@@ -107,15 +106,15 @@ TEST(ser_command_queue, simple)
 
 	command_queue_support<octopus::NoOpCommand, Walk, Attack>(ecs);
 
-	set_up_command_queue_systems<custom_variant>(ecs);
+	CommandQueueMementoManager<custom_variant> memento_manager;
+	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>();
-	auto e2 = ecs.entity("e2")
-		.add<CustomCommandQueue>()
-		.set<CustomNewCommand>({{Walk(1)}, false, false});
+
+	std::list<std::string> values_l;
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
@@ -123,24 +122,45 @@ TEST(ser_command_queue, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			CustomNewCommand cmd_l {{Walk(4), Attack(0)}, false, false};
-			e1.set(cmd_l);
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Walk(4)});
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Attack(0)});
 		}
 		if(i == 3)
 		{
-			CustomNewCommand cmd_l {{Attack(10)}, true, false};
-			e1.set(cmd_l);
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {Attack(10)});
 		}
 		ecs.progress();
 		// if(e1.get<Walk>()) std::cout << ecs.to_json(e1.get<Walk>()) << std::endl;
 		// if(e1.get<Attack>()) std::cout << ecs.to_json(e1.get<Attack>()) << std::endl;
-		if(e1.get<CustomCommandQueue>()) std::cout << ecs.to_json(e1.get<CustomCommandQueue>()) << std::endl;
-		std::cout<<std::endl;
-		// std::cout << e1.to_json() << std::endl << std::endl;
-		// std::cout << ecs.to_json() << std::endl << std::endl;
+		// std::cout << ecs.to_json(e1.get<CustomCommandQueue>()) << std::endl;
+		values_l.push_back(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
 
 		res<<"\n";
 	}
 	//std::cout << ecs.to_json() << std::endl << std::endl;
+
+	std::list<std::string> values_reverted_l;
+
+	for(auto rit_l = memento_manager.lMementos.rbegin() ; rit_l != memento_manager.lMementos.rend() ; ++ rit_l)
+	{
+		values_reverted_l.push_front(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
+		std::vector<typename CommandQueueMemento<custom_variant> > &mementos_l = *rit_l;
+		for(CommandQueueMemento<custom_variant> const &memento_l : mementos_l)
+		{
+			restore(ecs, memento_l);
+		}
+	}
+
+	for(std::string const &str_l : values_l)
+	{
+		std::cout<<str_l<<std::endl;
+	}
+	std::cout<<std::endl;
+	for(std::string const &str_l : values_reverted_l)
+	{
+		std::cout<<str_l<<std::endl;
+	}
+
+
 
 }

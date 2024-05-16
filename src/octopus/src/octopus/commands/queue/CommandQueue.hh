@@ -43,6 +43,24 @@ void remove(flecs::entity &e, flecs::entity &state, type_t const &)
 	e.remove_second<typename type_t::State>(state);
 }
 
+/// @brief Memento used to store the state of the queue
+template<typename variant_t>
+struct CommandQueueMemento
+{
+	variant_t _current;
+	std::list<variant_t> _queued;
+	bool _done;
+	flecs::entity e;
+};
+
+template<typename variant_t>
+struct CommandQueueMementoManager
+{
+	typedef std::vector<typename CommandQueueMemento<variant_t> > vMemento;
+
+	std::list<vMemento> lMementos;
+};
+
 template<typename variant_t>
 struct CommandQueue
 {
@@ -68,6 +86,7 @@ struct CommandQueue
 	{
 		if(_done && !std::holds_alternative<NoOpCommand>(_current))
 		{
+			/// @todo use step here
 			// reset state
 			std::visit([this, &ecs, &e](auto&& arg) { remove(e, state(ecs), arg); }, _current);
 			// add clean up
@@ -106,6 +125,29 @@ struct CommandQueue
 	static flecs::entity state(flecs::world &ecs) { return ecs.entity("state"); }
 	static flecs::entity cleanup(flecs::world &ecs) { return ecs.entity("cleanup"); }
 };
+
+template<typename variant_t>
+CommandQueueMemento<variant_t> memento(flecs::entity const &e, CommandQueue<variant_t> const &queue_p)
+{
+	return {
+		queue_p._current,
+		queue_p._queued,
+		queue_p._done,
+		e
+	};
+}
+
+template<typename variant_t>
+void restore(flecs::world &ecs, CommandQueueMemento<variant_t> const &memento_p)
+{
+	CommandQueue<variant_t> *queue_p = memento_p.e.mut(ecs).get_mut<CommandQueue<variant_t>>();
+	if(queue_p)
+	{
+		queue_p->_current = memento_p._current;
+		queue_p->_queued = memento_p._queued;
+		queue_p->_done = memento_p._done;
+	}
+}
 
 }
 

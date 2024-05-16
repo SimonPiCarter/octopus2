@@ -39,20 +39,23 @@ void handle_action(CommandQueue<variant_t> &queue_p, CommandQueueActionAddBack<v
 }
 
 template<typename variant_t>
-void set_up_command_queue_systems(flecs::world &ecs)
+void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<variant_t> &mementoManager_p)
 {
 	// set up relations
     CommandQueue<variant_t>::state(ecs).add(flecs::Exclusive);
     CommandQueue<variant_t>::cleanup(ecs).add(flecs::Exclusive);
 
+	// Add memento
+	ecs.system("CommandQueueMementoSetup")
+		.kind(flecs::PostLoad)
+		.iter([&mementoManager_p](flecs::iter& it) {
+			mementoManager_p.lMementos.push_back(CommandQueueMementoManager<variant_t>::vMemento());
+		});
+
 	// Apply actions
 	ecs.system<CommandQueue<variant_t>>()
 		.kind(flecs::PostLoad)
-		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			if(queue_p._queuedActions.size() > 0)
-			{
-				/// @todo store queue state
-			}
+		.each([&ecs, &mementoManager_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
 			for(typename CommandQueue<variant_t>::CommandQueueAction const & action_l : queue_p._queuedActions)
 			{
 				std::visit([&queue_p](auto&& arg)
@@ -61,8 +64,14 @@ void set_up_command_queue_systems(flecs::world &ecs)
 				}, action_l);
 			}
 
+			if(queue_p._queuedActions.size() > 0)
+			{
+				mementoManager_p.lMementos.back().push_back(memento(e, queue_p));
+			}
+
 			// clear once done
 			queue_p._queuedActions.clear();
+
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
