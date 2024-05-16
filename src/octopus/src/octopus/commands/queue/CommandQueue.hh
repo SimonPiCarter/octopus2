@@ -47,8 +47,16 @@ void remove(flecs::entity &e, flecs::entity &state, type_t const &)
 template<typename variant_t>
 struct CommandQueueMemento
 {
+	typedef std::variant<
+		CommandQueueActionDone,
+		CommandQueueActionReplace<variant_t>,
+		CommandQueueActionAddFront<variant_t>,
+		CommandQueueActionAddBack<variant_t>
+	> CommandQueueAction;
+
 	variant_t _current;
 	std::list<variant_t> _queued;
+	std::list<CommandQueueAction> _queuedActions;
 	bool _done;
 	flecs::entity e;
 };
@@ -132,6 +140,7 @@ CommandQueueMemento<variant_t> memento(flecs::entity const &e, CommandQueue<vari
 	return {
 		queue_p._current,
 		queue_p._queued,
+		queue_p._queuedActions,
 		queue_p._done,
 		e
 	};
@@ -145,6 +154,7 @@ void restore(flecs::world &ecs, CommandQueueMemento<variant_t> const &memento_p)
 	{
 		queue_p->_current = memento_p._current;
 		queue_p->_queued = memento_p._queued;
+		queue_p->_queuedActions = memento_p._queuedActions;
 		queue_p->_done = memento_p._done;
 	}
 }

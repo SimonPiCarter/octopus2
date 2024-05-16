@@ -3,21 +3,11 @@
 namespace octopus
 {
 
-// struct CommandQueueActionDone
-
-// template<typename variant_t>
-// struct CommandQueueActionReplace
-
-// template<typename variant_t>
-// struct CommandQueueActionAddFront
-
-// template<typename variant_t>
-// struct CommandQueueActionAddBack
 
 template<typename variant_t>
 void handle_action(CommandQueue<variant_t> &queue_p, CommandQueueActionDone const &action_p)
 {
-	queue_p._done = true;
+	queue_p._done = action_p._done;
 }
 
 template<typename variant_t>
@@ -56,17 +46,18 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 	ecs.system<CommandQueue<variant_t>>()
 		.kind(flecs::PostLoad)
 		.each([&ecs, &mementoManager_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+
+			if(queue_p._queuedActions.size() > 0)
+			{
+				mementoManager_p.lMementos.back().push_back(memento(e, queue_p));
+			}
+
 			for(typename CommandQueue<variant_t>::CommandQueueAction const & action_l : queue_p._queuedActions)
 			{
 				std::visit([&queue_p](auto&& arg)
 				{
 					handle_action(queue_p, arg);
 				}, action_l);
-			}
-
-			if(queue_p._queuedActions.size() > 0)
-			{
-				mementoManager_p.lMementos.back().push_back(memento(e, queue_p));
 			}
 
 			// clear once done

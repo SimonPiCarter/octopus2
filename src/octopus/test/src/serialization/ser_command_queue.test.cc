@@ -114,52 +114,51 @@ TEST(ser_command_queue, simple)
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>();
 
-	std::list<std::string> values_l;
+	std::vector<std::string> values_l;
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
 		res<<" p"<<i;
-		if(i == 2)
+		ecs.progress();
+
+		if(i == 1)
 		{
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Walk(4)});
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Attack(0)});
 		}
-		if(i == 3)
+		if(i == 2)
 		{
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {Attack(10)});
 		}
-		ecs.progress();
-		// if(e1.get<Walk>()) std::cout << ecs.to_json(e1.get<Walk>()) << std::endl;
-		// if(e1.get<Attack>()) std::cout << ecs.to_json(e1.get<Attack>()) << std::endl;
-		// std::cout << ecs.to_json(e1.get<CustomCommandQueue>()) << std::endl;
 		values_l.push_back(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
 
 		res<<"\n";
 	}
-	//std::cout << ecs.to_json() << std::endl << std::endl;
 
 	std::list<std::string> values_reverted_l;
 
 	for(auto rit_l = memento_manager.lMementos.rbegin() ; rit_l != memento_manager.lMementos.rend() ; ++ rit_l)
 	{
 		values_reverted_l.push_front(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
+		e1.get_mut<CustomCommandQueue>()->_queuedActions.clear();
 		std::vector<typename CommandQueueMemento<custom_variant> > &mementos_l = *rit_l;
 		for(CommandQueueMemento<custom_variant> const &memento_l : mementos_l)
 		{
 			restore(ecs, memento_l);
 		}
 	}
+	std::vector<std::string> vec_values_reverted_l(values_reverted_l.begin(), values_reverted_l.end());
 
-	for(std::string const &str_l : values_l)
-	{
-		std::cout<<str_l<<std::endl;
-	}
-	std::cout<<std::endl;
-	for(std::string const &str_l : values_reverted_l)
-	{
-		std::cout<<str_l<<std::endl;
-	}
-
-
-
+	ASSERT_EQ(10u, values_l.size());
+	ASSERT_EQ(10u, vec_values_reverted_l.size());
+	EXPECT_EQ(values_l[0], vec_values_reverted_l[0]);
+	EXPECT_EQ(values_l[1], vec_values_reverted_l[1]);
+	EXPECT_EQ(values_l[2], vec_values_reverted_l[2]);
+	EXPECT_EQ(values_l[3], vec_values_reverted_l[3]);
+	EXPECT_EQ(values_l[4], vec_values_reverted_l[4]);
+	EXPECT_EQ(values_l[5], vec_values_reverted_l[5]);
+	EXPECT_EQ(values_l[6], vec_values_reverted_l[6]);
+	EXPECT_EQ(values_l[7], vec_values_reverted_l[7]);
+	EXPECT_EQ(values_l[8], vec_values_reverted_l[8]);
+	EXPECT_EQ(values_l[9], vec_values_reverted_l[9]);
 }
