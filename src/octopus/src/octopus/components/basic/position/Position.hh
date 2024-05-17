@@ -22,12 +22,10 @@ struct PositionStep {
 
 	typedef Position Data;
 	typedef PositionMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const;
+
+	void revert_step(Data &d, Memento const &memento) const;
 };
-
-template<>
-void apply_step(PositionStep::Memento &memento, PositionStep::Data &d, PositionStep const &s);
-
-template<>
-void revert_step<PositionStep>(PositionStep::Data &d, PositionStep::Memento const &memento);
 
 }

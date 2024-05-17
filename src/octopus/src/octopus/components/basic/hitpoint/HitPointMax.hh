@@ -22,12 +22,10 @@ struct HitPointMaxStep {
 
 	typedef HitPointMax Data;
 	typedef HitPointMaxMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const;
+
+	void revert_step(Data &d, Memento const &memento) const;
 };
-
-template<>
-void apply_step(HitPointMaxStep::Memento &memento, HitPointMaxStep::Data &d, HitPointMaxStep const &s);
-
-template<>
-void revert_step<HitPointMaxStep>(HitPointMaxStep::Data &d, HitPointMaxStep::Memento const &memento);
 
 }

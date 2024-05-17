@@ -3,15 +3,13 @@
 namespace octopus
 {
 
-template<>
-void apply_step(PositionStep::Memento &memento, PositionStep::Data &d, PositionStep const &s)
+void PositionStep::apply_step(Data &d, Memento &memento) const
 {
 	memento.pos = d.pos;
-	d.pos += s.delta;
+	d.pos += delta;
 }
 
-template<>
-void revert_step<PositionStep>(PositionStep::Data &d, PositionStep::Memento const &memento)
+void PositionStep::revert_step(Data &d, Memento const &memento) const
 {
 	d.pos = memento.pos;
 }

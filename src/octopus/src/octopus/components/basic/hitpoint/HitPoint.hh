@@ -22,12 +22,10 @@ struct HitPointStep {
 
 	typedef HitPoint Data;
 	typedef HitPointMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const;
+
+	void revert_step(Data &d, Memento const &memento) const;
 };
-
-template<>
-void apply_step(HitPointStep::Memento &memento, HitPointStep::Data &d, HitPointStep const &s);
-
-template<>
-void revert_step<HitPointStep>(HitPointStep::Data &d, HitPointStep::Memento const &memento);
 
 }

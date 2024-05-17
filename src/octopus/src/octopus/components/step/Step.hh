@@ -30,15 +30,12 @@ struct StepVector {
 };
 
 template<typename T>
-void apply_step(typename T::Memento &memento, typename T::Data &d, T const &s);
-
-template<typename T>
 void apply_step_tuple(StepTuple<T> &s)
 {
 	typename T::Data * d = s.data.try_get();
 	if(d)
 	{
-		apply_step(s.memento, *d, s.step);
+		s.step.apply_step(*d, s.memento);
 	}
 }
 
@@ -58,15 +55,12 @@ void apply_all(StepVector<T> &vec)
 }
 
 template<typename T>
-void revert_step(typename T::Data &d, typename T::Memento const &memento);
-
-template<typename T>
 void revert_step_tuple(StepTuple<T> &s)
 {
 	typename T::Data * d = s.data.try_get();
 	if(d)
 	{
-		revert_step<T>(*d, s.memento);
+		s.step.revert_step(*d, s.memento);
 	}
 }
 

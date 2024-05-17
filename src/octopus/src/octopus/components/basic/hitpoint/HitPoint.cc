@@ -3,15 +3,13 @@
 namespace octopus
 {
 
-template<>
-void apply_step(HitPointStep::Memento &memento, HitPointStep::Data &d, HitPointStep const &s)
+void HitPointStep::apply_step(Data &d, Memento &memento) const
 {
 	memento.hp = d.qty;
-	d.qty += s.delta;
+	d.qty += delta;
 }
 
-template<>
-void revert_step<HitPointStep>(HitPointStep::Data &d, HitPointStep::Memento const &memento)
+void HitPointStep::revert_step(Data &d, Memento const &memento) const
 {
 	d.qty = memento.hp;
 }

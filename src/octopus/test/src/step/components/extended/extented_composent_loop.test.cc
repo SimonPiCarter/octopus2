@@ -52,32 +52,20 @@ struct AttackStep {
 
 	typedef Attack Data;
 	typedef AttackMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const
+	{
+		memento.old_windup = d.windup;
+		d.windup = new_windup;
+	}
+
+	void revert_step(Data &d, Memento const &memento) const
+	{
+		d.windup = memento.old_windup;
+	}
 };
 
-}
-
-namespace octopus
-{
-
-template<>
-void apply_step(AttackStep::Memento &memento, AttackStep::Data &d, AttackStep const &s)
-{
-	memento.old_windup = d.windup;
-	d.windup = s.new_windup;
-}
-
-template<>
-void revert_step<AttackStep>(AttackStep::Data &d, AttackStep::Memento const &memento)
-{
-	d.windup = memento.old_windup;
-}
-
-} // namespace octopus
-
 /// END component
-
-namespace
-{
 
 using custom_variant = std::variant<octopus::NoOpCommand, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
