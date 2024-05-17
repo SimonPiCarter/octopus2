@@ -11,7 +11,8 @@
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/step/StepContainer.hh"
-#include "octopus/systems/step/StepSystems.hh"
+
+#include "octopus/systems/Systems.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -118,8 +119,8 @@ TEST(hitpoint_loop, simple)
 	StepManager step_manager;
 	ThreadPool pool(1);
 
-	set_up_step_systems(ecs, pool, step_manager);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);
+
 	set_up_attack_systems(ecs, step_manager);
 
 	auto e1 = ecs.entity("e1")
