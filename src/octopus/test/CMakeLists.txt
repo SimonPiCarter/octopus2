@@ -27,6 +27,7 @@ target_sources (unit_tests
 	src/serialization/ser_list.test.cc
 	src/serialization/ser_variant.test.cc
 	src/serialization/ser_vector.test.cc
+	src/step/command/state_change_steps.test.cc
 	src/command_queue_chaining.test.cc
 	src/command_queue.test.cc
 	src/comp_exclusion_bench.cc
