@@ -47,25 +47,40 @@ struct Attack {
 	struct State {};
 };
 
+struct AttackMemento {
+	uint32_t old_windup = 0;
+};
+
+struct AttackStep {
+	uint32_t new_windup = 0;
+
+	typedef Attack Data;
+	typedef AttackMemento Memento;
+};
+
 using custom_variant = std::variant<octopus::NoOpCommand, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
-void set_up_attack_systems(flecs::world &ecs, StepManager &manager_p)
+void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep, AttackStep> &manager_p)
 {
 	// Attack : walk for 12 progress then done
 	ecs.system<Attack, CustomCommandQueue>()
 		.kind(flecs::OnValidate)
 		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
 		.each([&manager_p](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
-			++attack_p.windup;
-			if(attack_p.windup >= attack_p.windup_time)
+			// +1 because step is not applied
+			if(attack_p.windup+1 >= attack_p.windup_time)
 			{
 				if(attack_p.target)
 				{
 					manager_p.get_last_layer().back().get<HitPointStep>().add_step(attack_p.target, {-attack_p.damage});
 				}
-				attack_p.windup = 0;
+				manager_p.get_last_layer().back().get<AttackStep>().add_step(e, {0});
 				cQueue_p._queuedActions.push_back(CommandQueueActionDone());
+			}
+			else
+			{
+				manager_p.get_last_layer().back().get<AttackStep>().add_step(e, {attack_p.windup+1});
 			}
 		});
 
@@ -79,6 +94,24 @@ void set_up_attack_systems(flecs::world &ecs, StepManager &manager_p)
 }
 
 }
+
+namespace octopus
+{
+
+template<>
+void apply_step(AttackStep::Memento &memento, AttackStep::Data &d, AttackStep const &s)
+{
+	memento.old_windup = d.windup;
+	d.windup = s.new_windup;
+}
+
+template<>
+void revert_step<AttackStep>(AttackStep::Data &d, AttackStep::Memento const &memento)
+{
+	d.windup = memento.old_windup;
+}
+
+} // namespace octopus
 
 template<typename type_t>
 void stream_type(flecs::world &ecs, flecs::entity e, type_t arg)
@@ -123,7 +156,7 @@ TEST(extended_loop, simple)
 	command_queue_support<octopus::NoOpCommand, Attack>(ecs);
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	StepManager step_manager;
+	StepManager<HitPointStep, AttackStep> step_manager;
 	ThreadPool pool(1);
 
 	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);

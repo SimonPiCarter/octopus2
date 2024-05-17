@@ -14,7 +14,9 @@ using namespace octopus;
 TEST(sandbox, test)
 {
 	typedef StepContainerCascade<HitPointStep, HitPointMaxStep, PositionStep> StepContainer_t;
-	StepContainer_t cascade_l = StepContainer_t(HitPointStep(), HitPointMaxStep(), PositionStep());
+	StepContainer_t cascade_l = makeStepContainer<HitPointStep, HitPointMaxStep, PositionStep>();
+
+
 
 	reserve(cascade_l, 10);
 	clear_container(cascade_l);

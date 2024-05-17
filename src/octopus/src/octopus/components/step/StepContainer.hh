@@ -24,7 +24,7 @@ struct StepContainerCascade<T, Ts...> : StepContainerCascade<Ts...> {
 	template <class G>
 	typename std::enable_if<!std::is_same<G, T>::value, StepVector<G> &>::type get() {
 		// cascade
-		StepContainerCascade<Ts...>& base = container;
+		StepContainerCascade<Ts...>& base = *this;
 		return base.get<G>();
 	}
 
@@ -35,6 +35,12 @@ struct StepContainerCascade<T, Ts...> : StepContainerCascade<Ts...> {
 
 	StepVector<T> steps;
 };
+
+template <class... Ts>
+StepContainerCascade<Ts...> makeStepContainer()
+{
+	return StepContainerCascade<Ts...>(Ts()...);
+}
 
 template<class... Ts> void reserve(StepContainerCascade<Ts...> &container, size_t size) {}
 template<class T, class... Ts> void reserve(StepContainerCascade<T, Ts...> &container, size_t size)
@@ -104,15 +110,15 @@ void dispatch_revert(std::vector<StepContainer_t> &container, ThreadPool &pool)
 	}
 }
 
-typedef StepContainerCascade<HitPointStep, HitPointMaxStep, PositionStep> StepContainer;
-
+template<class... Ts>
 struct StepManager
 {
+	typedef StepContainerCascade<Ts...> StepContainer;
 	std::list<std::vector<StepContainer> > steps;
 
 	void add_layer(size_t threads_p)
 	{
-		steps.push_back(std::vector<StepContainer>(threads_p, StepContainer(HitPointStep(), HitPointMaxStep(), PositionStep())));
+		steps.push_back(std::vector<StepContainer>(threads_p, makeStepContainer<Ts...>()));
 	}
 
 	void pop_layer()

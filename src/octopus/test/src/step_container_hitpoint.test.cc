@@ -26,7 +26,7 @@ TEST(step_container, hit_point_simple)
 	flecs::world ecs;
 
 	ThreadPool pool_l(1);
-	StepManager manager_l;
+	StepManager<HitPointStep> manager_l;
 	manager_l.add_layer(pool_l.size());
 
 	auto e1 = ecs.entity()
@@ -60,7 +60,7 @@ TEST(step_container, hit_point_revert)
 	flecs::world ecs;
 
 	ThreadPool pool_l(1);
-	StepManager manager_l;
+	StepManager<HitPointStep> manager_l;
 	manager_l.add_layer(pool_l.size());
 
 	auto e1 = ecs.entity()

@@ -11,8 +11,8 @@ namespace octopus
 {
 /// @brief Set up all required system for the engine to run
 /// @param ecs
-template<typename variant_t>
-void set_up_systems(flecs::world &ecs, ThreadPool &pool, CommandQueueMementoManager<variant_t> &memento_manager, StepManager &step_manager)
+template<typename variant_t, typename StepManager_t>
+void set_up_systems(flecs::world &ecs, ThreadPool &pool, CommandQueueMementoManager<variant_t> &memento_manager, StepManager_t &step_manager)
 {
 	// command handling systems
 	set_up_command_queue_systems<variant_t>(ecs, memento_manager);
