@@ -23,12 +23,19 @@ using namespace octopus;
 
 /////////////////////////////////////////////////
 /// This test aims at testing that step
-/// updates for hitpoint and position work
-/// correctly in the loop
+/// updates for a new component
 /////////////////////////////////////////////////
 
 namespace
 {
+
+///////////////////////////////
+/// New component definition //
+///////////////////////////////
+
+
+
+/// END
 
 struct Attack {
 	uint32_t windup = 0;
@@ -100,7 +107,7 @@ void stream_ent(flecs::world &ecs, flecs::entity e, Targs... Fargs)
 	std::cout<<std::endl;
 }
 
-TEST(hitpoint_loop, simple)
+TEST(extended_loop, simple)
 {
 	flecs::world ecs;
 

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <variant>
 
+#include "octopus/serialization/components/BasicSupport.hh"
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 
 using namespace octopus;
@@ -97,6 +98,8 @@ TEST(ser_command_queue, simple)
 {
 	vString res;
 	flecs::world ecs;
+
+	basic_components_support(ecs);
 
 	// serialize states
     ecs.component<Walk>()

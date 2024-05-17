@@ -30,6 +30,7 @@ target_sources (unit_tests
 	src/serialization/ser_vector.test.cc
 	src/step/command/state_change_steps.test.cc
 	src/step/components/basic/hitpoint_loop.test.cc
+	src/step/components/extended/extented_composent_loop.test.cc
 	src/command_queue_chaining.test.cc
 	src/command_queue.test.cc
 	src/comp_exclusion_bench.cc
