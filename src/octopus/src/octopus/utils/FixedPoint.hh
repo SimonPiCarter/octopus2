@@ -203,7 +203,6 @@ namespace octopus
 			return _data;
 		}
 
-	private:
 		long long _data;
 	};
 
