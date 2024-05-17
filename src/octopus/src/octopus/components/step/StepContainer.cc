@@ -19,11 +19,15 @@ namespace octopus
 void reserve(StepContainer &container, size_t size)
 {
 	container.hitpoints.steps.reserve(size);
+	container.hitpointsMax.steps.reserve(size);
+	container.positions.steps.reserve(size);
 }
 
 void clear_container(StepContainer &container)
 {
 	container.hitpoints.steps.clear();
+	container.hitpointsMax.steps.clear();
+	container.positions.steps.clear();
 }
 
 void dispatch_apply(std::vector<StepContainer> &container, ThreadPool &pool)
