@@ -32,13 +32,13 @@ struct NoOpCommand {
 // 	OnStore
 
 template<typename type_t>
-void add(flecs::entity &e, flecs::entity &state, type_t const &)
+void add(flecs::entity &e, flecs::entity state, type_t const &)
 {
 	e.add_second<typename type_t::State>(state);
 }
 
 template<typename type_t>
-void remove(flecs::entity &e, flecs::entity &state, type_t const &)
+void remove(flecs::entity &e, flecs::entity state, type_t const &)
 {
 	e.remove_second<typename type_t::State>(state);
 }
@@ -64,7 +64,7 @@ struct CommandQueueMemento
 template<typename variant_t>
 struct CommandQueueMementoManager
 {
-	typedef std::vector<typename CommandQueueMemento<variant_t> > vMemento;
+	typedef std::vector<CommandQueueMemento<variant_t> > vMemento;
 
 	std::list<vMemento> lMementos;
 };
@@ -146,10 +146,16 @@ CommandQueueMemento<variant_t> memento(flecs::entity const &e, CommandQueue<vari
 	};
 }
 
+template<typename queue_t>
+queue_t * get_queue(flecs::entity e, queue_t const &)
+{
+	return e.get_mut<queue_t>();
+}
+
 template<typename variant_t>
 void restore(flecs::world &ecs, CommandQueueMemento<variant_t> const &memento_p)
 {
-	CommandQueue<variant_t> *queue_p = memento_p.e.mut(ecs).get_mut<CommandQueue<variant_t>>();
+	CommandQueue<variant_t> *queue_p = get_queue(memento_p.e.mut(ecs), CommandQueue<variant_t>());
 	if(queue_p)
 	{
 		queue_p->_current = memento_p._current;

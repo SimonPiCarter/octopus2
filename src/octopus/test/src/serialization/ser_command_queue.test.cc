@@ -141,7 +141,7 @@ TEST(ser_command_queue, simple)
 	{
 		values_reverted_l.push_front(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
 		e1.get_mut<CustomCommandQueue>()->_queuedActions.clear();
-		std::vector<typename CommandQueueMemento<custom_variant> > &mementos_l = *rit_l;
+		std::vector<CommandQueueMemento<custom_variant> > &mementos_l = *rit_l;
 		for(CommandQueueMemento<custom_variant> const &memento_l : mementos_l)
 		{
 			restore(ecs, memento_l);

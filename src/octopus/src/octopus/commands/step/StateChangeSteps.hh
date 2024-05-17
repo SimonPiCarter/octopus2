@@ -1,5 +1,9 @@
 #pragma once
 
+#include "flecs.h"
+#include <list>
+#include <vector>
+
 namespace octopus
 {
 
@@ -31,15 +35,15 @@ struct StateSetComponentStep
 template<typename variant_t>
 struct StateStepContainer
 {
-	std::list<std::vector<StateAddPairStep<variant_t>>> _addPair;
-	std::list<std::vector<StateRemovePairStep<variant_t>>> _removePair;
-	std::list<std::vector<StateSetComponentStep<variant_t>>> _setComp;
+	std::list<std::vector<StateAddPairStep<variant_t> > > _addPair;
+	std::list<std::vector<StateRemovePairStep<variant_t> > > _removePair;
+	std::list<std::vector<StateSetComponentStep<variant_t> > > _setComp;
 
 	void add_layer()
 	{
-		_addPair.push_back(std::vector<StateAddPairStep<variant_t>>());
-		_removePair.push_back(std::vector<StateRemovePairStep<variant_t>>());
-		_setComp.push_back(std::vector<StateSetComponentStep<variant_t>>());
+		_addPair.push_back(std::vector<StateAddPairStep<variant_t> >());
+		_removePair.push_back(std::vector<StateRemovePairStep<variant_t> >());
+		_setComp.push_back(std::vector<StateSetComponentStep<variant_t> >());
 	}
 
 	void pop_layer()

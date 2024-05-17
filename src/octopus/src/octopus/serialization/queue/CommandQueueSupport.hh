@@ -1,11 +1,16 @@
 #pragma once
 
 #include "flecs.h"
+#include <list>
 
 #include "octopus/serialization/containers/ListSupport.hh"
 #include "octopus/serialization/variant/VariantSupport.hh"
 
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/commands/queue/action/CommandQueueAction.hh"
+
+namespace octopus
+{
 
 // Reusable reflection support for std::vector
 template<typename... tArgs>
@@ -29,13 +34,13 @@ void command_queue_support(flecs::world& world) {
 		.member<bool>("done");
 
     world.component<octopus::CommandQueueActionReplace<variant_args> >()
-		.member<std::list<variant_args>>("queued");
+		.member("queued", &octopus::CommandQueueActionReplace<variant_args>::_queued);
 
     world.component<octopus::CommandQueueActionAddFront<variant_args> >()
-		.member<variant_args>("queued");
+		.member("queued", &octopus::CommandQueueActionAddFront<variant_args>::_queued);
 
     world.component<octopus::CommandQueueActionAddBack<variant_args> >()
-		.member<variant_args>("queued");
+		.member("queued", &octopus::CommandQueueActionAddBack<variant_args>::_queued);
 
 	variant_support<
 		octopus::CommandQueueActionDone,
@@ -54,8 +59,10 @@ void command_queue_support(flecs::world& world) {
         .opaque(std_list_support<variant_actions>);
 
     world.component<octopus::CommandQueue<variant_args> >()
-        .member<variant_args>("current")
-        .member<std::list<variant_args>>("queued")
-		.member<bool>("done")
-        .member<std::list<variant_actions>>("queued_action");
+        .member("current", &octopus::CommandQueue<variant_args>::_current)
+        .member("queued", &octopus::CommandQueue<variant_args>::_queued)
+		.member("done", &octopus::CommandQueue<variant_args>::_done)
+        .member("queued_action", &octopus::CommandQueue<variant_args>::_queuedActions);
+}
+
 }
