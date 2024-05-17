@@ -33,10 +33,6 @@ namespace
 /// New component definition //
 ///////////////////////////////
 
-
-
-/// END
-
 struct Attack {
 	uint32_t windup = 0;
 	uint32_t windup_time = 0;
@@ -58,12 +54,37 @@ struct AttackStep {
 	typedef AttackMemento Memento;
 };
 
+}
+
+namespace octopus
+{
+
+template<>
+void apply_step(AttackStep::Memento &memento, AttackStep::Data &d, AttackStep const &s)
+{
+	memento.old_windup = d.windup;
+	d.windup = s.new_windup;
+}
+
+template<>
+void revert_step<AttackStep>(AttackStep::Data &d, AttackStep::Memento const &memento)
+{
+	d.windup = memento.old_windup;
+}
+
+} // namespace octopus
+
+/// END component
+
+namespace
+{
+
 using custom_variant = std::variant<octopus::NoOpCommand, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep, AttackStep> &manager_p)
 {
-	// Attack : walk for 12 progress then done
+	// Attack
 	ecs.system<Attack, CustomCommandQueue>()
 		.kind(flecs::OnValidate)
 		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
@@ -88,30 +109,13 @@ void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep, AttackSt
 	ecs.system<Attack, CustomCommandQueue>()
 		.kind(flecs::PreUpdate)
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
-		.each([](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
-			attack_p.windup = 0;
+		.each([&manager_p](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
+				manager_p.get_last_layer().back().get<AttackStep>().add_step(e, {0});
 		});
 }
 
 }
 
-namespace octopus
-{
-
-template<>
-void apply_step(AttackStep::Memento &memento, AttackStep::Data &d, AttackStep const &s)
-{
-	memento.old_windup = d.windup;
-	d.windup = s.new_windup;
-}
-
-template<>
-void revert_step<AttackStep>(AttackStep::Data &d, AttackStep::Memento const &memento)
-{
-	d.windup = memento.old_windup;
-}
-
-} // namespace octopus
 
 template<typename type_t>
 void stream_type(flecs::world &ecs, flecs::entity e, type_t arg)
@@ -172,7 +176,7 @@ TEST(extended_loop, simple)
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
-		step_manager.add_layer(1);
+		step_manager.add_layer(pool.size());
 		ecs.progress();
 
 		if(i == 1)
