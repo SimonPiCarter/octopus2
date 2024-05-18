@@ -6,6 +6,8 @@
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 
+#include "octopus/world/path/direction.hh"
+
 namespace octopus
 {
 
@@ -29,13 +31,13 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<MoveCommand::State>())
 		.each([&ecs](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p, CommandQueue_t &queue_p) {
-			if(square_length(pos_p.pos - move_p.target) < Fixed::One()/100)
+			if(square_length(pos_p.pos - moveCommand_p.target.pos) < Fixed::One()/100)
 			{
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 			else
 			{
-				Vector direction_l = get_direction(ecs, pos_p, move_p.target);
+				Vector direction_l = get_direction(ecs, pos_p, moveCommand_p.target);
 				move_p.move = direction_l * move_p.speed;
 			}
 		});

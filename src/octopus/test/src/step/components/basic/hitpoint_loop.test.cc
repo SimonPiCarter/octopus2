@@ -44,7 +44,7 @@ struct Attack {
 using custom_variant = std::variant<octopus::NoOpCommand, Attack>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
-void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep> &manager_p)
+void set_up_attack_systems(flecs::world &ecs, StepManager<PositionStep, HitPointStep> &manager_p)
 {
 	// Attack : walk for 12 progress then done
 	ecs.system<Attack, CustomCommandQueue>()
@@ -117,7 +117,7 @@ TEST(hitpoint_loop, simple)
 	command_queue_support<octopus::NoOpCommand, Attack>(ecs);
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	StepManager<HitPointStep> step_manager;
+	StepManager<PositionStep, HitPointStep> step_manager;
 	ThreadPool pool(1);
 
 	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);
