@@ -32,10 +32,15 @@ void set_up_phases(flecs::world &ecs)
 		.add(flecs::Phase)
 		.depends_on(updatePhase);
 
+	/// MovingPhase
+	flecs::entity movingPhase = ecs.entity(MovingPhase)
+		.add(flecs::Phase)
+		.depends_on(postUpdatePhase);
+
 	/// SteppingPhase
 	flecs::entity steppingPhase = ecs.entity(SteppingPhase)
 		.add(flecs::Phase)
-		.depends_on(postUpdatePhase);
+		.depends_on(movingPhase);
 
 	/// ValidatePhase
 	flecs::entity validatePhase = ecs.entity(ValidatePhase)

@@ -8,23 +8,8 @@ namespace octopus
 {
 
 struct Move {
-	Vector pos;
+	Vector move;
 	Fixed speed = Fixed(1);
-};
-
-struct MoveMemento {
-	Vector pos;
-};
-
-struct MoveStep {
-	Vector delta;
-
-	typedef Move Data;
-	typedef MoveMemento Memento;
-
-	void apply_step(Data &d, Memento &memento) const;
-
-	void revert_step(Data &d, Memento const &memento) const;
 };
 
 }

@@ -25,11 +25,10 @@ struct MoveCommand {
 template<class StepManager_t, class CommandQueue_t>
 void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
 {
-	// Attack
-	ecs.system<Position const, MoveCommand const, Move const, CommandQueue_t>()
+	ecs.system<Position const, MoveCommand const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<MoveCommand::State>())
-		.each([&manager_p ,&ecs](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move const &move_p, CommandQueue_t &queue_p) {
+		.each([&ecs](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p, CommandQueue_t &queue_p) {
 			if(square_length(pos_p.pos - move_p.target) < Fixed::One()/100)
 			{
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
@@ -37,7 +36,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
 			else
 			{
 				Vector direction_l = get_direction(ecs, pos_p, move_p.target);
-				manager_p.get<Move>().add_step(e, MoveStep{direction_l * move_p.speed});
+				move_p.move = direction_l * move_p.speed;
 			}
 		});
 }
