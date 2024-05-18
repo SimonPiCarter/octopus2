@@ -27,7 +27,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
 {
 	// Attack
 	ecs.system<Position const, MoveCommand const, Move const, CommandQueue_t>()
-		.kind(flecs::OnValidate)
+		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<MoveCommand::State>())
 		.each([&manager_p ,&ecs](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move const &move_p, CommandQueue_t &queue_p) {
 			if(square_length(pos_p.pos - move_p.target) < Fixed::One()/100)

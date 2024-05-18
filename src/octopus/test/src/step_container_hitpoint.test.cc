@@ -4,6 +4,7 @@
 
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/step/StepContainer.hh"
+#include "octopus/systems/Systems.hh"
 #include "octopus/systems/step/StepSystems.hh"
 
 using namespace octopus;
@@ -33,12 +34,13 @@ TEST(step_container, hit_point_simple)
 		.set<HitPoint>({Fixed(10)});
 
 	ecs.system<HitPoint>()
-		.kind(flecs::OnValidate)
+		.kind(ecs.entity(PostUpdatePhase))
 		.each([&res, &manager_l](flecs::entity e, HitPoint &hp_p) {
 			manager_l.get_last_layer().back().get<HitPointStep>().add_step(e, {Fixed(-1)});
 			res<<" h"<<hp_p.qty.to_int();
 		});
 
+	set_up_phases(ecs);
 	set_up_step_systems(ecs, pool_l, manager_l);
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
@@ -67,12 +69,13 @@ TEST(step_container, hit_point_revert)
 		.set<HitPoint>({Fixed(10)});
 
 	ecs.system<HitPoint>()
-		.kind(flecs::OnValidate)
+		.kind(ecs.entity(PostUpdatePhase))
 		.each([&res, &manager_l](flecs::entity e, HitPoint &hp_p) {
 			manager_l.get_last_layer().back().get<HitPointStep>().add_step(e, {Fixed(-1)});
 			res<<" h"<<hp_p.qty.to_int();
 		});
 
+	set_up_phases(ecs);
 	set_up_step_systems(ecs, pool_l, manager_l);
 
 	for(size_t i = 0 ; i < 10 ; ++ i)

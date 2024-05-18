@@ -14,6 +14,7 @@
 #include "octopus/components/step/StepContainer.hh"
 
 #include "octopus/systems/Systems.hh"
+#include "octopus/systems/phases/Phases.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -75,7 +76,7 @@ void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep, AttackSt
 {
 	// Attack
 	ecs.system<Attack, CustomCommandQueue>()
-		.kind(flecs::OnValidate)
+		.kind(ecs.entity(PostUpdatePhase))
 		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
 		.each([&manager_p](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			// +1 because step is not applied
@@ -96,7 +97,7 @@ void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep, AttackSt
 
 	// clean up
 	ecs.system<Attack, CustomCommandQueue>()
-		.kind(flecs::PreUpdate)
+		.kind(ecs.entity(PreUpdatePhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
 		.each([&manager_p](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 				manager_p.get_last_layer().back().get<AttackStep>().add_step(e, {0});

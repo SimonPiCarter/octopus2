@@ -1,5 +1,7 @@
 #pragma once
 
+#include "octopus/systems/phases/Phases.hh"
+
 namespace octopus
 {
 
@@ -37,14 +39,14 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 
 	// Add memento
 	ecs.system("CommandQueueMementoSetup")
-		.kind(flecs::PostLoad)
+		.kind(ecs.entity(PrepingUpdatePhase))
 		.iter([&mementoManager_p](flecs::iter& it) {
 			mementoManager_p.lMementos.push_back(typename CommandQueueMementoManager<variant_t>::vMemento());
 		});
 
 	// Apply actions
 	ecs.system<CommandQueue<variant_t>>()
-		.kind(flecs::PostLoad)
+		.kind(ecs.entity(PrepingUpdatePhase))
 		.each([&ecs, &mementoManager_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
 
 			if(queue_p._queuedActions.size() > 0)
@@ -66,7 +68,7 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
-		.kind(flecs::PostLoad)
+		.kind(ecs.entity(PrepingUpdatePhase))
 		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
 		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
@@ -74,7 +76,7 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
-		.kind(flecs::OnUpdate)
+		.kind(ecs.entity(UpdatePhase))
 		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
 		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {

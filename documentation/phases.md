@@ -4,42 +4,40 @@ Describe the flecs system phases and what happen in every one of them.
 
 Here are all the default phases in the running order :
 
-## OnLoad
-Loading input
+## PrepingUpdate
 
-## PostLoad
+### CommandQueueSystems
 
-Setting up from intput.
+- Push a new memento layer
+- Take Queue Actions into account
+- Remove current state and add clean up state if done  in entities
 
-- CommandQueue : marking current has done and tagging clean up and removing state of entities
+## CleanUp
 
-## PreUpdate
+### CommandQueueSystems
 
 - Commands : all clean ups from commands
 
-## OnUpdate
+## PreUpdate
 
-- CommandQueue : updating states based on queue
+### CommandQueueSystems
 
-## OnValidate
+- Remove clean up state and add new state if any and component associated
 
-- Commands : all actions from commands
+## Update
+
+- all actions from commands
 
 ## PostUpdate
 
-- CommandQueue : register potential done step
+### Moves and position
+
+- Update PositionStep from Move
+
+## Stepping
+
 - Step : apply all
 
-## PreStore
-
-Prepare display
+## Validate
 
 - Validate components (do various checks and corrections)
-
-## OnStore
-
-Sync with display. This is the only time where display and backend must be synced
-
-## Revert
-
-Custom phase not run by default use to revert steps

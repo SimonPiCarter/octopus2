@@ -13,6 +13,7 @@
 #include "octopus/components/step/StepContainer.hh"
 
 #include "octopus/systems/Systems.hh"
+#include "octopus/systems/phases/Phases.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -47,7 +48,7 @@ void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep> &manager
 {
 	// Attack : walk for 12 progress then done
 	ecs.system<Attack, CustomCommandQueue>()
-		.kind(flecs::OnValidate)
+		.kind(ecs.entity(PostUpdatePhase))
 		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
 		.each([&manager_p](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.windup;
@@ -64,7 +65,7 @@ void set_up_attack_systems(flecs::world &ecs, StepManager<HitPointStep> &manager
 
 	// clean up
 	ecs.system<Attack, CustomCommandQueue>()
-		.kind(flecs::PreUpdate)
+		.kind(ecs.entity(PreUpdatePhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
 		.each([](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			attack_p.windup = 0;

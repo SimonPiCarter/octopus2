@@ -6,40 +6,52 @@
 #include <vector>
 #include <variant>
 
+#include "octopus/systems/phases/Phases.hh"
 #include "octopus/components/step/StepContainer.hh"
 
 using namespace octopus;
 
+// This application demonstrates how to use custom phases for systems. The
+// default pipeline will automatically run systems for custom phases as long as
+// they have the flecs::Phase tag.
+
+// Dummy system
+void Sys(flecs::iter& it) {
+    std::cout << "system " << it.system().name() << "\n";
+}
 
 TEST(sandbox, test)
 {
-	typedef StepContainerCascade<HitPointStep, HitPointMaxStep, PositionStep> StepContainer_t;
-	StepContainer_t cascade_l = makeStepContainer<HitPointStep, HitPointMaxStep, PositionStep>();
-
-
-
-	reserve(cascade_l, 10);
-	clear_container(cascade_l);
-
 	flecs::world ecs;
+    // Create two custom phases that branch off of EcsOnUpdate. Note that the
+    // phases have the Phase tag, which is necessary for the builtin pipeline
+    // to discover which systems it should run.
+    flecs::entity Physics = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(flecs::OnUpdate);
 
-	auto e1 = ecs.entity("e1")
-		.set<HitPoint>({Fixed(10)});
+    flecs::entity Collisions = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(Physics);
 
-	cascade_l.get<HitPointStep>().add_step(e1, {Fixed(-1)});
+    // Create 3 dummy systems.
+    ecs.system("CollisionSystem")
+        .kind(Collisions)
+        .iter(Sys);
 
-	std::vector<std::function<void()>> jobs;
-	apply_container(cascade_l, jobs);
+    ecs.system("PhysicsSystem")
+        .kind(Physics)
+        .iter(Sys);
 
-	StepVector<HitPointStep> &test_l = cascade_l.get<HitPointStep>();
+    ecs.system("GameSystem")
+        .kind(ecs.entity(UpdatePhase))
+        .iter(Sys);
 
-	std::cout<<test_l.steps.size()<<std::endl;
+    // Run pipeline
+    ecs.progress();
 
-	ThreadPool pool(1);
-
-	std::vector<StepContainer_t> vec;
-	vec.push_back(cascade_l);
-	dispatch_apply<StepContainer_t>(vec, pool);
-
-	std::cout<<e1.get<HitPoint>()->qty<<std::endl;
+    // Output
+    //   system GameSystem
+    //   system PhysicsSystem
+    //   system CollisionSystem
 }

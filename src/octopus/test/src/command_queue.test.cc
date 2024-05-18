@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/systems/Systems.hh"
 
 #include <sstream>
 #include <variant>
@@ -36,7 +37,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
 	// Walk : walk for 7 progress then done
 	ecs.system<Walk, CustomCommandQueue>()
-		.kind(flecs::OnValidate)
+		.kind(ecs.entity(PostUpdatePhase))
 		.with(CustomCommandQueue::state(ecs), ecs.component<Walk::State>())
 		.each([&res](flecs::entity e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
 			++walk_p.t;
@@ -50,7 +51,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 
 	// clean up
 	ecs.system<Walk, CustomCommandQueue>()
-		.kind(flecs::PreUpdate)
+		.kind(ecs.entity(PreUpdatePhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Walk::State>())
 		.each([&res](flecs::entity e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
 			res<<" cw"<<walk_p.t;
@@ -62,7 +63,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 {
 	// Attack : walk for 12 progress then done
 	ecs.system<Attack, CustomCommandQueue>()
-		.kind(flecs::OnValidate)
+		.kind(ecs.entity(PostUpdatePhase))
 		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
 		.each([&res](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.t;
@@ -76,7 +77,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 
 	// clean up
 	ecs.system<Attack, CustomCommandQueue>()
-		.kind(flecs::PreUpdate)
+		.kind(ecs.entity(PreUpdatePhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
 		.each([&res](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
 			res<<" ca"<<attack_p.t;
@@ -104,6 +105,7 @@ TEST(command_queue, simple)
 	flecs::world ecs;
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
+	set_up_phases(ecs);
 	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
 	set_up_walk_systems(ecs, res);
 
@@ -132,6 +134,7 @@ TEST(command_queue, simple_multiple)
 	flecs::world ecs;
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
+	set_up_phases(ecs);
 	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
@@ -163,6 +166,7 @@ TEST(command_queue, simple_multiple_queuing_front)
 	flecs::world ecs;
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
+	set_up_phases(ecs);
 	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
@@ -198,6 +202,7 @@ TEST(command_queue, simple_multiple_queuing_back)
 	flecs::world ecs;
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
+	set_up_phases(ecs);
 	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
@@ -233,6 +238,7 @@ TEST(command_queue, simple_replaced)
 	flecs::world ecs;
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
+	set_up_phases(ecs);
 	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);

@@ -13,7 +13,7 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 {
 	// apply steps
 	ecs.system<>()
-		.kind(flecs::PostUpdate)
+		.kind(ecs.entity(SteppingPhase))
 		.iter([&pool, &manager_p](flecs::iter& it) {
 			dispatch_apply(manager_p.get_last_layer(), pool);
 		});

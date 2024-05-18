@@ -18,18 +18,8 @@ struct NoOpCommand {
 	struct State {};
 };
 
-// System running commands should be part of the OnUpdate phase
-// System cleaning up commands should be part of the PreUpdate phase
-
-// phases order :
-// 	OnLoad (loading input)
-// 	PostLoad (setting up from intput & cleaning up) : marking current has done and tagging clean up and removing state
-// 	PreUpdate - all clean ups from commands
-// 	OnUpdate (loading new commands) : updating state based on queue
-// 	OnValidate - all actions from commands
-// 	PostUpdate - apply all steps
-// 	PreStore
-// 	OnStore
+// System running commands should be part of the Update phase
+// System cleaning up commands should be part of the CleanUp phase
 
 template<typename type_t>
 void add(flecs::entity &e, flecs::entity state, type_t const &)
