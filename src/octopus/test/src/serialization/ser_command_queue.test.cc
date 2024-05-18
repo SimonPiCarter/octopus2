@@ -17,16 +17,16 @@ using vString = std::stringstream;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
+using custom_variant = std::variant<octopus::NoOpCommand, WalkTest, AttackTest>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
-	// Walk : walk for 7 progress then done
-	ecs.system<Walk, CustomCommandQueue>()
+	// WalkTest : walk for 7 progress then done
+	ecs.system<WalkTest, CustomCommandQueue>()
 		.kind(ecs.entity(PostUpdatePhase))
-		.with(CustomCommandQueue::state(ecs), ecs.component<Walk::State>())
-		.each([&res](flecs::entity e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::state(ecs), ecs.component<WalkTest::State>())
+		.each([&res](flecs::entity e, WalkTest &walk_p, CustomCommandQueue &cQueue_p) {
 			++walk_p.t;
 			res<<" w"<<walk_p.t;
 			if(walk_p.t >= 7)
@@ -37,10 +37,10 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 		});
 
 	// clean up
-	ecs.system<Walk, CustomCommandQueue>()
+	ecs.system<WalkTest, CustomCommandQueue>()
 		.kind(ecs.entity(PreUpdatePhase))
-		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Walk::State>())
-		.each([&res](flecs::entity e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::cleanup(ecs), ecs.component<WalkTest::State>())
+		.each([&res](flecs::entity e, WalkTest &walk_p, CustomCommandQueue &cQueue_p) {
 			res<<" cw"<<walk_p.t;
 			walk_p.t = 0;
 		});
@@ -48,11 +48,11 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 
 void set_up_attack_systems(flecs::world &ecs, vString &res)
 {
-	// Attack : walk for 12 progress then done
-	ecs.system<Attack, CustomCommandQueue>()
+	// AttackTest : walk for 12 progress then done
+	ecs.system<AttackTest, CustomCommandQueue>()
 		.kind(ecs.entity(PostUpdatePhase))
-		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
-		.each([&res](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::state(ecs), ecs.component<AttackTest::State>())
+		.each([&res](flecs::entity e, AttackTest &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.t;
 			res<<" a"<<attack_p.t;
 			if(attack_p.t >= 12)
@@ -63,10 +63,10 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 		});
 
 	// clean up
-	ecs.system<Attack, CustomCommandQueue>()
+	ecs.system<AttackTest, CustomCommandQueue>()
 		.kind(ecs.entity(PreUpdatePhase))
-		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
-		.each([&res](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTest::State>())
+		.each([&res](flecs::entity e, AttackTest &attack_p, CustomCommandQueue &cQueue_p) {
 			res<<" ca"<<attack_p.t;
 			attack_p.t = 0;
 		});
@@ -87,12 +87,12 @@ TEST(ser_command_queue, simple)
 	basic_components_support(ecs);
 
 	// serialize states
-    ecs.component<Walk>()
+    ecs.component<WalkTest>()
 		.member<uint32_t>("t");
-    ecs.component<Attack>()
+    ecs.component<AttackTest>()
 		.member<uint32_t>("t");
 
-	command_queue_support<octopus::NoOpCommand, Walk, Attack>(ecs);
+	command_queue_support<octopus::NoOpCommand, WalkTest, AttackTest>(ecs);
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
 	set_up_phases(ecs);
@@ -112,12 +112,12 @@ TEST(ser_command_queue, simple)
 
 		if(i == 1)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Walk(4)});
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Attack(0)});
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(4)});
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
 		}
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {Attack(10)});
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {AttackTest(10)});
 		}
 		values_l.push_back(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
 

@@ -16,7 +16,6 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	ecs.system<Move>()
 		.kind(ecs.entity(MovingPhase))
 		.each([&ecs, &manager_p](flecs::entity e, Move &move_p) {
-			std::cout<<"ok "<<ecs.to_json(&move_p.move)<<std::endl;
 			manager_p.get_last_layer().back().get<PositionStep>().add_step(e, PositionStep{move_p.move});
 			move_p.move = Vector();
 		});

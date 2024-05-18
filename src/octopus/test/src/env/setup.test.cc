@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "flecs.h"
+#include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 
@@ -24,25 +25,27 @@ class Environment : public ::testing::Environment {
 		octopus::basic_commands_support(ecs);
 
 		// serialize states
-		ecs.component<Walk>()
+		ecs.component<WalkTest>()
 			.member<uint32_t>("t");
-		ecs.component<Attack>()
+		ecs.component<AttackTest>()
 			.member<uint32_t>("t");
 
 		// set up all command queues in test
 		octopus::command_queue_support<octopus::NoOpCommand, octopus::MoveCommand>(ecs);
-		octopus::command_queue_support<octopus::NoOpCommand, Walk, Attack>(ecs);
-		octopus::command_queue_support<octopus::NoOpCommand, Attack>(ecs);
+		octopus::command_queue_support<octopus::NoOpCommand, WalkTest, AttackTest>(ecs);
+		octopus::command_queue_support<octopus::NoOpCommand, AttackTest>(ecs);
 		octopus::command_queue_support<octopus::NoOpCommand, octopus::MoveCommand>(ecs);
+		octopus::command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
 	}
 
 	// Override this to define how to tear down the environment.
 	void TearDown() override {}
 };
 
-int main(int, char *[])
+int main(int argc, char ** argv)
 {
-	testing::InitGoogleTest();
+	testing::InitGoogleTest(&argc, argv);
 	testing::AddGlobalTestEnvironment(new Environment);
 	return RUN_ALL_TESTS();
 }

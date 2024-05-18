@@ -116,8 +116,11 @@ struct StepManager
 	typedef StepContainerCascade<Ts...> StepContainer;
 	std::list<std::vector<StepContainer> > steps;
 
+	uint32_t steps_added = 0;
+
 	void add_layer(size_t threads_p)
 	{
+		++steps_added;
 		steps.push_back(std::vector<StepContainer>(threads_p, makeStepContainer<Ts...>()));
 	}
 
@@ -129,7 +132,10 @@ struct StepManager
 	void pop_last_layer()
 	{
 		if(!steps.empty())
+		{
+			--steps_added;
 			steps.pop_back();
+		}
 	}
 
 	std::vector<StepContainer> &get_last_layer()

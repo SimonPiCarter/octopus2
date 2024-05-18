@@ -4,8 +4,6 @@
 #include "octopus/components/step/Step.hh"
 #include "octopus/utils/FixedPoint.hh"
 
-// HP
-
 namespace octopus
 {
 

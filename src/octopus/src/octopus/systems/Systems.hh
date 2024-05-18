@@ -4,6 +4,7 @@
 #include "octopus/utils/ThreadPool.hh"
 
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/systems/hitpoint/HitPointsSystems.hh"
 #include "octopus/systems/position/PositionSystems.hh"
@@ -37,6 +38,7 @@ void set_up_systems(flecs::world &ecs, ThreadPool &pool, CommandQueueMementoMana
 
 	// commands systems
 	set_up_move_system<StepManager_t, CommandQueue<variant_t>>(ecs, step_manager);
+	set_up_attack_system<StepManager_t, CommandQueue<variant_t>>(ecs, step_manager);
 }
 
 }

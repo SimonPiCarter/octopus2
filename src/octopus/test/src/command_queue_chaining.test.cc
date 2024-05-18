@@ -12,16 +12,16 @@ using vString = std::stringstream;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, Walk, Attack>;
+using custom_variant = std::variant<octopus::NoOpCommand, WalkTest, AttackTest>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
-	// Walk : walk for 7 progress then done
-	ecs.system<Walk, CustomCommandQueue>()
+	// WalkTest : walk for 7 progress then done
+	ecs.system<WalkTest, CustomCommandQueue>()
 		.kind(ecs.entity(UpdatePhase))
-		.with(CustomCommandQueue::state(ecs), ecs.component<Walk::State>())
-		.each([&res](flecs::entity e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::state(ecs), ecs.component<WalkTest::State>())
+		.each([&res](flecs::entity e, WalkTest &walk_p, CustomCommandQueue &cQueue_p) {
 			++walk_p.t;
 			res<<" w"<<walk_p.t;
 			if(walk_p.t >= 7)
@@ -29,15 +29,15 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 				walk_p.t = 0;
 				// adding attack next
 				cQueue_p._queuedActions.push_back(CommandQueueActionDone());
-				cQueue_p._queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {Attack(0)});
+				cQueue_p._queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {AttackTest(0)});
 			}
 		});
 
 	// clean up
-	ecs.system<Walk, CustomCommandQueue>()
+	ecs.system<WalkTest, CustomCommandQueue>()
 		.kind(ecs.entity(CleanUpPhase))
-		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Walk::State>())
-		.each([&res](flecs::entity e, Walk &walk_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::cleanup(ecs), ecs.component<WalkTest::State>())
+		.each([&res](flecs::entity e, WalkTest &walk_p, CustomCommandQueue &cQueue_p) {
 			res<<" cw"<<walk_p.t;
 			walk_p.t = 0;
 		});
@@ -45,11 +45,11 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 
 void set_up_attack_systems(flecs::world &ecs, vString &res)
 {
-	// Attack : walk for 12 progress then done
-	ecs.system<Attack, CustomCommandQueue>()
+	// AttackTest : walk for 12 progress then done
+	ecs.system<AttackTest, CustomCommandQueue>()
 		.kind(ecs.entity(UpdatePhase))
-		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
-		.each([&res](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::state(ecs), ecs.component<AttackTest::State>())
+		.each([&res](flecs::entity e, AttackTest &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.t;
 			res<<" a"<<attack_p.t;
 			if(attack_p.t >= 12)
@@ -60,10 +60,10 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 		});
 
 	// clean up
-	ecs.system<Attack, CustomCommandQueue>()
+	ecs.system<AttackTest, CustomCommandQueue>()
 		.kind(ecs.entity(CleanUpPhase))
-		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
-		.each([&res](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTest::State>())
+		.each([&res](flecs::entity e, AttackTest &attack_p, CustomCommandQueue &cQueue_p) {
 			res<<" ca"<<attack_p.t;
 			attack_p.t = 0;
 		});
@@ -78,7 +78,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 //////////////////////////////////
 
 /// Those test test two commands in the command queue
-/// Attack and Walk
+/// AttackTest and WalkTest
 /// systems associated with those commands write in a string stream each action
 /// We test that the string stream has the expected value with different usage of the
 /// queue
@@ -103,7 +103,7 @@ TEST(command_queue_chaining, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {Walk(2)});
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(2)});
 		}
 		ecs.progress();
 		res<<"\n";

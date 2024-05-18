@@ -20,6 +20,8 @@
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
 
+#include "env/stream_ent.hh"
+
 using namespace octopus;
 
 /////////////////////////////////////////////////
@@ -31,7 +33,7 @@ using namespace octopus;
 namespace
 {
 
-struct Attack {
+struct AttackTestHP {
 	uint32_t windup = 0;
 	uint32_t windup_time = 0;
 	Fixed damage;
@@ -41,16 +43,16 @@ struct Attack {
 	struct State {};
 };
 
-using custom_variant = std::variant<octopus::NoOpCommand, Attack>;
+using custom_variant = std::variant<octopus::NoOpCommand, AttackTestHP>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
-void set_up_attack_systems(flecs::world &ecs, StepManager<PositionStep, HitPointStep> &manager_p)
+void set_up_attack_test_systems(flecs::world &ecs, StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> &manager_p)
 {
-	// Attack : walk for 12 progress then done
-	ecs.system<Attack, CustomCommandQueue>()
+	// AttackTestHP : walk for 12 progress then done
+	ecs.system<AttackTestHP, CustomCommandQueue>()
 		.kind(ecs.entity(PostUpdatePhase))
-		.with(CustomCommandQueue::state(ecs), ecs.component<Attack::State>())
-		.each([&manager_p](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::state(ecs), ecs.component<AttackTestHP::State>())
+		.each([&manager_p](flecs::entity e, AttackTestHP &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.windup;
 			if(attack_p.windup >= attack_p.windup_time)
 			{
@@ -64,41 +66,14 @@ void set_up_attack_systems(flecs::world &ecs, StepManager<PositionStep, HitPoint
 		});
 
 	// clean up
-	ecs.system<Attack, CustomCommandQueue>()
+	ecs.system<AttackTestHP, CustomCommandQueue>()
 		.kind(ecs.entity(PreUpdatePhase))
-		.with(CustomCommandQueue::cleanup(ecs), ecs.component<Attack::State>())
-		.each([](flecs::entity e, Attack &attack_p, CustomCommandQueue &cQueue_p) {
+		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTestHP::State>())
+		.each([](flecs::entity e, AttackTestHP &attack_p, CustomCommandQueue &cQueue_p) {
 			attack_p.windup = 0;
 		});
 }
 
-}
-
-template<typename type_t>
-void stream_type(flecs::world &ecs, flecs::entity e, type_t arg)
-{
-	if(e.get<type_t>())
-		std::cout<<ecs.to_json(e.get<type_t>());
-	else
-		std::cout<<"null";
-}
-
-template<typename type_t, typename... Targs>
-void stream_type(flecs::world &ecs, flecs::entity e, type_t arg, Targs... Fargs)
-{
-	if(e.get<type_t>())
-		std::cout<<ecs.to_json(e.get<type_t>())<<", ";
-	else
-		std::cout<<"null, ";
-	stream_type(ecs, e, Fargs...);
-}
-
-template<typename... Targs>
-void stream_ent(flecs::world &ecs, flecs::entity e, Targs... Fargs)
-{
-	std::cout<<e.name()<<" : ";
-	stream_type(ecs, e, Fargs...);
-	std::cout<<std::endl;
 }
 
 TEST(hitpoint_loop, simple)
@@ -108,21 +83,21 @@ TEST(hitpoint_loop, simple)
 	basic_components_support(ecs);
 
 	// serialize states
-    ecs.component<Attack>()
-		.member("windup", &Attack::windup)
-		.member("windup_time", &Attack::windup_time)
-		.member("damage", &Attack::damage)
-		.member("target", &Attack::target);
+    ecs.component<AttackTestHP>()
+		.member("windup", &AttackTestHP::windup)
+		.member("windup_time", &AttackTestHP::windup_time)
+		.member("damage", &AttackTestHP::damage)
+		.member("target", &AttackTestHP::target);
 
-	command_queue_support<octopus::NoOpCommand, Attack>(ecs);
+	command_queue_support<octopus::NoOpCommand, AttackTestHP>(ecs);
 
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	StepManager<PositionStep, HitPointStep> step_manager;
+	StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> step_manager;
 	ThreadPool pool(1);
 
 	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);
 
-	set_up_attack_systems(ecs, step_manager);
+	set_up_attack_test_systems(ecs, step_manager);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
@@ -138,12 +113,12 @@ TEST(hitpoint_loop, simple)
 
 		if(i == 1)
 		{
-			Attack atk_l {0,3,5,e2};
+			AttackTestHP atk_l {0,3,5,e2};
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 		}
 
-		stream_ent(ecs, e1, HitPoint(), Attack(), CustomCommandQueue());
-		stream_ent(ecs, e2, HitPoint(), Attack(), CustomCommandQueue());
-		std::cout<<std::endl;
+		// stream_ent<HitPoint, AttackTestHP, CustomCommandQueue>(std::cout, ecs, e1);
+		// stream_ent<HitPoint, AttackTestHP, CustomCommandQueue>(std::cout, ecs, e2);
+		// std::cout<<std::endl;
 	}
 }
