@@ -9,6 +9,11 @@
 namespace octopus
 {
 
-std::vector<flecs::entity> get_closest_entities(flecs::world &ecs, Position const &pos_p, std::function<bool(flecs::entity const&)> const &func_p);
+std::vector<flecs::entity> get_closest_entities(
+	size_t n,
+	Fixed const &max_range,
+	flecs::world &ecs,
+	Position const &pos_p,
+	std::function<bool(flecs::entity const&)> const &filter_p);
 
 } // namespace octopus

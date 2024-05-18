@@ -5,7 +5,12 @@
 namespace octopus
 {
 
-std::vector<flecs::entity> get_closest_entities(size_t n, flecs::world &ecs, Position const &pos_p, std::function<bool(flecs::entity const&)> const &func_p)
+std::vector<flecs::entity> get_closest_entities(
+	size_t n,
+	Fixed const &max_range,
+	flecs::world &ecs,
+	Position const &pos_p,
+	std::function<bool(flecs::entity const&)> const &filter_p)
 {
 	flecs::query<Position> q = ecs.query<Position>();
 
@@ -25,13 +30,16 @@ std::vector<flecs::entity> get_closest_entities(size_t n, flecs::world &ecs, Pos
 
 	std::set<DistanceEntity> closest_l;
 
+	Fixed max_range_sq = max_range*max_range;
+
 	// clear queued actions first
-	q.each([&closest_l, &pos_p, &func_p, &n](flecs::entity e, Position const &other_p) {
+	q.each([&closest_l, &pos_p, &filter_p, &n, &max_range_sq](flecs::entity e, Position const &other_p) {
 
 		Fixed distance_sq = square_length(pos_p.pos - other_p.pos);
 
-		if(func_p(e)
-		&& distance_sq < closest_l.rbegin()->distance_sq)
+		if(filter_p(e)
+		&& (closest_l.empty() || distance_sq < closest_l.rbegin()->distance_sq)
+		&& distance_sq <= max_range_sq)
 		{
 			closest_l.insert({e, distance_sq});
 		}
