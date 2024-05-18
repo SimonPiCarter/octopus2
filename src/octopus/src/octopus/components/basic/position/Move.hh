@@ -7,19 +7,20 @@
 namespace octopus
 {
 
-struct Position {
+struct Move {
+	Vector pos;
+	Fixed speed = Fixed(1);
+};
+
+struct MoveMemento {
 	Vector pos;
 };
 
-struct PositionMemento {
-	Vector pos;
-};
-
-struct PositionStep {
+struct MoveStep {
 	Vector delta;
 
-	typedef Position Data;
-	typedef PositionMemento Memento;
+	typedef Move Data;
+	typedef MoveMemento Memento;
 
 	void apply_step(Data &d, Memento &memento) const;
 
