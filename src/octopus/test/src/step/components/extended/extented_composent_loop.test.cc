@@ -125,10 +125,10 @@ void stream_type(flecs::world &ecs, flecs::entity e, type_t arg, Targs... Fargs)
 }
 
 template<typename... Targs>
-void stream_ent(flecs::world &ecs, flecs::entity e, Targs... Fargs)
+void stream_ent(flecs::world &ecs, flecs::entity e)
 {
 	std::cout<<e.name()<<" : ";
-	stream_type(ecs, e, Fargs...);
+	stream_type(ecs, e, Targs()...);
 	std::cout<<std::endl;
 }
 
@@ -173,8 +173,8 @@ TEST(extended_loop, simple)
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 		}
 
-		stream_ent(ecs, e1, HitPoint(), Attack(), CustomCommandQueue());
-		stream_ent(ecs, e2, HitPoint(), Attack(), CustomCommandQueue());
+		stream_ent<HitPoint, Attack, CustomCommandQueue>(ecs, e1);
+		stream_ent<HitPoint, Attack, CustomCommandQueue>(ecs, e2);
 		std::cout<<std::endl;
 	}
 }
