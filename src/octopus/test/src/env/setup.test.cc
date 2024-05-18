@@ -17,6 +17,8 @@ class Environment : public ::testing::Environment {
 	// Override this to define how to set up the environment.
 	void SetUp() override
 	{
+		/// In this method we register all components to avoid id collision
+		/// cf https://github.com/SanderMertens/flecs/issues/1032#issuecomment-1694693064
 		flecs::world ecs;
 		octopus::basic_components_support(ecs);
 		octopus::basic_commands_support(ecs);
