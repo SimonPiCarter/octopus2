@@ -128,7 +128,8 @@ struct StepManager
 
 	void pop_last_layer()
 	{
-		steps.pop_back();
+		if(!steps.empty())
+			steps.pop_back();
 	}
 
 	std::vector<StepContainer> &get_last_layer()

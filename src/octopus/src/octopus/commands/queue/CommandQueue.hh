@@ -64,6 +64,7 @@ struct CommandQueueMemento
 template<typename variant_t>
 struct CommandQueueMementoManager
 {
+	typedef variant_t variant;
 	typedef std::vector<CommandQueueMemento<variant_t> > vMemento;
 
 	std::list<vMemento> lMementos;
