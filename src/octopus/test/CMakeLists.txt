@@ -23,6 +23,7 @@ add_executable (unit_tests)
 
 target_sources (unit_tests
 	PRIVATE
+	src/env/setup.test.cc
 	src/serialization/ser_basic_components.test.cc
 	src/serialization/ser_command_queue.test.cc
 	src/serialization/ser_list.test.cc
@@ -30,6 +31,7 @@ target_sources (unit_tests
 	src/serialization/ser_vector.test.cc
 	src/step/command/state_change_steps.test.cc
 	src/step/components/basic/hitpoint_loop.test.cc
+	src/step/components/basic/move_loop.test.cc
 	src/step/components/extended/extented_component_loop.test.cc
 	src/command_queue_chaining.test.cc
 	src/command_queue.test.cc
@@ -44,6 +46,8 @@ target_sources (unit_tests
 
 target_link_libraries (unit_tests
 	PRIVATE
-	GTest::gtest_main
+	GTest::gtest
 	octopus
 )
+
+target_include_directories(unit_tests PRIVATE src)
