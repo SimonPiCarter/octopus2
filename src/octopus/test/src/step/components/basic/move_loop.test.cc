@@ -47,15 +47,17 @@ TEST(move_loop, simple)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::MoveCommand>(ecs);
 
+	StateStepContainer<custom_variant> state_step_container;
 	CommandQueueMementoManager<custom_variant> memento_manager;
 	StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> step_manager;
 	ThreadPool pool(1);
 
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);
+	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<Move>()
+		.set<MoveCommand>({{{10,10}}})
 		.set<Position>({{10,10}});
 
 	for(size_t i = 0; i < 10 ; ++ i)
@@ -68,9 +70,8 @@ TEST(move_loop, simple)
 			MoveCommand move_l {{{10,5}}};
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {move_l});
 		}
-
-		// stream_ent(std::cout, ecs, e1, Position(), CustomCommandQueue());
-		// std::cout<<std::endl;
+		stream_ent<Position, MoveCommand, CustomCommandQueue>(std::cout, ecs, e1); std::cout<<std::endl;
+		std::cout<<std::endl;
 	}
 
 	EXPECT_EQ(Fixed(10), e1.get<Position>()->pos.x);

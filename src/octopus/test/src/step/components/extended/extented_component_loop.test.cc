@@ -102,7 +102,7 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager<PositionStep, Hit
 		.kind(ecs.entity(PreUpdatePhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTestComponent::State>())
 		.each([&manager_p](flecs::entity e, AttackTestComponent &attack_p, CustomCommandQueue &cQueue_p) {
-				manager_p.get_last_layer().back().get<AttackTestStep>().add_step(e, {0});
+				manager_p.get_last_prelayer().back().get<AttackTestStep>().add_step(e, {0});
 		});
 }
 
@@ -123,11 +123,12 @@ TEST(extended_loop, simple)
 
 	command_queue_support<octopus::NoOpCommand, AttackTestComponent>(ecs);
 
+	StateStepContainer<custom_variant> state_step_container;
 	CommandQueueMementoManager<custom_variant> memento_manager;
 	StepManager<PositionStep, HitPointStep, AttackTestStep, AttackWindupStep, AttackReloadStep> step_manager;
 	ThreadPool pool(1);
 
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);
+	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container);
 
 	set_up_attack_test_systems(ecs, step_manager);
 
@@ -137,17 +138,16 @@ TEST(extended_loop, simple)
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()
 		.set<HitPoint>({10});
-	e1.set<AttackTestComponent>({0,3,5,e2});
+	e1.set<AttackTestComponent>({0,1,1,e2});
 
 	std::vector<std::string> e1_applied;
 	std::vector<std::string> e2_applied;
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
-		step_manager.add_layer(pool.size());
 		ecs.progress();
 
-		if(i == 1)
+		if(i == 1 || i == 7)
 		{
 			AttackTestComponent atk_l {0,3,5,e2};
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
@@ -174,8 +174,8 @@ TEST(extended_loop, simple)
 		e1_reverted_list.push_front(ss_e1_l.str());
 		e2_reverted_list.push_front(ss_e2_l.str());
 
-		revert_n_steps(ecs, pool, 1, step_manager, memento_manager);
-		clear_n_steps(1, step_manager, memento_manager);
+		revert_n_steps(ecs, pool, 1, step_manager, memento_manager, state_step_container);
+		clear_n_steps(1, step_manager, memento_manager, state_step_container);
 	}
 
 	std::vector<std::string> e1_reverted(e1_reverted_list.begin(), e1_reverted_list.end());

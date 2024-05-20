@@ -76,7 +76,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackCommand::State>())
 		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, CustomCommandQueue &cQueue_p) {
 			// reset windup
-			manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {0});
+			manager_p.get_last_prelayer().back().get<AttackWindupStep>().add_step(e, {0});
 		});
 }
 

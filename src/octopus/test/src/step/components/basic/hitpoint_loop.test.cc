@@ -91,11 +91,12 @@ TEST(hitpoint_loop, simple)
 
 	command_queue_support<octopus::NoOpCommand, AttackTestHP>(ecs);
 
+	StateStepContainer<custom_variant> state_step_container;
 	CommandQueueMementoManager<custom_variant> memento_manager;
 	StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> step_manager;
 	ThreadPool pool(1);
 
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);
+	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container);
 
 	set_up_attack_test_systems(ecs, step_manager);
 

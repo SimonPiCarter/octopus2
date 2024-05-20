@@ -1,10 +1,12 @@
 #pragma once
 
 #include <vector>
+#include <variant>
 #include "flecs.h"
 
 #include "Step.hh"
 
+#include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/position/Position.hh"
@@ -113,8 +115,11 @@ void dispatch_revert(std::vector<StepContainer_t> &container, ThreadPool &pool)
 template<class... Ts>
 struct StepManager
 {
+	typedef std::variant<Ts...> Variant;
 	typedef StepContainerCascade<Ts...> StepContainer;
 	std::list<std::vector<StepContainer> > steps;
+	std::list<std::vector<StepContainer> > presteps;
+
 
 	uint32_t steps_added = 0;
 
@@ -122,11 +127,13 @@ struct StepManager
 	{
 		++steps_added;
 		steps.push_back(std::vector<StepContainer>(threads_p, makeStepContainer<Ts...>()));
+		presteps.push_back(std::vector<StepContainer>(threads_p, makeStepContainer<Ts...>()));
 	}
 
 	void pop_layer()
 	{
 		steps.pop_front();
+		presteps.pop_front();
 	}
 
 	void pop_last_layer()
@@ -135,6 +142,7 @@ struct StepManager
 		{
 			--steps_added;
 			steps.pop_back();
+			presteps.pop_back();
 		}
 	}
 
@@ -142,6 +150,23 @@ struct StepManager
 	{
 		return steps.back();
 	}
+
+	std::vector<StepContainer> &get_last_prelayer()
+	{
+		return presteps.back();
+	}
 };
+
+/// add StepManager maker function
+/// one with only basic steps
+/// one extended that add the basic steps
+
+StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep> makeDefaultStepManager();
+
+template<class... Ts>
+StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, Ts...> makeStepManager()
+{
+	return StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, Ts...>();
+}
 
 } // octopus

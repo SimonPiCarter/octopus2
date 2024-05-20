@@ -2,6 +2,7 @@
 
 #include "flecs.h"
 
+#include "octopus/commands/step/StateChangeSteps.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/systems/Systems.hh"
@@ -27,6 +28,7 @@ TEST(step_container, hit_point_simple)
 	flecs::world ecs;
 
 	ThreadPool pool_l(1);
+	StateStepContainer<std::variant<NoOpCommand, octopus::AttackCommand>> state_step_manager_l;
 	StepManager<HitPointStep, AttackWindupStep, AttackReloadStep> manager_l;
 	manager_l.add_layer(pool_l.size());
 
@@ -41,7 +43,7 @@ TEST(step_container, hit_point_simple)
 		});
 
 	set_up_phases(ecs);
-	set_up_step_systems(ecs, pool_l, manager_l);
+	set_up_step_systems(ecs, pool_l, manager_l, state_step_manager_l);
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
@@ -62,6 +64,7 @@ TEST(step_container, hit_point_revert)
 	flecs::world ecs;
 
 	ThreadPool pool_l(1);
+	StateStepContainer<std::variant<NoOpCommand, octopus::AttackCommand>> state_step_manager_l;
 	StepManager<HitPointStep, AttackWindupStep, AttackReloadStep> manager_l;
 	manager_l.add_layer(pool_l.size());
 
@@ -76,7 +79,7 @@ TEST(step_container, hit_point_revert)
 		});
 
 	set_up_phases(ecs);
-	set_up_step_systems(ecs, pool_l, manager_l);
+	set_up_step_systems(ecs, pool_l, manager_l, state_step_manager_l);
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{

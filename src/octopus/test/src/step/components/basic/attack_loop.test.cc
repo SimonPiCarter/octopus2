@@ -49,11 +49,12 @@ TEST(attack_loop, simple)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 
+	StateStepContainer<custom_variant> state_step_container;
 	CommandQueueMementoManager<custom_variant> memento_manager;
 	StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> step_manager;
 	ThreadPool pool(1);
 
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager);
+	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
@@ -69,7 +70,7 @@ TEST(attack_loop, simple)
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
-		step_manager.add_layer(1);
+		// std::cout<<"p"<<i<<std::endl;
 		ecs.progress();
 
 		if(i == 2)

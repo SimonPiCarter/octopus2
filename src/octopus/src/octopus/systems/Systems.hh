@@ -19,19 +19,22 @@ void set_up_phases(flecs::world &ecs);
 
 /// @brief Set up all required system for the engine to run
 /// @param ecs
-template<typename variant_t, typename StepManager_t>
-void set_up_systems(flecs::world &ecs, ThreadPool &pool, CommandQueueMementoManager<variant_t> &memento_manager, StepManager_t &step_manager)
+template<typename variant_t, typename StepManager_t, typename StateStepManager_t>
+void set_up_systems(flecs::world &ecs, ThreadPool &pool,
+	CommandQueueMementoManager<variant_t> &memento_manager,
+	StepManager_t &step_manager,
+	StateStepManager_t &state_step_manager)
 {
 	set_up_phases(ecs);
 
 	// command handling systems
-	set_up_command_queue_systems<variant_t>(ecs, memento_manager);
+	set_up_command_queue_systems<variant_t>(ecs, memento_manager, state_step_manager);
 
 	// position systems
 	set_up_position_systems(ecs, pool, step_manager);
 
 	// step systems
-	set_up_step_systems(ecs, pool, step_manager);
+	set_up_step_systems(ecs, pool, step_manager, state_step_manager);
 
 	// components systems
 	set_up_hitpoint_systems(ecs, pool);

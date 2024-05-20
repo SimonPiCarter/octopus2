@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/components/step/StepContainer.hh"
 #include "octopus/systems/Systems.hh"
 
 #include <sstream>
@@ -21,7 +22,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 {
 	// WalkTest : walk for 7 progress then done
 	ecs.system<WalkTest, CustomCommandQueue>()
-		.kind(ecs.entity(PostUpdatePhase))
+		.kind(ecs.entity(UpdatePhase))
 		.with(CustomCommandQueue::state(ecs), ecs.component<WalkTest::State>())
 		.each([&res](flecs::entity e, WalkTest &walk_p, CustomCommandQueue &cQueue_p) {
 			++walk_p.t;
@@ -35,7 +36,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 
 	// clean up
 	ecs.system<WalkTest, CustomCommandQueue>()
-		.kind(ecs.entity(PreUpdatePhase))
+		.kind(ecs.entity(CleanUpPhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<WalkTest::State>())
 		.each([&res](flecs::entity e, WalkTest &walk_p, CustomCommandQueue &cQueue_p) {
 			res<<" cw"<<walk_p.t;
@@ -47,7 +48,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 {
 	// AttackTest : walk for 12 progress then done
 	ecs.system<AttackTest, CustomCommandQueue>()
-		.kind(ecs.entity(PostUpdatePhase))
+		.kind(ecs.entity(UpdatePhase))
 		.with(CustomCommandQueue::state(ecs), ecs.component<AttackTest::State>())
 		.each([&res](flecs::entity e, AttackTest &attack_p, CustomCommandQueue &cQueue_p) {
 			++attack_p.t;
@@ -61,7 +62,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 
 	// clean up
 	ecs.system<AttackTest, CustomCommandQueue>()
-		.kind(ecs.entity(PreUpdatePhase))
+		.kind(ecs.entity(CleanUpPhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTest::State>())
 		.each([&res](flecs::entity e, AttackTest &attack_p, CustomCommandQueue &cQueue_p) {
 			res<<" ca"<<attack_p.t;
@@ -87,10 +88,12 @@ TEST(command_queue, simple)
 {
 	vString res;
 	flecs::world ecs;
+	ThreadPool pool(1);
 
+	auto step_manager = makeDefaultStepManager();
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	StateStepContainer<custom_variant> state_step_manager;
+	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager);
 	set_up_walk_systems(ecs, res);
 
 	auto e1 = ecs.entity()
@@ -116,10 +119,12 @@ TEST(command_queue, simple_multiple)
 {
 	vString res;
 	flecs::world ecs;
+	ThreadPool pool(1);
 
+	auto step_manager = makeDefaultStepManager();
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	StateStepContainer<custom_variant> state_step_manager;
+	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -148,10 +153,12 @@ TEST(command_queue, simple_multiple_queuing_front)
 {
 	vString res;
 	flecs::world ecs;
+	ThreadPool pool(1);
 
+	auto step_manager = makeDefaultStepManager();
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	StateStepContainer<custom_variant> state_step_manager;
+	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -184,10 +191,12 @@ TEST(command_queue, simple_multiple_queuing_back)
 {
 	vString res;
 	flecs::world ecs;
+	ThreadPool pool(1);
 
+	auto step_manager = makeDefaultStepManager();
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	StateStepContainer<custom_variant> state_step_manager;
+	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -220,10 +229,12 @@ TEST(command_queue, simple_replaced)
 {
 	vString res;
 	flecs::world ecs;
+	ThreadPool pool(1);
 
+	auto step_manager = makeDefaultStepManager();
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	StateStepContainer<custom_variant> state_step_manager;
+	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 

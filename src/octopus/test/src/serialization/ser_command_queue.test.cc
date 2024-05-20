@@ -94,9 +94,10 @@ TEST(ser_command_queue, simple)
 
 	command_queue_support<octopus::NoOpCommand, WalkTest, AttackTest>(ecs);
 
+	StateStepContainer<custom_variant> step_manager;
 	CommandQueueMementoManager<custom_variant> memento_manager;
 	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	set_up_command_queue_systems<custom_variant>(ecs, memento_manager, step_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -107,8 +108,10 @@ TEST(ser_command_queue, simple)
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
+		step_manager.add_layer();
 		res<<" p"<<i;
 		ecs.progress();
+		step_manager.get_last_layer().apply(ecs);
 
 		if(i == 1)
 		{

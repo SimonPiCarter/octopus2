@@ -5,6 +5,7 @@
 
 #include "flecs.h"
 
+#include "octopus/commands/step/StateChangeSteps.hh"
 #include "action/CommandQueueAction.hh"
 
 namespace octopus
@@ -81,14 +82,13 @@ struct CommandQueue
 
 	// PostLoad (1)
 	// set clean up state
-	void clean_up_current(flecs::world &ecs, flecs::entity &e)
+	void clean_up_current(flecs::world &ecs, flecs::entity &e, StateStepContainer<variant_t> &stateStep_p)
 	{
 		if(_done && !std::holds_alternative<NoOpCommand>(_current))
 		{
-			/// @todo use step here
 			// reset state
-			std::visit([this, &ecs, &e](auto&& arg) { remove(e, state(ecs), arg); }, _current);
-			// add clean up
+			stateStep_p.get_last_prelayer()._removePair.push_back({e, state(ecs), _current});
+			// add clean up (do not use step here since at the end of the iteration this will be cleaned up)
 			std::visit([this, &ecs, &e](auto&& arg) { add(e, cleanup(ecs), arg); }, _current);
 			// reset variant
 			_current = NoOpCommand();
@@ -97,15 +97,20 @@ struct CommandQueue
 		_done = false;
 	}
 
-	template<typename type_t>
-	void update_comp(flecs::entity &e, type_t const &new_comp)
+	template<typename type_t, typename StateStepLayer_t>
+	void update_comp(flecs::entity &e, StateStepLayer_t &state_layer_p, type_t const &new_comp)
 	{
-		/// @todo use step here
-		e.set(new_comp);
+		variant_t old_comp;
+		type_t const * old_typped_value = e.get<type_t>();
+		if(old_typped_value)
+		{
+			old_comp = *old_typped_value;
+		}
+		state_layer_p._setComp.push_back({e, new_comp, old_comp});
 	}
 
 	// OnUpdate (1)
-	void update_current(flecs::world &ecs, flecs::entity &e)
+	void update_current(flecs::world &ecs, flecs::entity &e, StateStepContainer<variant_t> &stateStep_p)
 	{
 		e.remove(cleanup(ecs), flecs::Wildcard);
 		if(std::holds_alternative<NoOpCommand>(_current) && !_queued.empty())
@@ -114,10 +119,10 @@ struct CommandQueue
 			_queued.pop_front();
 
 			// set state
-			std::visit([this, &ecs, &e](auto&& arg) { add(e, state(ecs), arg); }, _current);
+			stateStep_p.get_last_prelayer()._addPair.push_back({e, state(ecs), _current});
 
 			// set component
-			std::visit([this, &e](auto&& arg) { update_comp(e, arg); }, _current);
+			std::visit([this, &e, &stateStep_p](auto&& arg) { update_comp(e, stateStep_p.get_last_prelayer(), arg); }, _current);
 		}
 	}
 

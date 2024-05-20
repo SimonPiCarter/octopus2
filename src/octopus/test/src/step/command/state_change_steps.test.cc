@@ -29,21 +29,25 @@ TEST(state_change_steps, simple)
 
 	StateStepContainer<custom_variant_t> container_l;
 	container_l.add_layer();
-	container_l._addPair.back().push_back(StateAddPairStep<custom_variant_t>({
+	container_l.get_last_layer()._removePair.push_back(StateRemovePairStep<custom_variant_t>({
+		e1,
+		first,
+		Bar(),
+	}));
+	container_l.get_last_layer()._addPair.push_back(StateAddPairStep<custom_variant_t>({
 		e1,
 		first,
 		Foo(),
-		Bar()
 	}));
 
 	EXPECT_TRUE(e1.has_second<Bar::State>(first));
 
-	container_l.apply(ecs);
+	container_l.get_last_layer().apply(ecs);
 
 	EXPECT_FALSE(e1.has_second<Bar::State>(first));
 	EXPECT_TRUE(e1.has_second<Foo::State>(first));
 
-	container_l.revert(ecs);
+	container_l.get_last_layer().revert(ecs);
 
 	EXPECT_TRUE(e1.has_second<Bar::State>(first));
 	EXPECT_FALSE(e1.has_second<Foo::State>(first));

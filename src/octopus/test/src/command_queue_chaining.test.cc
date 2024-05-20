@@ -87,10 +87,12 @@ TEST(command_queue_chaining, simple)
 {
 	vString res;
 	flecs::world ecs;
+	ThreadPool pool(1);
 
+	auto step_manager = makeDefaultStepManager();
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager);
+	StateStepContainer<custom_variant> state_step_manager;
+	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 

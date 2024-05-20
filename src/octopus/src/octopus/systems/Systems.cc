@@ -7,20 +7,30 @@ void set_up_phases(flecs::world &ecs)
 {
 	// set up phases
 
+	/// InitializationPhase
+	flecs::entity initializationPhase = ecs.entity(InitializationPhase)
+		.add(flecs::Phase)
+		.depends_on(flecs::OnUpdate);
+
 	/// PrepingUpdatePhase
 	flecs::entity prepingUpdatePhase = ecs.entity(PrepingUpdatePhase)
 		.add(flecs::Phase)
-		.depends_on(flecs::OnUpdate);
+		.depends_on(initializationPhase);
 
 	/// CleanUpPhase
 	flecs::entity cleanUpPhase = ecs.entity(CleanUpPhase)
 		.add(flecs::Phase)
 		.depends_on(prepingUpdatePhase);
 
+
+	flecs::entity postCleanUpPhase = ecs.entity(PostCleanUpPhase)
+		.add(flecs::Phase)
+		.depends_on(cleanUpPhase);
+
 	/// PreUpdatePhase
 	flecs::entity preUpdatePhase = ecs.entity(PreUpdatePhase)
 		.add(flecs::Phase)
-		.depends_on(cleanUpPhase);
+		.depends_on(postCleanUpPhase);
 
 	/// UpdatePhase
 	flecs::entity updatePhase = ecs.entity(UpdatePhase)

@@ -31,7 +31,7 @@ void handle_action(CommandQueue<variant_t> &queue_p, CommandQueueActionAddBack<v
 }
 
 template<typename variant_t>
-void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<variant_t> &mementoManager_p)
+void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<variant_t> &mementoManager_p, StateStepContainer<variant_t> &stateStep_p)
 {
 	// set up relations
     CommandQueue<variant_t>::state(ecs).add(flecs::Exclusive);
@@ -39,7 +39,7 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 
 	// Add memento
 	ecs.system("CommandQueueMementoSetup")
-		.kind(ecs.entity(PrepingUpdatePhase))
+		.kind(ecs.entity(InitializationPhase))
 		.iter([&mementoManager_p](flecs::iter& it) {
 			mementoManager_p.lMementos.push_back(typename CommandQueueMementoManager<variant_t>::vMemento());
 		});
@@ -69,18 +69,16 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 
 	ecs.system<CommandQueue<variant_t>>()
 		.kind(ecs.entity(PrepingUpdatePhase))
-		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			queue_p.clean_up_current(ecs, e);
+		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			queue_p.clean_up_current(ecs, e, stateStep_p);
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
-		.kind(ecs.entity(UpdatePhase))
-		.write(CommandQueue<variant_t>::state(ecs), flecs::Wildcard)
+		.kind(ecs.entity(PostCleanUpPhase))
 		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
-		.each([&ecs](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			queue_p.update_current(ecs, e);
+		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			queue_p.update_current(ecs, e, stateStep_p);
 		});
 }
 
