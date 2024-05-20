@@ -11,47 +11,19 @@
 
 using namespace octopus;
 
-// This application demonstrates how to use custom phases for systems. The
-// default pipeline will automatically run systems for custom phases as long as
-// they have the flecs::Phase tag.
-
-// Dummy system
-void Sys(flecs::iter& it) {
-    std::cout << "system " << it.system().name() << "\n";
-}
+struct A {};
+struct B {};
 
 TEST(sandbox, test)
 {
 	flecs::world ecs;
-    // Create two custom phases that branch off of EcsOnUpdate. Note that the
-    // phases have the Phase tag, which is necessary for the builtin pipeline
-    // to discover which systems it should run.
-    flecs::entity Physics = ecs.entity()
-        .add(flecs::Phase)
-        .depends_on(flecs::OnUpdate);
 
-    flecs::entity Collisions = ecs.entity()
-        .add(flecs::Phase)
-        .depends_on(Physics);
+	auto cmp = ecs.entity("cmp").add(flecs::Exclusive);
 
-    // Create 3 dummy systems.
-    ecs.system("CollisionSystem")
-        .kind(Collisions)
-        .iter(Sys);
+	auto e = ecs.entity("e")
+		.add_second<A>(cmp);
 
-    ecs.system("PhysicsSystem")
-        .kind(Physics)
-        .iter(Sys);
+	EXPECT_TRUE(e.has_second<A>(cmp));
 
-    ecs.system("GameSystem")
-        .kind(ecs.entity(UpdatePhase))
-        .iter(Sys);
-
-    // Run pipeline
-    ecs.progress();
-
-    // Output
-    //   system GameSystem
-    //   system PhysicsSystem
-    //   system CollisionSystem
+	std::cout<<e.get_second<A>(cmp)<<std::endl;
 }
