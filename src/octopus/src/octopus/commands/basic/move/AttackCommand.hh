@@ -50,6 +50,7 @@ struct AttackCommandStep {
 
 } // octopus
 
+// after AttackCommandStep definition
 #include "octopus/components/step/StepContainer.hh"
 
 namespace octopus {

@@ -1,4 +1,4 @@
-#pragma
+#pragma once
 
 #include "flecs.h"
 #include "octopus/utils/ThreadPool.hh"
