@@ -24,6 +24,7 @@
 #include "octopus/serialization/commands/CommandSupport.hh"
 
 #include "env/stream_ent.hh"
+#include "utils/reverted/reverted_comparison.hh"
 
 using namespace octopus;
 
@@ -71,6 +72,8 @@ TEST(attack_move_loop, simple)
 		.set<HitPoint>({10})
 		.set<Position>({{10,0}});
 
+	RevertTester<Position, Attack, AttackCommand, CustomCommandQueue> revert_test({e1, e2});
+
 	for(size_t i = 0; i < 20 ; ++ i)
 	{
 		// std::cout<<"p"<<i<<std::endl;
@@ -82,6 +85,7 @@ TEST(attack_move_loop, simple)
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 		}
 
+		revert_test.add_record(ecs);
 		// stream_ent<Position, Attack, AttackCommand, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
 	}
@@ -89,4 +93,6 @@ TEST(attack_move_loop, simple)
 	EXPECT_EQ(Fixed(10), e1.get<Position>()->pos.x) << "10 != "<<e1.get<Position>()->pos.x;
 	EXPECT_EQ(Fixed(2), e1.get<Position>()->pos.y) << "2 != "<<e1.get<Position>()->pos.y;
 	EXPECT_EQ(Fixed(2), e2.get<HitPoint>()->qty) << "2 != "<<e2.get<HitPoint>()->qty;
+
+	revert_test.revert_and_check_records(ecs, pool, step_manager, memento_manager, state_step_container);
 }
