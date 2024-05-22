@@ -25,6 +25,7 @@
 #include "octopus/serialization/commands/CommandSupport.hh"
 
 #include "env/stream_ent.hh"
+#include "utils/reverted/reverted_comparison.hh"
 
 using namespace octopus;
 
@@ -61,6 +62,7 @@ TEST(attack_retarget_loop, simple)
 		.add<Move>()
 		.set<Position>({{10,10}})
 		.set<Team>({{1}})
+		.set<AttackCommand>({flecs::entity()})
 		.set<Attack>({0, 1, 0, 1, 5, 2});
 
 	auto e2 = ecs.entity("e2")
@@ -84,6 +86,8 @@ TEST(attack_retarget_loop, simple)
 		.set<Team>({{0}})
 		.set<Position>({{10,3}});
 
+	RevertTester<Position, Attack, AttackCommand, CustomCommandQueue> revert_test({e1, e2, e4});
+
 	for(size_t i = 0; i < 20 ; ++ i)
 	{
 		// std::cout<<"p"<<i<<std::endl;
@@ -95,6 +99,7 @@ TEST(attack_retarget_loop, simple)
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 		}
 
+		revert_test.add_record(ecs);
 		// stream_ent<Position, Attack, AttackCommand, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
 	}
@@ -103,4 +108,6 @@ TEST(attack_retarget_loop, simple)
 	EXPECT_EQ(Fixed(5), e1.get<Position>()->pos.y) << "5 != "<<e1.get<Position>()->pos.y;
 	EXPECT_EQ(Fixed(0), e2.get<HitPoint>()->qty) << "0 != "<<e2.get<HitPoint>()->qty;
 	EXPECT_EQ(Fixed(0), e4.get<HitPoint>()->qty) << "0 != "<<e4.get<HitPoint>()->qty;
+
+	revert_test.revert_and_check_records(ecs, pool, step_manager, memento_manager, state_step_container);
 }
