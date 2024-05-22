@@ -68,6 +68,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
 			if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 			{
 				Team const *team_l = e.get<Team>();
+				// get enemy closest entities
 				std::vector<flecs::entity> new_candidates_l = get_closest_entities(1, 8, ecs, pos_p, [team_l](flecs::entity const &other_p) -> bool {
 					if(!team_l)
 					{
