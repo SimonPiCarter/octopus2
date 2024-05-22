@@ -55,6 +55,12 @@ struct AttackCommandStep {
 
 namespace octopus {
 
+flecs::entity get_new_target(flecs::entity const &e, flecs::world &ecs, Position const&pos_p);
+
+bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack const&attack_p);
+
+bool has_reloaded(uint32_t time_p, Attack const&attack_p);
+
 template<class StepManager_t, class CommandQueue_t>
 void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
 {
@@ -67,35 +73,25 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
 			Position const * target_pos = attackCommand_p.target.get<Position>();
 			if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 			{
-				Team const *team_l = e.get<Team>();
-				// get enemy closest entities
-				std::vector<flecs::entity> new_candidates_l = get_closest_entities(1, 8, ecs, pos_p, [team_l](flecs::entity const &other_p) -> bool {
-					if(!team_l)
-					{
-						return true;
-					}
-					if(other_p.get<Team>() && other_p.get<HitPoint>() && other_p.get<HitPoint>()->qty > Fixed::Zero())
-					{
-						return team_l->team != other_p.get<Team>()->team;
-					}
-					return false;
-				});
-				if (new_candidates_l.empty())
+				flecs::entity new_target = get_new_target(e, ecs, pos_p);
+				if(!new_target)
 				{
 					queue_p._queuedActions.push_back(CommandQueueActionDone());
 				}
 				else
 				{
-					manager_p.get_last_layer().back().get<AttackCommandStep>().add_step(e, {new_candidates_l[0]});
+					// update target
+					manager_p.get_last_layer().back().get<AttackCommandStep>().add_step(e, {new_target});
+					// reset windup
+					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {0});
 				}
 				return;
 			}
 
 			// in range and reloaded : we can attack
 			uint32_t time = manager_p.steps_added;
-			if(target_pos
-			&& square_length(pos_p.pos - target_pos->pos) <= attack_p.range*attack_p.range
-			&& time >= attack_p.reload + attack_p.reload_time)
+			// wind up has started
+			if(attack_p.windup > 0)
 			{
 				if(attack_p.windup >= attack_p.windup_time)
 				{
@@ -112,11 +108,18 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
 					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
 				}
 			}
-			// else we need to move
-			else
+			// if not in range we need to move
+			else if(!in_attack_range(target_pos, pos_p, attack_p))
 			{
 				Vector direction_l = get_direction(ecs, pos_p, *target_pos);
 				move_p.move = direction_l * move_p.speed;
+
+			}
+			// if in range and reload ready initiate windup
+			else if(has_reloaded(manager_p.steps_added, attack_p))
+			{
+				// increment windup
+				manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
 			}
 		});
 
