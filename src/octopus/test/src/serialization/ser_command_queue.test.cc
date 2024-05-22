@@ -38,7 +38,7 @@ void set_up_walk_systems(flecs::world &ecs, vString &res)
 
 	// clean up
 	ecs.system<WalkTest, CustomCommandQueue>()
-		.kind(ecs.entity(PreUpdatePhase))
+		.kind(ecs.entity(CleanUpPhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<WalkTest::State>())
 		.each([&res](flecs::entity e, WalkTest &walk_p, CustomCommandQueue &cQueue_p) {
 			res<<" cw"<<walk_p.t;
@@ -64,7 +64,7 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 
 	// clean up
 	ecs.system<AttackTest, CustomCommandQueue>()
-		.kind(ecs.entity(PreUpdatePhase))
+		.kind(ecs.entity(CleanUpPhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTest::State>())
 		.each([&res](flecs::entity e, AttackTest &attack_p, CustomCommandQueue &cQueue_p) {
 			res<<" ca"<<attack_p.t;

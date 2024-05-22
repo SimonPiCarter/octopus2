@@ -68,7 +68,7 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 
 	// clean up
 	ecs.system<AttackTestHP, CustomCommandQueue>()
-		.kind(ecs.entity(PreUpdatePhase))
+		.kind(ecs.entity(CleanUpPhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTestHP::State>())
 		.each([](flecs::entity e, AttackTestHP &attack_p, CustomCommandQueue &cQueue_p) {
 			attack_p.windup = 0;

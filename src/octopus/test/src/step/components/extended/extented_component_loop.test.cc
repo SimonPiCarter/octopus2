@@ -101,7 +101,7 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 
 	// clean up
 	ecs.system<AttackTestComponent, CustomCommandQueue>()
-		.kind(ecs.entity(PreUpdatePhase))
+		.kind(ecs.entity(CleanUpPhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTestComponent::State>())
 		.each([&manager_p](flecs::entity e, AttackTestComponent &attack_p, CustomCommandQueue &cQueue_p) {
 				manager_p.get_last_prelayer().back().get<AttackTestStep>().add_step(e, {0});
