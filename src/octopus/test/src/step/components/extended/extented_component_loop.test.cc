@@ -22,6 +22,7 @@
 #include "octopus/serialization/components/BasicSupport.hh"
 
 #include "env/stream_ent.hh"
+#include "utils/reverted/reverted_comparison.hh"
 
 using namespace octopus;
 
@@ -144,6 +145,8 @@ TEST(extended_loop, simple)
 	std::vector<std::string> e1_applied;
 	std::vector<std::string> e2_applied;
 
+	RevertTester<HitPoint, AttackTestComponent, CustomCommandQueue> revert_test({e1, e2});
+
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
 		ecs.progress();
@@ -154,57 +157,8 @@ TEST(extended_loop, simple)
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 		}
 
-		std::stringstream ss_e1_l;
-		std::stringstream ss_e2_l;
-		stream_ent<HitPoint, AttackTestComponent, CustomCommandQueue>(ss_e1_l, ecs, e1);
-		stream_ent<HitPoint, AttackTestComponent, CustomCommandQueue>(ss_e2_l, ecs, e2);
-		e1_applied.push_back(ss_e1_l.str());
-		e2_applied.push_back(ss_e2_l.str());
+		revert_test.add_record(ecs);
 	}
 
-	// fill list to fill front
-	std::list<std::string> e1_reverted_list;
-	std::list<std::string> e2_reverted_list;
-
-	for(size_t i = 0; i < 10 ; ++ i)
-	{
-		std::stringstream ss_e1_l;
-		std::stringstream ss_e2_l;
-		stream_ent<HitPoint, AttackTestComponent, CustomCommandQueue>(ss_e1_l, ecs, e1);
-		stream_ent<HitPoint, AttackTestComponent, CustomCommandQueue>(ss_e2_l, ecs, e2);
-		e1_reverted_list.push_front(ss_e1_l.str());
-		e2_reverted_list.push_front(ss_e2_l.str());
-
-		revert_n_steps(ecs, pool, 1, step_manager, memento_manager, state_step_container);
-		clear_n_steps(1, step_manager, memento_manager, state_step_container);
-	}
-
-	std::vector<std::string> e1_reverted(e1_reverted_list.begin(), e1_reverted_list.end());
-	std::vector<std::string> e2_reverted(e2_reverted_list.begin(), e2_reverted_list.end());
-
-	ASSERT_EQ(10u, e1_reverted.size());
-	ASSERT_EQ(10u, e1_applied.size());
-	EXPECT_EQ(e1_applied[0], e1_reverted[0]);
-	EXPECT_EQ(e1_applied[1], e1_reverted[1]);
-	EXPECT_EQ(e1_applied[2], e1_reverted[2]);
-	EXPECT_EQ(e1_applied[3], e1_reverted[3]);
-	EXPECT_EQ(e1_applied[4], e1_reverted[4]);
-	EXPECT_EQ(e1_applied[5], e1_reverted[5]);
-	EXPECT_EQ(e1_applied[6], e1_reverted[6]);
-	EXPECT_EQ(e1_applied[7], e1_reverted[7]);
-	EXPECT_EQ(e1_applied[8], e1_reverted[8]);
-	EXPECT_EQ(e1_applied[9], e1_reverted[9]);
-	ASSERT_EQ(10u, e2_reverted.size());
-	ASSERT_EQ(10u, e2_applied.size());
-	EXPECT_EQ(e2_applied[0], e2_reverted[0]);
-	EXPECT_EQ(e2_applied[1], e2_reverted[1]);
-	EXPECT_EQ(e2_applied[2], e2_reverted[2]);
-	EXPECT_EQ(e2_applied[3], e2_reverted[3]);
-	EXPECT_EQ(e2_applied[4], e2_reverted[4]);
-	EXPECT_EQ(e2_applied[5], e2_reverted[5]);
-	EXPECT_EQ(e2_applied[6], e2_reverted[6]);
-	EXPECT_EQ(e2_applied[7], e2_reverted[7]);
-	EXPECT_EQ(e2_applied[8], e2_reverted[8]);
-	EXPECT_EQ(e2_applied[9], e2_reverted[9]);
-
+	revert_test.revert_and_check_records(ecs, pool, step_manager, memento_manager, state_step_container);
 }
