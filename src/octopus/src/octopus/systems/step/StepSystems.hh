@@ -22,6 +22,7 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 
 	// apply state steps and clean up steps
 	ecs.system<>()
+        .no_readonly()
 		.kind(ecs.entity(PreUpdatePhase))
 		.write(CommandQueue<typename StateStepManager_t::Variant>::state(ecs), flecs::Wildcard)
 		.iter([&ecs, &pool, &manager_p, &state_step_container_p](flecs::iter& it) {
@@ -31,6 +32,7 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 
 	// apply steps
 	ecs.system<>()
+        .no_readonly()
 		.kind(ecs.entity(SteppingPhase))
 		.write(CommandQueue<typename StateStepManager_t::Variant>::state(ecs), flecs::Wildcard)
 		.iter([&ecs, &pool, &manager_p, &state_step_container_p](flecs::iter& it) {

@@ -24,7 +24,7 @@ struct MoveCommand {
 
 /// END State
 
-bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p);
+bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Position const&target_p, Move &move_p);
 
 template<class StepManager_t, class CommandQueue_t>
 void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
@@ -33,7 +33,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<MoveCommand::State>())
 		.each([&ecs](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p, CommandQueue_t &queue_p) {
-			if(move_routine(ecs, e, pos_p, moveCommand_p, move_p))
+			if(move_routine(ecs, e, pos_p, moveCommand_p.target, move_p))
 			{
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
