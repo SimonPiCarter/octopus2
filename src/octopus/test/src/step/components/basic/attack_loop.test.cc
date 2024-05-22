@@ -51,7 +51,7 @@ TEST(attack_loop, simple)
 
 	StateStepContainer<custom_variant> state_step_container;
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> step_manager;
+	auto step_manager = makeDefaultStepManager();
 	ThreadPool pool(1);
 
 	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container);

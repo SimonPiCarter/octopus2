@@ -10,6 +10,7 @@
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/position/Position.hh"
+#include "octopus/commands/basic/move/AttackCommand.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -161,12 +162,12 @@ struct StepManager
 /// one with only basic steps
 /// one extended that add the basic steps
 
-StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep> makeDefaultStepManager();
+StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep> makeDefaultStepManager();
 
 template<class... Ts>
-StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, Ts...> makeStepManager()
+StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...> makeStepManager()
 {
-	return StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, Ts...>();
+	return StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...>();
 }
 
 } // octopus

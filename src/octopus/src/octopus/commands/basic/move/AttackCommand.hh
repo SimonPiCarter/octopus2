@@ -2,10 +2,11 @@
 
 #include "flecs.h"
 #include "octopus/utils/Vector.hh"
-#include "octopus/components/step/StepContainer.hh"
 #include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/position/Move.hh"
+#include "octopus/components/basic/player/Team.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/world/position/closest_neighbours.hh"
 
 #include "octopus/world/path/direction.hh"
 
@@ -23,7 +24,35 @@ struct AttackCommand {
 	struct State {};
 };
 
+struct AttackCommandMemento {
+	flecs::entity old_target;
+};
+
+struct AttackCommandStep {
+	flecs::entity new_target;
+
+	typedef AttackCommand Data;
+	typedef AttackCommandMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const
+	{
+		memento.old_target = d.target;
+		d.target = new_target;
+	}
+
+	void revert_step(Data &d, Memento const &memento) const
+	{
+		d.target = memento.old_target;
+	}
+};
+
 /// END State
+
+} // octopus
+
+#include "octopus/components/step/StepContainer.hh"
+
+namespace octopus {
 
 template<class StepManager_t, class CommandQueue_t>
 void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
@@ -37,7 +66,26 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
 			Position const * target_pos = attackCommand_p.target.get<Position>();
 			if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 			{
-				queue_p._queuedActions.push_back(CommandQueueActionDone());
+				Team const *team_l = e.get<Team>();
+				std::vector<flecs::entity> new_candidates_l = get_closest_entities(1, 8, ecs, pos_p, [team_l](flecs::entity const &other_p) -> bool {
+					if(!team_l)
+					{
+						return true;
+					}
+					if(other_p.get<Team>() && other_p.get<HitPoint>() && other_p.get<HitPoint>()->qty > Fixed::Zero())
+					{
+						return team_l->team != other_p.get<Team>()->team;
+					}
+					return false;
+				});
+				if (new_candidates_l.empty())
+				{
+					queue_p._queuedActions.push_back(CommandQueueActionDone());
+				}
+				else
+				{
+					manager_p.get_last_layer().back().get<AttackCommandStep>().add_step(e, {new_candidates_l[0]});
+				}
 				return;
 			}
 

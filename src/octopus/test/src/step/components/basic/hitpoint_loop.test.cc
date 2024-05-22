@@ -46,7 +46,8 @@ struct AttackTestHP {
 using custom_variant = std::variant<octopus::NoOpCommand, AttackTestHP>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
-void set_up_attack_test_systems(flecs::world &ecs, StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> &manager_p)
+template<class StepManager_t>
+void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 {
 	// AttackTestHP : walk for 12 progress then done
 	ecs.system<AttackTestHP, CustomCommandQueue>()
@@ -93,7 +94,7 @@ TEST(hitpoint_loop, simple)
 
 	StateStepContainer<custom_variant> state_step_container;
 	CommandQueueMementoManager<custom_variant> memento_manager;
-	StepManager<PositionStep, HitPointStep, AttackWindupStep, AttackReloadStep> step_manager;
+	auto step_manager = makeDefaultStepManager();
 	ThreadPool pool(1);
 
 	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container);

@@ -3,9 +3,9 @@
 namespace octopus
 {
 
-StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep> makeDefaultStepManager()
+StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep> makeDefaultStepManager()
 {
-	return StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep>();
+	return StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>();
 }
 
 } // octopus
