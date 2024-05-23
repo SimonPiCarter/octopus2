@@ -5,6 +5,7 @@
 #include <functional>
 
 #include "octopus/components/basic/position/Position.hh"
+#include "octopus/world/position/PositionContext.hh"
 
 namespace octopus
 {
@@ -12,7 +13,7 @@ namespace octopus
 std::vector<flecs::entity> get_closest_entities(
 	size_t n,
 	Fixed const &max_range,
-	flecs::world &ecs,
+	PositionContext const &context_p,
 	Position const &pos_p,
 	std::function<bool(flecs::entity const&)> const &filter_p);
 

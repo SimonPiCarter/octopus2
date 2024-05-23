@@ -54,7 +54,8 @@ TEST(attack_loop, simple)
 	auto step_manager = makeDefaultStepManager();
 	ThreadPool pool(1);
 
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container);
+	PositionContext pos_context(ecs);
+	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container, pos_context);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()

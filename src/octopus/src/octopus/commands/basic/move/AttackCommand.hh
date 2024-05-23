@@ -8,6 +8,7 @@
 #include "octopus/components/basic/player/Team.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/world/position/closest_neighbours.hh"
+#include "octopus/world/position/PositionContext.hh"
 
 #include "octopus/world/path/direction.hh"
 
@@ -59,25 +60,25 @@ struct AttackCommandStep {
 
 namespace octopus {
 
-flecs::entity get_new_target(flecs::entity const &e, flecs::world &ecs, Position const&pos_p);
+flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p);
 
 bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack const&attack_p);
 
 bool has_reloaded(uint32_t time_p, Attack const&attack_p);
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p)
+void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionContext const &context_p)
 {
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
-		.each([&ecs, &manager_p](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
+		.each([&ecs, &manager_p, &context_p](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
 			// check if target is valid
 			HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.get<HitPoint>() : nullptr;
 			Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
 			if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 			{
-				flecs::entity new_target = get_new_target(e, ecs, pos_p);
+				flecs::entity new_target = get_new_target(e, context_p, pos_p);
 				if(!new_target)
 				{
 					// if no move we are done

@@ -23,7 +23,8 @@ template<typename variant_t, typename StepManager_t, typename StateStepManager_t
 void set_up_systems(flecs::world &ecs, ThreadPool &pool,
 	CommandQueueMementoManager<variant_t> &memento_manager,
 	StepManager_t &step_manager,
-	StateStepManager_t &state_step_manager)
+	StateStepManager_t &state_step_manager,
+	PositionContext const &context_p)
 {
 	set_up_phases(ecs);
 
@@ -41,7 +42,7 @@ void set_up_systems(flecs::world &ecs, ThreadPool &pool,
 
 	// commands systems
 	set_up_move_system<StepManager_t, CommandQueue<variant_t>>(ecs, step_manager);
-	set_up_attack_system<StepManager_t, CommandQueue<variant_t>>(ecs, step_manager);
+	set_up_attack_system<StepManager_t, CommandQueue<variant_t>>(ecs, step_manager, context_p);
 }
 
 }
