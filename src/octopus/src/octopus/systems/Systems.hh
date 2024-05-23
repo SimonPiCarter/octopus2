@@ -10,6 +10,9 @@
 #include "octopus/systems/position/PositionSystems.hh"
 #include "octopus/systems/step/StepSystems.hh"
 
+#include "octopus/world/WorldContext.hh"
+#include "octopus/world/StepContext.hh"
+
 #include "octopus/systems/phases/Phases.hh"
 
 namespace octopus
@@ -18,31 +21,26 @@ namespace octopus
 void set_up_phases(flecs::world &ecs);
 
 /// @brief Set up all required system for the engine to run
-/// @param ecs
-template<typename variant_t, typename StepManager_t, typename StateStepManager_t>
-void set_up_systems(flecs::world &ecs, ThreadPool &pool,
-	CommandQueueMementoManager<variant_t> &memento_manager,
-	StepManager_t &step_manager,
-	StateStepManager_t &state_step_manager,
-	PositionContext const &context_p)
+template<typename StepContext_t>
+void set_up_systems(WorldContext &world, StepContext_t &step_context)
 {
-	set_up_phases(ecs);
+	set_up_phases(world.ecs);
 
 	// command handling systems
-	set_up_command_queue_systems<variant_t>(ecs, memento_manager, state_step_manager);
+	set_up_command_queue_systems<typename StepContext_t::variant>(world.ecs, step_context.memento_manager, step_context.state_step_manager);
 
 	// position systems
-	set_up_position_systems(ecs, pool, step_manager);
+	set_up_position_systems(world.ecs, world.pool, step_context.step_manager);
 
 	// step systems
-	set_up_step_systems(ecs, pool, step_manager, state_step_manager);
+	set_up_step_systems(world.ecs, world.pool, step_context.step_manager, step_context.state_step_manager);
 
 	// components systems
-	set_up_hitpoint_systems(ecs, pool);
+	set_up_hitpoint_systems(world.ecs, world.pool);
 
 	// commands systems
-	set_up_move_system<StepManager_t, CommandQueue<variant_t>>(ecs, step_manager);
-	set_up_attack_system<StepManager_t, CommandQueue<variant_t>>(ecs, step_manager, context_p);
+	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager);
+	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.position_context);
 }
 
 }

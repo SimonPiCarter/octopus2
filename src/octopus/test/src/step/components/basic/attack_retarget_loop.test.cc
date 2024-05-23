@@ -44,19 +44,16 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 
 TEST(attack_retarget_loop, simple)
 {
-	flecs::world ecs;
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 
-	StateStepContainer<custom_variant> state_step_container;
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	auto step_manager = makeDefaultStepManager();
-	ThreadPool pool(1);
+	auto step_context = makeDefaultStepContext<custom_variant>();
 
-	PositionContext pos_context(ecs);
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container, pos_context);
+	set_up_systems(world, step_context);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
@@ -110,5 +107,5 @@ TEST(attack_retarget_loop, simple)
 	EXPECT_EQ(Fixed(0), e2.get<HitPoint>()->qty) << "0 != "<<e2.get<HitPoint>()->qty;
 	EXPECT_EQ(Fixed(0), e4.get<HitPoint>()->qty) << "0 != "<<e4.get<HitPoint>()->qty;
 
-	revert_test.revert_and_check_records(ecs, pool, step_manager, memento_manager, state_step_container);
+	revert_test.revert_and_check_records(ecs, world.pool, step_context.step_manager, step_context.memento_manager, step_context.state_step_manager);
 }

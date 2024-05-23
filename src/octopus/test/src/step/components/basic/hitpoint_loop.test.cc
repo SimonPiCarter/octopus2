@@ -79,7 +79,8 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 
 TEST(hitpoint_loop, simple)
 {
-	flecs::world ecs;
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
 
@@ -92,15 +93,11 @@ TEST(hitpoint_loop, simple)
 
 	command_queue_support<octopus::NoOpCommand, AttackTestHP>(ecs);
 
-	StateStepContainer<custom_variant> state_step_container;
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	auto step_manager = makeDefaultStepManager();
-	ThreadPool pool(1);
+	auto step_context = makeDefaultStepContext<custom_variant>();
 
-	PositionContext pos_context(ecs);
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container, pos_context);
+	set_up_systems(world, step_context);
 
-	set_up_attack_test_systems(ecs, step_manager);
+	set_up_attack_test_systems(ecs, step_context.step_manager);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
@@ -111,7 +108,6 @@ TEST(hitpoint_loop, simple)
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
-		step_manager.add_layer(1);
 		ecs.progress();
 
 		if(i == 1)

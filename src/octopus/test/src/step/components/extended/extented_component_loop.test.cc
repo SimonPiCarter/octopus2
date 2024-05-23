@@ -112,7 +112,8 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 
 TEST(extended_loop, simple)
 {
-	flecs::world ecs;
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
 
@@ -125,15 +126,10 @@ TEST(extended_loop, simple)
 
 	command_queue_support<octopus::NoOpCommand, AttackTestComponent>(ecs);
 
-	StateStepContainer<custom_variant> state_step_container;
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	auto step_manager = makeStepManager<AttackTestStep>();
-	ThreadPool pool(1);
+	auto step_context = makeStepContext<custom_variant, AttackTestStep>();
+	set_up_systems(world, step_context);
 
-	PositionContext pos_context(ecs);
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container, pos_context);
-
-	set_up_attack_test_systems(ecs, step_manager);
+	set_up_attack_test_systems(ecs, step_context.step_manager);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
@@ -161,5 +157,5 @@ TEST(extended_loop, simple)
 		revert_test.add_record(ecs);
 	}
 
-	revert_test.revert_and_check_records(ecs, pool, step_manager, memento_manager, state_step_container);
+	revert_test.revert_and_check_records(ecs, world.pool, step_context.step_manager, step_context.memento_manager, step_context.state_step_manager);
 }

@@ -41,19 +41,15 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 
 TEST(move_loop, simple)
 {
-	flecs::world ecs;
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::MoveCommand>(ecs);
 
-	StateStepContainer<custom_variant> state_step_container;
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	auto step_manager = makeDefaultStepManager();
-	ThreadPool pool(1);
-
-	PositionContext pos_context(ecs);
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container, pos_context);
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	set_up_systems(world, step_context);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
@@ -63,7 +59,6 @@ TEST(move_loop, simple)
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
-		step_manager.add_layer(1);
 		ecs.progress();
 
 		if(i == 2)

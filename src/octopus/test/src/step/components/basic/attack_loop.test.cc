@@ -23,6 +23,9 @@
 #include "octopus/serialization/components/BasicSupport.hh"
 #include "octopus/serialization/commands/CommandSupport.hh"
 
+#include "octopus/world/WorldContext.hh"
+#include "octopus/world/StepContext.hh"
+
 #include "env/stream_ent.hh"
 
 using namespace octopus;
@@ -43,19 +46,16 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 
 TEST(attack_loop, simple)
 {
-	flecs::world ecs;
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 
-	StateStepContainer<custom_variant> state_step_container;
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	auto step_manager = makeDefaultStepManager();
-	ThreadPool pool(1);
+	auto step_context = makeDefaultStepContext<custom_variant>();
 
-	PositionContext pos_context(ecs);
-	set_up_systems<custom_variant>(ecs, pool, memento_manager, step_manager, state_step_container, pos_context);
+	set_up_systems(world, step_context);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()

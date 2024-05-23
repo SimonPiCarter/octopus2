@@ -3,6 +3,8 @@
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/systems/Systems.hh"
+#include "octopus/world/WorldContext.hh"
+#include "octopus/world/StepContext.hh"
 
 #include <sstream>
 #include <variant>
@@ -87,14 +89,11 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 TEST(command_queue, simple)
 {
 	vString res;
-	flecs::world ecs;
-	ThreadPool pool(1);
+	WorldContext world;
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	flecs::world &ecs = world.ecs;
 
-	auto step_manager = makeDefaultStepManager();
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	StateStepContainer<custom_variant> state_step_manager;
-	PositionContext pos_context(ecs);
-	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager, pos_context);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 
 	auto e1 = ecs.entity()
@@ -119,14 +118,11 @@ TEST(command_queue, simple)
 TEST(command_queue, simple_multiple)
 {
 	vString res;
-	flecs::world ecs;
-	ThreadPool pool(1);
+	WorldContext world;
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	flecs::world &ecs = world.ecs;
 
-	auto step_manager = makeDefaultStepManager();
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	StateStepContainer<custom_variant> state_step_manager;
-	PositionContext pos_context(ecs);
-	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager, pos_context);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -154,14 +150,11 @@ TEST(command_queue, simple_multiple)
 TEST(command_queue, simple_multiple_queuing_front)
 {
 	vString res;
-	flecs::world ecs;
-	ThreadPool pool(1);
+	WorldContext world;
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	flecs::world &ecs = world.ecs;
 
-	auto step_manager = makeDefaultStepManager();
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	StateStepContainer<custom_variant> state_step_manager;
-	PositionContext pos_context(ecs);
-	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager, pos_context);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -193,14 +186,11 @@ TEST(command_queue, simple_multiple_queuing_front)
 TEST(command_queue, simple_multiple_queuing_back)
 {
 	vString res;
-	flecs::world ecs;
-	ThreadPool pool(1);
+	WorldContext world;
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	flecs::world &ecs = world.ecs;
 
-	auto step_manager = makeDefaultStepManager();
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	StateStepContainer<custom_variant> state_step_manager;
-	PositionContext pos_context(ecs);
-	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager, pos_context);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -232,14 +222,11 @@ TEST(command_queue, simple_multiple_queuing_back)
 TEST(command_queue, simple_replaced)
 {
 	vString res;
-	flecs::world ecs;
-	ThreadPool pool(1);
+	WorldContext world;
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	flecs::world &ecs = world.ecs;
 
-	auto step_manager = makeDefaultStepManager();
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	StateStepContainer<custom_variant> state_step_manager;
-	PositionContext pos_context(ecs);
-	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager, pos_context);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 

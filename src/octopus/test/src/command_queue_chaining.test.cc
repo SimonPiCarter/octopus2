@@ -86,14 +86,12 @@ void set_up_attack_systems(flecs::world &ecs, vString &res)
 TEST(command_queue_chaining, simple)
 {
 	vString res;
-	flecs::world ecs;
-	ThreadPool pool(1);
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
 
-	auto step_manager = makeDefaultStepManager();
-	CommandQueueMementoManager<custom_variant> memento_manager;
-	StateStepContainer<custom_variant> state_step_manager;
-	PositionContext pos_context(ecs);
-	set_up_systems(ecs, pool, memento_manager, step_manager, state_step_manager, pos_context);
+	auto step_context = makeDefaultStepContext<custom_variant>();
+
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
