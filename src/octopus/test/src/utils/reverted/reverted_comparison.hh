@@ -4,6 +4,7 @@
 
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/step/StepReversal.hh"
+#include "octopus/world/WorldContext.hh"
 #include "env/stream_ent.hh"
 
 #include <vector>
@@ -43,10 +44,8 @@ struct RevertTester
 		++recorded_steps;
 	}
 
-	template<class StepManager_t, class CommandMementoManager_t, class StateStepContainer_t>
-	void revert_and_check_records(flecs::world &ecs, ThreadPool &pool_p,
-		StepManager_t &step_manager_p, CommandMementoManager_t &command_memento_p,
-		StateStepContainer_t & state_step_container_p)
+	template<class StepContext_t>
+	void revert_and_check_records(octopus::WorldContext &world, StepContext_t &stepContext_p)
 	{
 		// reverted records
 		std::vector<StreamedEntityRecord> reverted_records(records.size(), StreamedEntityRecord());
@@ -56,11 +55,11 @@ struct RevertTester
 			{
 				flecs::entity const &e = tracked_entities[i];
 				std::stringstream ss_l;
-				stream_ent<Ts...>(ss_l, ecs, e);
+				stream_ent<Ts...>(ss_l, world.ecs, e);
 				reverted_records[i].records.push_front(ss_l.str());
 			}
-			revert_n_steps(ecs, pool_p, 1, step_manager_p, command_memento_p, state_step_container_p);
-			clear_n_steps(1, step_manager_p, command_memento_p, state_step_container_p);
+			revert_n_steps(world.ecs, world.pool, 1, stepContext_p.step_manager, stepContext_p.memento_manager, stepContext_p.state_step_manager);
+			clear_n_steps(1, stepContext_p.step_manager, stepContext_p.memento_manager, stepContext_p.state_step_manager);
 		}
 
 		for(size_t i = 0 ; i < tracked_entities.size() ; ++ i)

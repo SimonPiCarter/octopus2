@@ -157,5 +157,5 @@ TEST(extended_loop, simple)
 		revert_test.add_record(ecs);
 	}
 
-	revert_test.revert_and_check_records(ecs, world.pool, step_context.step_manager, step_context.memento_manager, step_context.state_step_manager);
+	revert_test.revert_and_check_records(world, step_context);
 }

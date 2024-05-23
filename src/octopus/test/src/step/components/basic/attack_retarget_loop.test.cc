@@ -107,5 +107,5 @@ TEST(attack_retarget_loop, simple)
 	EXPECT_EQ(Fixed(0), e2.get<HitPoint>()->qty) << "0 != "<<e2.get<HitPoint>()->qty;
 	EXPECT_EQ(Fixed(0), e4.get<HitPoint>()->qty) << "0 != "<<e4.get<HitPoint>()->qty;
 
-	revert_test.revert_and_check_records(ecs, world.pool, step_context.step_manager, step_context.memento_manager, step_context.state_step_manager);
+	revert_test.revert_and_check_records(world, step_context);
 }
