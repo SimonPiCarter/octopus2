@@ -84,7 +84,8 @@ TEST(attack_retarget_loop, simple)
 		.set<Team>({{0}})
 		.set<Position>({{10,3}});
 
-	RevertTester<Position, Attack, AttackCommand, CustomCommandQueue> revert_test({e1, e2, e4});
+	RevertTester<custom_variant, Position, Attack, AttackCommand, CustomCommandQueue> revert_test({e1, e2, e4});
+	revert_test.add_second_recorder(CustomCommandQueue::state(ecs));
 
 	for(size_t i = 0; i < 20 ; ++ i)
 	{

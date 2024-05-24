@@ -26,10 +26,15 @@ struct StreamedEntityRecord
 /// on each progress
 /// Then revert everythin and compare outputs for each entity
 /// @tparam ...Ts
-template<class... Ts>
+template<typename variant_t, class... Ts>
 struct RevertTester
 {
 	RevertTester(std::vector<flecs::entity> const &tracked_p) : tracked_entities(tracked_p), records(tracked_p.size(), StreamedEntityRecord()) {}
+
+	void add_second_recorder(flecs::entity first)
+	{
+		tracked_pairs.push_back(first);
+	}
 
 	void add_record(flecs::world &ecs)
 	{
@@ -38,6 +43,10 @@ struct RevertTester
 			flecs::entity const &e = tracked_entities[i];
 			std::stringstream ss_l;
 			stream_ent<Ts...>(ss_l, ecs, e);
+			for(flecs::entity const &first_l : tracked_pairs)
+			{
+				stream_second_components(ss_l, e, first_l, variant_t());
+			}
 			records[i].records.push_back(ss_l.str());
 
 		}
@@ -56,6 +65,10 @@ struct RevertTester
 				flecs::entity const &e = tracked_entities[i];
 				std::stringstream ss_l;
 				stream_ent<Ts...>(ss_l, world.ecs, e);
+				for(flecs::entity const &first_l : tracked_pairs)
+				{
+					stream_second_components(ss_l, e, first_l, variant_t());
+				}
 				reverted_records[i].records.push_front(ss_l.str());
 			}
 			revert_n_steps(world.ecs, world.pool, 1, stepContext_p.step_manager, stepContext_p.memento_manager, stepContext_p.state_step_manager);
@@ -68,6 +81,8 @@ struct RevertTester
 			ASSERT_EQ(recorded_steps, records[i].records.size());
 			for(size_t step = 0 ; step < recorded_steps; ++step)
 			{
+				// std::cout<<records[i][step]<<std::endl;
+				// std::cout<<reverted_records[i][step]<<std::endl<<std::endl;
 				EXPECT_EQ(reverted_records[i][step], records[i][step]) << "error while comparing step "<< step;
 			}
 		}
@@ -75,6 +90,7 @@ struct RevertTester
 
 private:
 	std::vector<flecs::entity> tracked_entities;
+	std::vector<flecs::entity> tracked_pairs;
 	std::vector<StreamedEntityRecord> records;
 	size_t recorded_steps = 0;
 };

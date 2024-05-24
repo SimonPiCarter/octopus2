@@ -142,7 +142,8 @@ TEST(extended_loop, simple)
 	std::vector<std::string> e1_applied;
 	std::vector<std::string> e2_applied;
 
-	RevertTester<HitPoint, AttackTestComponent, CustomCommandQueue> revert_test({e1, e2});
+	RevertTester<custom_variant, HitPoint, AttackTestComponent, CustomCommandQueue> revert_test({e1, e2});
+	revert_test.add_second_recorder(CustomCommandQueue::state(ecs));
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
