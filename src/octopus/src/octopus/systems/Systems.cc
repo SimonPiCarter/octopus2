@@ -56,6 +56,11 @@ void set_up_phases(flecs::world &ecs)
 	flecs::entity validatePhase = ecs.entity(ValidatePhase)
 		.add(flecs::Phase)
 		.depends_on(steppingPhase);
+
+	/// DisplaySyncPhase
+	flecs::entity displaySyncPhase = ecs.entity(DisplaySyncPhase)
+		.add(flecs::Phase)
+		.depends_on(validatePhase);
 }
 
 }

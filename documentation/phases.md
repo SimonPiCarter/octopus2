@@ -59,3 +59,7 @@ Apply all steps :
 ## Validate
 
 - Validate components (do various checks and corrections)
+
+## DisplaySync
+
+- sync with display

@@ -10,3 +10,4 @@
 #define MovingPhase "Moving"
 #define SteppingPhase "Stepping"
 #define ValidatePhase "Validate"
+#define DisplaySyncPhase "DisplaySync"
