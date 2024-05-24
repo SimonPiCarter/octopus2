@@ -15,11 +15,11 @@ def get_infos():
     except Exception:
         return None,None
 
-class cfllpspConan(ConanFile):
+class octopusConan(ConanFile):
     name, version = get_infos()
-    license = "©EURODECISION"
-    url = "https://edgitlab.eurodecision.Command/cfl/cfllpsp"
-    description = "EURODECISION cfllpsp"
+    license = "Octopus Engine"
+    url = "https://github.com/SimonPiCarter/octopus2"
+    description = "Octopus Engine octopus2"
     settings = "os", "compiler", "build_type", "arch"
     requires = "boost/1.83.0", \
                  ("gtest/1.12.1", "private")
