@@ -19,10 +19,20 @@ octopus::Fixed octopus::square_length(Vector const &vec_p)
 	return vec_p.x * vec_p.x + vec_p.y * vec_p.y;
 }
 
-octopus::Fixed octopus::dot_product(Vector const &a, Vector const b)
+octopus::Fixed octopus::dot_product(Vector const &a, Vector const &b)
 {
 	return a.x*b.x + a.y*b.y;
 }
+
+void octopus::limit_length(Vector &vec_p, Fixed const &limit_p)
+{
+	if(square_length(vec_p) > limit_p*limit_p)
+	{
+		vec_p /= length(vec_p);
+		vec_p *= limit_p;
+	}
+}
+
 
 bool octopus::same_direction(Vector const & a, Vector const & b)
 {
