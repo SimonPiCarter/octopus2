@@ -125,24 +125,38 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// if not in range we need to move
 			else if(!in_attack_range(target_pos, pos_p, attack_p))
 			{
+				// reset mass if necessary
+				if(pos_p.mass > 1)
+				{
+					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
+				}
 				move_p.move = get_speed_direction(ecs, pos_p, *target_pos, move_p.speed);
-
 			}
 			// if in range and reload ready initiate windup
 			else if(has_reloaded(manager_p.steps_added, attack_p))
 			{
+				// set mass if necessary
+				if(pos_p.mass < 5)
+				{
+					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1000});
+				}
 				// increment windup
 				manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
 			}
 		});
 
 	// clean up
-	ecs.system<AttackCommand const, Attack const, CommandQueue_t>()
+	ecs.system<AttackCommand const, Attack const, Position const, CommandQueue_t>()
 		.kind(ecs.entity(CleanUpPhase))
 		.with(CommandQueue_t::cleanup(ecs), ecs.component<AttackCommand::State>())
-		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, CommandQueue_t &cQueue_p) {
+		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, Position const &pos_p, CommandQueue_t &cQueue_p) {
 			// reset windup
 			manager_p.get_last_prelayer().back().get<AttackWindupStep>().add_step(e, {0});
+			// reset mass if necessary
+			if(pos_p.mass > 1)
+			{
+				manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
+			}
 		});
 }
 
