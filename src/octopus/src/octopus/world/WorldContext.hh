@@ -11,7 +11,10 @@ namespace octopus
 /// @note should contain the spatialisation and the pathfinding contexts for example
 struct WorldContext
 {
-	WorldContext() : pool(1), position_context(ecs) {}
+	WorldContext() : pool(1), position_context(ecs)
+	{
+		ecs.set_threads(12);
+	}
 
 	flecs::world ecs;
 	ThreadPool pool;
