@@ -1,5 +1,6 @@
 #pragma once
 
+#include "octopus/components/basic/position/Position.hh"
 #include "flecs.h"
 
 namespace octopus

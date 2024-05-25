@@ -18,6 +18,10 @@ struct StepContext
 };
 
 template<typename variant_t>
+struct DefaultStepContext : StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>
+{};
+
+template<typename variant_t>
 StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep> makeDefaultStepContext()
 {
 	return StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>();

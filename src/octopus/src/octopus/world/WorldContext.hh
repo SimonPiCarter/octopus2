@@ -1,6 +1,8 @@
 #pragma once
 
+#include "octopus/utils/ThreadPool.hh"
 #include "octopus/world/position/PositionContext.hh"
+#include "flecs.h"
 
 namespace octopus
 {
