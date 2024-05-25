@@ -125,8 +125,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// if not in range we need to move
 			else if(!in_attack_range(target_pos, pos_p, attack_p))
 			{
-				Vector direction_l = get_direction(ecs, pos_p, *target_pos);
-				move_p.move = direction_l * move_p.speed;
+				move_p.move = get_speed_direction(ecs, pos_p, *target_pos, move_p.speed);
 
 			}
 			// if in range and reload ready initiate windup
