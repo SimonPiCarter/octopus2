@@ -28,7 +28,10 @@ Vector separation_force(flecs::iter& it, size_t i, Position const *pos_p)
 		Fixed length_squared = square_length(diff);
 		if(length_squared <= max_range_squared && length_squared > 0.001)
 		{
-			force += diff/length(diff) * force_factor / length_squared;
+			Vector local_force = diff/length(diff) * force_factor / length_squared;
+			// account for mass
+			local_force *= 2 * pos_p[j].mass / (pos_p[i].mass + pos_p[j].mass);
+			force += local_force;
 		}
 	}
 

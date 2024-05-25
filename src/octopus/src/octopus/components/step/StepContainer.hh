@@ -158,16 +158,4 @@ struct StepManager
 	}
 };
 
-/// add StepManager maker function
-/// one with only basic steps
-/// one extended that add the basic steps
-
-StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep> makeDefaultStepManager();
-
-template<class... Ts>
-StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...> makeStepManager()
-{
-	return StepManager<HitPointStep, HitPointMaxStep, PositionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...>();
-}
-
 } // octopus

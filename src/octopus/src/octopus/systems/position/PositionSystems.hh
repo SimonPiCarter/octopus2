@@ -11,10 +11,6 @@
 namespace octopus
 {
 
-Fixed get_coef(Fixed const &dist_sq);
-
-Vector get_separation(flecs::entity e, Position const &pos_p, PositionContext const &posContext_p, Move const &move_p);
-
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p);
 
 Vector separation_force(flecs::iter& it, size_t i, Position const *pos_p);
@@ -43,7 +39,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 				// setup velocity and position
 				for (size_t i = 0; i < it.count(); i ++) {
 					flecs::entity &ent = it.entity(i);
-					v.push_back(move_p[i].velocity * max_speed / move_p[i].speed);
+					v.push_back(pos_p[i].velocity * max_speed / move_p[i].speed);
 					p.push_back(pos_p[i].pos);
 				}
 
@@ -54,12 +50,12 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 					f[i] = seek_force(move_p[i].move, v[i], max_speed);
 					// separation force
 					f[i] += separation_force(it, i, pos_p);
-					// tail force (to slow down when no other force)
-					f[i] -= v[i] * 0.5;
 
 					limit_length(f[i], max_force);
 
-					a[i] = f[i];
+					a[i] = f[i] / pos_p[i].mass;
+					// tail force (to slow down when no other force)
+					a[i] -= v[i] * 0.1 * std::min(pos_p[i].mass, Fixed(9));
 
 					v[i] += a[i];
 					limit_length(v[i], max_speed);
@@ -78,7 +74,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 		.kind(ecs.entity(MovingPhase))
 		.each([&ecs, &manager_p](flecs::entity e, Move &move_p) {
 			manager_p.get_last_layer().back().get<PositionStep>().add_step(e, PositionStep{move_p.move});
-			move_p.velocity = move_p.move;
+			manager_p.get_last_layer().back().get<VelocityStep>().add_step(e, VelocityStep{move_p.move});
 			move_p.move = Vector();
 		});
 
