@@ -2,6 +2,7 @@
 
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
+#include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/attack/Attack.hh"
 
@@ -29,6 +30,11 @@ void basic_components_support(flecs::world& ecs)
 		.member("reload_time", &Attack::reload_time)
 		.member("damage", &Attack::damage)
 		.member("range", &Attack::range);
+
+    ecs.component<Move>()
+		.member("move", &Move::move)
+		.member("velocity", &Move::velocity)
+		.member("speed", &Move::speed);
 }
 
 } // namespace octopus
