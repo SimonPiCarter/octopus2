@@ -63,3 +63,7 @@ Apply all steps :
 ## DisplaySync
 
 - sync with display
+
+## Cleanup
+
+- destroy entities
