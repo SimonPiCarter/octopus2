@@ -46,6 +46,10 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 				// iterate on every entity and update all values
 
 				for (size_t i = 0; i < it.count(); i ++) {
+					if(!pos_p[i].collision || pos_p[i].mass == Fixed::Zero())
+					{
+						continue;
+					}
 					// steering to target
 					f[i] = seek_force(move_p[i].move, v[i], max_speed);
 					// separation force
@@ -65,6 +69,10 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 				// update move with velocity
 				for (size_t i = 0; i < it.count(); i ++) {
+					if(!pos_p[i].collision || pos_p[i].mass == Fixed::Zero())
+					{
+						continue;
+					}
 					move_p[i].move = v[i] / max_speed * move_p[i].speed;
 				}
 			});

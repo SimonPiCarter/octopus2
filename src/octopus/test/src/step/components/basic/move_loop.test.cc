@@ -55,7 +55,7 @@ TEST(move_loop, simple)
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<MoveCommand>({{{10,10}}})
-		.set<Position>({{10,10}});
+		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), false});
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{

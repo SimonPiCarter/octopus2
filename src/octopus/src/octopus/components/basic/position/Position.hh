@@ -11,6 +11,7 @@ struct Position {
 	Vector pos;
 	Vector velocity;
 	Fixed mass = Fixed::One();
+	bool collision = true;
 };
 
 ///////////////////////////

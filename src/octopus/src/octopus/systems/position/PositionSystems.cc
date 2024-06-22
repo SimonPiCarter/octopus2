@@ -24,6 +24,10 @@ Vector separation_force(flecs::iter& it, size_t i, Position const *pos_p)
 	for(size_t j = 0 ; j < it.count() ; ++ j)
 	{
 		if(j==i) {continue;}
+		if(!pos_p[j].collision || pos_p[j].mass == Fixed::Zero())
+		{
+			continue;
+		}
 		Vector diff = pos_p[i].pos - pos_p[j].pos;
 		Fixed length_squared = square_length(diff);
 		if(length_squared <= max_range_squared && length_squared > 0.001)
