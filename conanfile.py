@@ -15,7 +15,7 @@ def get_infos():
     except Exception:
         return None,None
 
-class cfllpspConan(ConanFile):
+class octopus2Conan(ConanFile):
     name, version = get_infos()
     license = "©EURODECISION"
     url = "https://edgitlab.eurodecision.Command/cfl/cfllpsp"

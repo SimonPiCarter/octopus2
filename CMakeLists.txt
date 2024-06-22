@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.19)
 # Project configuration
 # ============================================================================
 
-project (octopus
+project (octopus2_old
 	VERSION 1.0.0
 	LANGUAGES CXX)
 
@@ -62,8 +62,8 @@ endif ()
 
 set (ConfigPackageLocation "lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
 
-install (EXPORT ${PROJECT_NAME}-export
-	FILE ${PROJECT_NAME}-targets.cmake
-	NAMESPACE ${PROJECT_NAME}::
+install (EXPORT octopus-export
+	FILE octopus-targets.cmake
+	NAMESPACE octopus::
 	DESTINATION "${ConfigPackageLocation}"
 	)
