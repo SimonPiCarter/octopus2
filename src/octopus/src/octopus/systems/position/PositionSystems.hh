@@ -73,7 +73,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 					{
 						continue;
 					}
-					move_p[i].move = v[i] / max_speed * move_p[i].speed;
+					move_p[i].move = v[i] * move_p[i].speed / max_speed;
 				}
 			});
 		});

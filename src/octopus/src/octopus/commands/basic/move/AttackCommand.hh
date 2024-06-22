@@ -78,6 +78,10 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
 			if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 			{
+				if(pos_p.mass > 1)
+				{
+					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
+				}
 				flecs::entity new_target = get_new_target(e, context_p, pos_p);
 				if(!new_target)
 				{
@@ -155,7 +159,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// reset mass if necessary
 			if(pos_p.mass > 1)
 			{
-				manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
+				manager_p.get_last_prelayer().back().get<MassStep>().add_step(e, {1});
 			}
 		});
 }
