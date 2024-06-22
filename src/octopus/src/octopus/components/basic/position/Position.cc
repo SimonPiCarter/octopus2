@@ -48,4 +48,19 @@ void VelocityStep::revert_step(Data &d, Memento const &memento) const
 	d.velocity = memento.old_velocity;
 }
 
+///////////////////////////
+/// Collision STEP
+///////////////////////////
+
+void CollisionStep::apply_step(Data &d, Memento &memento) const
+{
+	memento.old_collision = d.collision;
+	d.collision = new_collision;
+}
+
+void CollisionStep::revert_step(Data &d, Memento const &memento) const
+{
+	d.collision = memento.old_collision;
+}
+
 }

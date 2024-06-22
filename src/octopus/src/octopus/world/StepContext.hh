@@ -18,19 +18,19 @@ struct StepContext
 };
 
 template<typename variant_t>
-struct DefaultStepContext : StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>
+struct DefaultStepContext : StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>
 {};
 
 template<typename variant_t>
-StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, AttackWindupStep, AttackReloadStep, AttackCommandStep> makeDefaultStepContext()
+StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep> makeDefaultStepContext()
 {
-	return StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>();
+	return StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>();
 }
 
 template<typename variant_t, class... Ts>
-StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...> makeStepContext()
+StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...> makeStepContext()
 {
-	return StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...>();
+	return StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...>();
 }
 
 

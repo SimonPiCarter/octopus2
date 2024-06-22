@@ -71,4 +71,23 @@ struct VelocityStep {
 	void revert_step(Data &d, Memento const &memento) const;
 };
 
+///////////////////////////
+/// Collision STEP
+///////////////////////////
+
+struct CollisionMemento {
+	bool old_collision;
+};
+
+struct CollisionStep {
+	bool new_collision;
+
+	typedef Position Data;
+	typedef CollisionMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const;
+
+	void revert_step(Data &d, Memento const &memento) const;
+};
+
 }
