@@ -14,7 +14,7 @@ Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed con
 	return force;
 }
 
-Vector separation_force(flecs::iter& it, size_t i, Position const *pos_p)
+Vector separation_force(flecs::iter& it, size_t i, flecs::field<const octopus::Position> const &pos_p)
 {
 	Vector force;
 	Fixed max_range = Fixed(2);

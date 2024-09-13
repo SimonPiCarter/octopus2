@@ -33,39 +33,48 @@ TEST(DISABLED_comp_exclusive, bench)
 
 	// Walk : walk for 7 progress then run
 	ecs.system<Walk>()
-		.iter([](flecs::iter& it, Walk *walk_p) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				++walk_p[i].t;
-				if(walk_p[i].t >= 7)
-				{
-					it.entity(i).set<Runn>({0});
-					it.entity(i).remove<Walk>();
+		.run([](flecs::iter& it) {
+			while(it.next()) {
+				flecs::field<Walk> &walk_p = it.field<Walk>(0);
+				for (size_t i = 0; i < it.count(); i ++) {
+					++walk_p[i].t;
+					if(walk_p[i].t >= 7)
+					{
+						it.entity(i).set<Runn>({0});
+						it.entity(i).remove<Walk>();
+					}
 				}
 			}
 		});
 
 	// Run : run for 12 progress then attack
 	ecs.system<Runn>()
-		.iter([](flecs::iter& it, Runn *run_p) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				++run_p[i].t;
-				if(run_p[i].t >= 12)
-				{
-					it.entity(i).set<Attack>({0});
-					it.entity(i).remove<Runn>();
+		.run([](flecs::iter& it) {
+			while(it.next()) {
+				flecs::field<Runn> &run_p = it.field<Runn>(0);
+				for (size_t i = 0; i < it.count(); i ++) {
+					++run_p[i].t;
+					if(run_p[i].t >= 12)
+					{
+						it.entity(i).set<Attack>({0});
+						it.entity(i).remove<Runn>();
+					}
 				}
 			}
 		});
 
 	// Attack : attack for 16 progress then walk
 	ecs.system<Attack>()
-		.iter([](flecs::iter& it, Attack *attack_p) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				++attack_p[i].t;
-				if(attack_p[i].t >= 16)
-				{
-					it.entity(i).set<Walk>({0});
-					it.entity(i).remove<Attack>();
+		.run([](flecs::iter& it) {
+			while(it.next()) {
+				flecs::field<Attack> &attack_p = it.field<Attack>(0);
+				for (size_t i = 0; i < it.count(); i ++) {
+					++attack_p[i].t;
+					if(attack_p[i].t >= 16)
+					{
+						it.entity(i).set<Walk>({0});
+						it.entity(i).remove<Attack>();
+					}
 				}
 			}
 		});

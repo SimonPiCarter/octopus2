@@ -26,18 +26,22 @@ TEST(state_extension, simple)
 	// Walk
 	ecs.system<>()
 		.with(State::Walk).in()
-		.iter([](flecs::iter& it) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				std::cout << it.entity(i).name() << " Walk " << std::endl;
+		.run([](flecs::iter& it) {
+			while (it.next()) {
+				for (size_t i = 0; i < it.count(); i ++) {
+					std::cout << it.entity(i).name() << " Walk " << std::endl;
+				}
 			}
 		});
 
 	// Attack
 	ecs.system<>()
 		.with(StateExtension::Attack)
-		.iter([](flecs::iter& it) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				std::cout << it.entity(i).name() << " Attack " << std::endl;
+		.run([](flecs::iter& it) {
+			while (it.next()) {
+				for (size_t i = 0; i < it.count(); i ++) {
+					std::cout << it.entity(i).name() << " Attack " << std::endl;
+				}
 			}
 		});
 

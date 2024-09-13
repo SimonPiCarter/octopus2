@@ -40,7 +40,7 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 	// Add memento
 	ecs.system("CommandQueueMementoSetup")
 		.kind(ecs.entity(InitializationPhase))
-		.iter([&mementoManager_p](flecs::iter& it) {
+		.run([&mementoManager_p](flecs::iter& it) {
 			mementoManager_p.lMementos.push_back(typename CommandQueueMementoManager<variant_t>::vMemento());
 		});
 

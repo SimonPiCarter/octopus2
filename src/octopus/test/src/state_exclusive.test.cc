@@ -21,16 +21,20 @@ TEST(state_exclusive, simple)
 	// System
 	ecs.system<>()
 		.with(state, walk)
-		.iter([](flecs::iter& it) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				std::cout << it.entity(i).name() << " walking. " << std::endl;
+		.run([](flecs::iter& it) {
+			while (it.next()) {
+				for (size_t i = 0; i < it.count(); i ++) {
+					std::cout << it.entity(i).name() << " walking. " << std::endl;
+				}
 			}
 		});
 	ecs.system<>()
 		.with(state, run)
-		.iter([](flecs::iter& it) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				std::cout << it.entity(i).name() << " running. " << std::endl;
+		.run([](flecs::iter& it) {
+			while (it.next()) {
+				for (size_t i = 0; i < it.count(); i ++) {
+					std::cout << it.entity(i).name() << " running. " << std::endl;
+				}
 			}
 		});
 
@@ -41,9 +45,11 @@ TEST(state_exclusive, simple)
     flecs::entity attack = ecs.entity();
 	ecs.system<>()
 		.with(state, attack)
-		.iter([](flecs::iter& it) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				std::cout << it.entity(i).name() << " attacking. " << std::endl;
+		.run([](flecs::iter& it) {
+			while (it.next()) {
+				for (size_t i = 0; i < it.count(); i ++) {
+					std::cout << it.entity(i).name() << " attacking. " << std::endl;
+				}
 			}
 		});
 

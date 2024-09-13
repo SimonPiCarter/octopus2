@@ -13,7 +13,8 @@ namespace octopus
 
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p);
 
-Vector separation_force(flecs::iter& it, size_t i, Position const *pos_p);
+Vector separation_force(flecs::iter& it, size_t i, flecs::field<const octopus::Position> const &pos_p);
+
 
 template<class StepManager_t>
 void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, PositionContext const &posContext_p)
@@ -23,7 +24,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	// flocking system
 	ecs.system<>()
 		.kind(ecs.entity(MovingPhase))
-		.iter([&](flecs::iter&) {
+		.run([&](flecs::iter&) {
 			Fixed max_force = 100;
 			Fixed max_speed = 100;
 			std::vector<Vector> f;  // forces
@@ -31,7 +32,10 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			std::vector<Vector> v;  // velocity
 			std::vector<Vector> p;  // position
 
-			posContext_p.move_query.iter([&](flecs::iter& it, Position const *pos_p, Move *move_p) {
+			posContext_p.move_query.run([&](flecs::iter& it) {
+				while(it.next()) {
+				auto pos_p = it.field<Position const>(0);
+				auto move_p = it.field<Move>(1);
 				f.resize(it.count(), Vector());
 				a.resize(it.count(), Vector());
 				v.reserve(it.count());
@@ -62,7 +66,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 					a[i] -= v[i] * 0.1 * std::min(pos_p[i].mass, Fixed(9));
 
 					v[i] += a[i];
-					limit_length(v[i], max_speed);
+					limit_length(v[i], pos_p[i].mass > 999 ? Fixed::Zero() : max_speed);
 
 					p[i] += v[i];
 				}
@@ -75,7 +79,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 					}
 					move_p[i].move = v[i] * move_p[i].speed / max_speed;
 				}
-			});
+			}});
 		});
 
 	ecs.system<Move>()

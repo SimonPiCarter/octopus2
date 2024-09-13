@@ -49,20 +49,22 @@ TEST(simple, simple)
     e3.add(Walking);
 
     // Iterate the query
-    q.iter([&](const flecs::iter& it) {
-        // Get the column with direction states. This is stored as an array
-        // with identifiers to the individual states
-        auto movement = it.field<const flecs::entity_t>(1);
-        auto direction = it.field<const flecs::entity_t>(2);
+    q.run([&](flecs::iter& it) {
+		while (it.next()) {
+			// Get the column with direction states. This is stored as an array
+			// with identifiers to the individual states
+			auto movement = it.field<const flecs::entity_t>(1);
+			auto direction = it.field<const flecs::entity_t>(2);
 
-        for (auto i : it) {
-            // Movement will always be Walking, Direction can be any state
-            std::cout << it.entity(i).name()
-                << ": Movement: "
-                << it.world().get_alive(movement[i]).name()
-                << ", Direction: "
-                << it.world().get_alive(direction[i]).name()
-                << std::endl;
-        }
+			for (auto i : it) {
+				// Movement will always be Walking, Direction can be any state
+				std::cout << it.entity(i).name()
+					<< ": Movement: "
+					<< it.world().get_alive(movement[i]).name()
+					<< ", Direction: "
+					<< it.world().get_alive(direction[i]).name()
+					<< std::endl;
+			}
+		}
     });
 }

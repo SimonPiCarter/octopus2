@@ -50,13 +50,16 @@ TEST(DISABLED_state_exclusive, bench)
 	// Walk : walk for 7 progress then run
 	ecs.system<Walk>()
 		.with(state, walk)
-		.iter([&state, &run](flecs::iter& it, Walk *walk_p) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				++walk_p[i].t;
-				if(walk_p[i].t >= 7)
-				{
-					walk_p[i].t = 0;
-					it.entity(i).add(state, run);
+		.run([&state, &run](flecs::iter& it) {
+			while(it.next()) {
+				flecs::field<Walk> &walk_p = it.field<Walk>(0);
+				for (size_t i = 0; i < it.count(); i ++) {
+					++walk_p[i].t;
+					if(walk_p[i].t >= 7)
+					{
+						walk_p[i].t = 0;
+						it.entity(i).add(state, run);
+					}
 				}
 			}
 		});
@@ -64,13 +67,16 @@ TEST(DISABLED_state_exclusive, bench)
 	// Run : run for 12 progress then attack
 	ecs.system<Runn>()
 		.with(state, run)
-		.iter([&state, &attack](flecs::iter& it, Runn *run_p) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				++run_p[i].t;
-				if(run_p[i].t >= 12)
-				{
-					run_p[i].t = 0;
-					it.entity(i).add(state, attack);
+		.run([&state, &attack](flecs::iter& it) {
+			while(it.next()) {
+				flecs::field<Runn> &run_p = it.field<Runn>(0);
+				for (size_t i = 0; i < it.count(); i ++) {
+					++run_p[i].t;
+					if(run_p[i].t >= 12)
+					{
+						run_p[i].t = 0;
+						it.entity(i).add(state, attack);
+					}
 				}
 			}
 		});
@@ -78,13 +84,16 @@ TEST(DISABLED_state_exclusive, bench)
 	// Attack : attack for 16 progress then walk
 	ecs.system<Attack>()
 		.with(state, attack)
-		.iter([&state, &walk](flecs::iter& it, Attack *attack_p) {
-			for (size_t i = 0; i < it.count(); i ++) {
-				++attack_p[i].t;
-				if(attack_p[i].t >= 16)
-				{
-					attack_p[i].t = 0;
-					it.entity(i).add(state, walk);
+		.run([&state, &walk](flecs::iter& it) {
+			while(it.next()) {
+				flecs::field<Attack> &attack_p = it.field<Attack>(0);
+				for (size_t i = 0; i < it.count(); i ++) {
+					++attack_p[i].t;
+					if(attack_p[i].t >= 16)
+					{
+						attack_p[i].t = 0;
+						it.entity(i).add(state, walk);
+					}
 				}
 			}
 		});
