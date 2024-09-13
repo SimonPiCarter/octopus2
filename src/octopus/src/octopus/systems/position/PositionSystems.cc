@@ -19,7 +19,7 @@ Vector separation_force(flecs::iter& it, size_t i, flecs::field<const octopus::P
 	Vector force;
 	Fixed max_range = Fixed(2);
 	Fixed max_range_squared = max_range*max_range;
-	Fixed force_factor = 100;
+	Fixed force_factor = 500;
 
 	for(size_t j = 0 ; j < it.count() ; ++ j)
 	{

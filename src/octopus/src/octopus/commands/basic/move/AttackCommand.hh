@@ -134,18 +134,30 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				{
 					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
 				}
+
+				flecs::entity new_target = get_new_target(e, context_p, pos_p);
+				if(new_target
+				&& in_attack_range(new_target.get<Position>(), pos_p, attack_p))
+				{
+					// update target
+					manager_p.get_last_layer().back().get<AttackCommandStep>().add_step(e, {new_target});
+				}
+
 				move_p.move = get_speed_direction(ecs, pos_p, *target_pos, move_p.speed);
 			}
 			// if in range and reload ready initiate windup
-			else if(has_reloaded(manager_p.steps_added, attack_p))
+			else
 			{
 				// set mass if necessary
 				if(pos_p.mass < 5)
 				{
 					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1000});
 				}
-				// increment windup
-				manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
+				if(has_reloaded(manager_p.steps_added, attack_p))
+				{
+					// increment windup
+					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
+				}
 			}
 		});
 
