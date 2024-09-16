@@ -1,5 +1,7 @@
 #pragma once
 
+#include "octopus/components/basic/flock/Flock.hh"
+
 namespace octopus
 {
 
@@ -17,20 +19,31 @@ struct StepContext
 	StateStepContainer<variant_t> state_step_manager;
 };
 
+#define DEFAULT_STEPS_T HitPointStep, \
+HitPointMaxStep, \
+PositionStep, \
+MassStep, \
+VelocityStep, \
+CollisionStep, \
+AttackWindupStep, \
+AttackReloadStep, \
+AttackCommandStep, \
+FlockArrivedStep
+
 template<typename variant_t>
-struct DefaultStepContext : StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>
+struct DefaultStepContext : StepContext<variant_t, DEFAULT_STEPS_T>
 {};
 
 template<typename variant_t>
-StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep> makeDefaultStepContext()
+StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T> makeDefaultStepContext()
 {
-	return StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep>();
+	return StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T>();
 }
 
 template<typename variant_t, class... Ts>
-StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...> makeStepContext()
+StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T, Ts...> makeStepContext()
 {
-	return StepContext<variant_t, HitPointStep, HitPointMaxStep, PositionStep, MassStep, VelocityStep, CollisionStep, AttackWindupStep, AttackReloadStep, AttackCommandStep, Ts...>();
+	return StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T, Ts...>();
 }
 
 

@@ -3,12 +3,14 @@
 #include "flecs.h"
 #include "octopus/utils/Vector.hh"
 #include "octopus/components/basic/attack/Attack.hh"
+#include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/player/Team.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/world/position/closest_neighbours.hh"
 #include "octopus/world/position/PositionContext.hh"
+#include "octopus/world/stats/TimeStats.hh"
 
 #include "octopus/world/path/direction.hh"
 
@@ -67,12 +69,14 @@ bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack
 bool has_reloaded(uint32_t time_p, Attack const&attack_p);
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionContext const &context_p)
+void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionContext const &context_p, TimeStats &time_stats_p)
 {
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
-		.each([&ecs, &manager_p, &context_p](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
+		.each([&](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
+			START_TIME(attack_command)
+
 			// check if target is valid
 			HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.get<HitPoint>() : nullptr;
 			Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
@@ -82,7 +86,12 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				{
 					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
 				}
+				START_TIME(attack_command_new_target)
+
 				flecs::entity new_target = get_new_target(e, context_p, pos_p);
+
+				END_TIME(attack_command_new_target)
+
 				if(!new_target)
 				{
 					// if no move we are done
@@ -93,6 +102,13 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					// else move and if done we are done
 					else if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p))
 					{
+						FlockRef const * flock_ref_l = e.get<FlockRef>();
+						if(flock_ref_l)
+						{
+							flecs::entity flock_l = flock_ref_l->ref;
+							Flock const *flock_comp_l = flock_l.get<Flock>();
+							manager_p.get_last_layer().back().get<FlockArrivedStep>().add_step(flock_l, {flock_comp_l->arrived + 1});
+						}
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
 					}
 				}
@@ -103,6 +119,8 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					// reset windup
 					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {0});
 				}
+
+				END_TIME(attack_command)
 				return;
 			}
 
@@ -159,6 +177,8 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
 				}
 			}
+
+			END_TIME(attack_command)
 		});
 
 	// clean up

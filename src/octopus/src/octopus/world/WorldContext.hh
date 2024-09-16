@@ -2,6 +2,7 @@
 
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/world/position/PositionContext.hh"
+#include "octopus/world/stats/TimeStats.hh"
 #include "flecs.h"
 
 namespace octopus
@@ -19,6 +20,7 @@ struct WorldContext
 	flecs::world ecs;
 	ThreadPool pool;
 	PositionContext position_context;
+	TimeStats time_stats;
 };
 
 } // namespace octopus

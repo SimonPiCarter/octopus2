@@ -30,7 +30,7 @@ void set_up_systems(WorldContext &world, StepContext_t &step_context)
 	set_up_command_queue_systems<typename StepContext_t::variant>(world.ecs, step_context.memento_manager, step_context.state_step_manager);
 
 	// position systems
-	set_up_position_systems(world.ecs, world.pool, step_context.step_manager, world.position_context);
+	set_up_position_systems(world.ecs, world.pool, step_context.step_manager, world.position_context, world.time_stats);
 
 	// step systems
 	set_up_step_systems(world.ecs, world.pool, step_context.step_manager, step_context.state_step_manager);
@@ -40,7 +40,8 @@ void set_up_systems(WorldContext &world, StepContext_t &step_context)
 
 	// commands systems
 	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager);
-	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.position_context);
+	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
+		world.ecs, step_context.step_manager, world.position_context, world.time_stats);
 }
 
 }

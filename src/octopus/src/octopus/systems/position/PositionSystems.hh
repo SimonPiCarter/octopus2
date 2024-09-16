@@ -1,23 +1,27 @@
 #pragma once
 
+#include <chrono>
+
 #include "flecs.h"
+
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/world/position/PositionContext.hh"
 
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/systems/phases/Phases.hh"
+#include "octopus/world/stats/TimeStats.hh"
 
 namespace octopus
 {
 
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p);
 
-Vector separation_force(flecs::iter& it, size_t i, flecs::field<const octopus::Position> const &pos_p);
+Vector separation_force(PositionContext const &posContext_p, Position const &pos_ref_p);
 
 
 template<class StepManager_t>
-void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, PositionContext const &posContext_p)
+void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, PositionContext const &posContext_p, TimeStats &time_stats_p)
 {
 	// Move system
 
@@ -25,19 +29,22 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	ecs.system<>()
 		.kind(ecs.entity(MovingPhase))
 		.run([&](flecs::iter&) {
+			START_TIME(position_system)
+
 			Fixed max_force = 100;
 			Fixed max_speed = 100;
-			std::vector<Vector> f;  // forces
-			std::vector<Vector> a;  // acceleration
-			std::vector<Vector> v;  // velocity
-			std::vector<Vector> p;  // position
 
 			posContext_p.move_query.run([&](flecs::iter& it) {
 				while(it.next()) {
 				auto pos_p = it.field<Position const>(0);
 				auto move_p = it.field<Move>(1);
-				f.resize(it.count(), Vector());
-				a.resize(it.count(), Vector());
+
+				std::vector<Vector> f;  // forces
+				std::vector<Vector> a;  // acceleration
+				std::vector<Vector> v;  // velocity
+				std::vector<Vector> p;  // position
+				f.resize(it.count());
+				a.resize(it.count());
 				v.reserve(it.count());
 				p.reserve(it.count());
 				// setup velocity and position
@@ -54,16 +61,22 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 					{
 						continue;
 					}
+
 					// steering to target
-					f[i] = seek_force(move_p[i].move, v[i], max_speed);
+					Vector seek_l = seek_force(move_p[i].move, v[i], max_speed);
+					f[i] = seek_l;
 					// separation force
-					f[i] += separation_force(it, i, pos_p);
+					Vector sep_l = separation_force(posContext_p, pos_p[i]);
+					f[i] += sep_l;
 
 					limit_length(f[i], max_force);
 
 					a[i] = f[i] / pos_p[i].mass;
 					// tail force (to slow down when no other force)
-					a[i] -= v[i] * 0.1 * std::min(pos_p[i].mass, Fixed(9));
+					if(square_length(a[i]) < Fixed::One() / 10)
+					{
+						a[i] = Vector(0,0)-v[i];
+					}
 
 					v[i] += a[i];
 					limit_length(v[i], pos_p[i].mass > 999 ? Fixed::Zero() : max_speed);
@@ -80,6 +93,8 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 					move_p[i].move = v[i] * move_p[i].speed / max_speed;
 				}
 			}});
+
+			END_TIME(position_system)
 		});
 
 	ecs.system<Move>()
