@@ -62,8 +62,8 @@ void set_up_phases(flecs::world &ecs)
 		.add(flecs::Phase)
 		.depends_on(validatePhase);
 
-	/// CleanupPhase
-	flecs::entity cleanupPhase = ecs.entity(CleanupPhase)
+	/// EndCleanupPhase
+	flecs::entity endCleanupPhase = ecs.entity(EndCleanupPhase)
 		.add(flecs::Phase)
 		.depends_on(displaySyncPhase);
 }

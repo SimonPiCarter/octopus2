@@ -48,7 +48,7 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool)
 
 	ecs.system<HitPoint const>()
 		.multi_threaded()
-		.kind(ecs.entity(CleanupPhase))
+		.kind(ecs.entity(EndCleanupPhase))
 		.each([](flecs::entity e, HitPoint const &hp_p) {
 			if(hp_p.qty == Fixed::Zero())
 			{
