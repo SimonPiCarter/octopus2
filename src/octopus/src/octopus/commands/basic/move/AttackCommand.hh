@@ -86,11 +86,16 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				{
 					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
 				}
-				START_TIME(attack_command_new_target)
 
-				flecs::entity new_target = get_new_target(e, context_p, pos_p);
+				flecs::entity new_target;
+				if(!ecs.get_info() || ecs.get_info()->frame_count_total % 32 == 0)
+				{
+					START_TIME(attack_command_new_target)
 
-				END_TIME(attack_command_new_target)
+					new_target = get_new_target(e, context_p, pos_p);
+
+					END_TIME(attack_command_new_target)
+				}
 
 				if(!new_target)
 				{
@@ -153,7 +158,16 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
 				}
 
-				flecs::entity new_target = get_new_target(e, context_p, pos_p);
+				flecs::entity new_target;
+				if(!ecs.get_info() || ecs.get_info()->frame_count_total % 32 == 0)
+				{
+					START_TIME(attack_command_new_target)
+
+					new_target = get_new_target(e, context_p, pos_p);
+
+					END_TIME(attack_command_new_target)
+				}
+
 				if(new_target
 				&& in_attack_range(new_target.get<Position>(), pos_p, attack_p))
 				{

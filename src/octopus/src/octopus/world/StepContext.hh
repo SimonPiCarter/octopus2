@@ -1,6 +1,7 @@
 #pragma once
 
 #include "octopus/components/basic/flock/Flock.hh"
+#include "octopus/components/basic/position/PositionInTree.hh"
 
 namespace octopus
 {
@@ -22,6 +23,7 @@ struct StepContext
 #define DEFAULT_STEPS_T HitPointStep, \
 HitPointMaxStep, \
 PositionStep, \
+PositionInTreeStep, \
 MassStep, \
 VelocityStep, \
 CollisionStep, \

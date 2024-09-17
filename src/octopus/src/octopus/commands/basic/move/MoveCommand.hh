@@ -28,12 +28,13 @@ struct MoveCommand {
 bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Position const&target_p, Move &move_p);
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
+void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &time_stats_p)
 {
 	ecs.system<Position const, MoveCommand const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<MoveCommand::State>())
-		.each([&ecs, &manager_p](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p, CommandQueue_t &queue_p) {
+		.each([&ecs, &manager_p, &time_stats_p](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p, CommandQueue_t &queue_p) {
+			START_TIME(attack_command)
 			if(move_routine(ecs, e, pos_p, moveCommand_p.target, move_p))
 			{
 				FlockRef const * flock_ref_l = e.get<FlockRef>();
@@ -45,6 +46,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p)
 				}
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
+			END_TIME(attack_command)
 		});
 }
 

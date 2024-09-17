@@ -5,9 +5,11 @@
 #include "flecs.h"
 
 #include "octopus/utils/ThreadPool.hh"
+#include "octopus/utils/aabb/aabb_tree.hh"
 #include "octopus/world/position/PositionContext.hh"
 
 #include "octopus/components/basic/position/Position.hh"
+#include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/systems/phases/Phases.hh"
 #include "octopus/world/stats/TimeStats.hh"
@@ -21,79 +23,80 @@ Vector separation_force(PositionContext const &posContext_p, Position const &pos
 
 
 template<class StepManager_t>
-void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, PositionContext const &posContext_p, TimeStats &time_stats_p)
+void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, PositionContext &posContext_p, TimeStats &time_stats_p)
 {
 	// Move system
 
+	// update position tree
+	ecs.system<PositionInTree const, Position const>()
+		.kind(ecs.entity(UpdatePhase))
+		.each([&](flecs::entity e, PositionInTree const &pos_in_tree, Position const &pos) {
+			START_TIME(tree_update)
+			if(pos_in_tree.idx_leaf < 0)
+			{
+				aabb box {pos.pos, pos.pos};
+				box = expand_aabb(box, 2*pos.ray);
+				int32_t idx_l = add_new_leaf(posContext_p.tree, box, e);
+				manager_p.get_last_layer().back().get<PositionInTreeStep>().add_step(e, PositionInTreeStep{PositionInTree{idx_l}});
+			}
+			else
+			{
+				aabb box {pos.pos, pos.pos};
+				box = expand_aabb(box, pos.ray);
+				update_leaf(posContext_p.tree, pos_in_tree.idx_leaf, box, pos.ray);
+			}
+			END_TIME(tree_update)
+		});
+
+	ecs.observer<PositionInTree const>()
+		.event(flecs::OnRemove)
+		.each([&posContext_p](flecs::entity e, PositionInTree const& pos_in_tree) {
+			if(pos_in_tree.idx_leaf >= 0)
+			{
+				remove_leaf(posContext_p.tree, pos_in_tree.idx_leaf);
+			}
+		});
+
+	static Fixed max_force = 100;
+	static Fixed max_speed = 100;
+
 	// flocking system
-	ecs.system<>()
+	ecs.system<Position const, Move>()
 		.kind(ecs.entity(MovingPhase))
-		.run([&](flecs::iter&) {
+		.multi_threaded()
+		.each([&](flecs::entity &e, Position const &pos_p, Move &move_p) {
 			START_TIME(position_system)
 
-			Fixed max_force = 100;
-			Fixed max_speed = 100;
+			Vector f;  // forces
+			Vector a;  // acceleration
+			Vector v = pos_p.velocity * max_speed / move_p.speed;  // velocity
+			Vector const &p = pos_p.pos;  // position
 
-			posContext_p.move_query.run([&](flecs::iter& it) {
-				while(it.next()) {
-				auto pos_p = it.field<Position const>(0);
-				auto move_p = it.field<Move>(1);
+			if(!pos_p.collision || pos_p.mass == Fixed::Zero())
+			{
+				return;
+			}
 
-				std::vector<Vector> f;  // forces
-				std::vector<Vector> a;  // acceleration
-				std::vector<Vector> v;  // velocity
-				std::vector<Vector> p;  // position
-				f.resize(it.count());
-				a.resize(it.count());
-				v.reserve(it.count());
-				p.reserve(it.count());
-				// setup velocity and position
-				for (size_t i = 0; i < it.count(); i ++) {
-					flecs::entity &ent = it.entity(i);
-					v.push_back(pos_p[i].velocity * max_speed / move_p[i].speed);
-					p.push_back(pos_p[i].pos);
-				}
+			// steering to target
+			Vector seek_l = seek_force(move_p.move, v, max_speed);
+			f = seek_l;
+			// separation force
+			Vector sep_l = separation_force(posContext_p, pos_p);
+			f += sep_l;
 
-				// iterate on every entity and update all values
+			limit_length(f, max_force);
 
-				for (size_t i = 0; i < it.count(); i ++) {
-					if(!pos_p[i].collision || pos_p[i].mass == Fixed::Zero())
-					{
-						continue;
-					}
+			a = f / pos_p.mass;
+			// tail force (to slow down when no other force)
+			if(square_length(a) < Fixed::One() / 10)
+			{
+				a = Vector(0,0)-v;
+			}
 
-					// steering to target
-					Vector seek_l = seek_force(move_p[i].move, v[i], max_speed);
-					f[i] = seek_l;
-					// separation force
-					Vector sep_l = separation_force(posContext_p, pos_p[i]);
-					f[i] += sep_l;
+			v += a;
+			limit_length(v, pos_p.mass > 999 ? Fixed::Zero() : max_speed);
 
-					limit_length(f[i], max_force);
-
-					a[i] = f[i] / pos_p[i].mass;
-					// tail force (to slow down when no other force)
-					if(square_length(a[i]) < Fixed::One() / 10)
-					{
-						a[i] = Vector(0,0)-v[i];
-					}
-
-					v[i] += a[i];
-					limit_length(v[i], pos_p[i].mass > 999 ? Fixed::Zero() : max_speed);
-
-					p[i] += v[i];
-				}
-
-				// update move with velocity
-				for (size_t i = 0; i < it.count(); i ++) {
-					if(!pos_p[i].collision || pos_p[i].mass == Fixed::Zero())
-					{
-						continue;
-					}
-					move_p[i].move = v[i] * move_p[i].speed / max_speed;
-				}
-			}});
-
+			move_p.move = v * move_p.speed / max_speed;
 			END_TIME(position_system)
 		});
 

@@ -1,6 +1,8 @@
 #include "closest_neighbours.hh"
 
+#include <cassert>
 #include <set>
+#include "octopus/utils/aabb/aabb.hh"
 
 namespace octopus
 {
@@ -30,10 +32,10 @@ std::vector<flecs::entity> get_closest_entities(
 
 	Fixed max_range_sq = max_range*max_range;
 
-	// clear queued actions first
-	context_p.position_query.each([&closest_l, &pos_p, &filter_p, &n, &max_range_sq](flecs::entity e, Position const &other_p) {
-
-		Fixed distance_sq = square_length(pos_p.pos - other_p.pos);
+	std::function<bool(int32_t, flecs::entity)> func_l = [&](int32_t idx_l, flecs::entity e) -> bool {
+		Position const *other_p = e.get<Position>();
+		assert(other_p);
+		Fixed distance_sq = square_length(pos_p.pos - other_p->pos);
 
 		if(filter_p(e)
 		&& (closest_l.empty() || distance_sq < closest_l.rbegin()->distance_sq)
@@ -46,7 +48,10 @@ std::vector<flecs::entity> get_closest_entities(
 		{
 			closest_l.erase(std::prev(closest_l.end()));
 		}
-	});
+		return true;
+	};
+
+	tree_circle_query(context_p.tree, pos_p.pos, max_range, func_l);
 
 	std::vector<flecs::entity> result_l;
 	for(auto &&dis_ent : closest_l)
