@@ -3,11 +3,11 @@
 namespace octopus
 {
 
-flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p)
+flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p)
 {
 	Team const *team_l = e.get<Team>();
 	// get enemy closest entities
-	std::vector<flecs::entity> new_candidates_l = get_closest_entities(1, 8, context_p, pos_p, [team_l](flecs::entity const &other_p) -> bool {
+	std::vector<flecs::entity> new_candidates_l = get_closest_entities(1, range_p, context_p, pos_p, [team_l](flecs::entity const &other_p) -> bool {
 		if(!team_l)
 		{
 			return true;

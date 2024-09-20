@@ -63,7 +63,7 @@ struct AttackCommandStep {
 
 namespace octopus {
 
-flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p);
+flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p);
 
 bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack const&attack_p);
 
@@ -93,7 +93,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				{
 					START_TIME(attack_command_new_target)
 
-					new_target = get_new_target(e, context_p, pos_p);
+					new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(8), attack_p.range));
 
 					END_TIME(attack_command_new_target)
 				}
@@ -164,7 +164,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				{
 					START_TIME(attack_command_new_target)
 
-					new_target = get_new_target(e, context_p, pos_p);
+					new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(8), attack_p.range));
 
 					END_TIME(attack_command_new_target)
 				}
