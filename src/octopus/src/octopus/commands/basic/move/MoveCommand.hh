@@ -6,6 +6,7 @@
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/world/stats/TimeStats.hh"
 
 #include "octopus/world/path/direction.hh"
 
