@@ -52,7 +52,7 @@ TEST(DISABLED_state_exclusive, bench)
 		.with(state, walk)
 		.run([&state, &run](flecs::iter& it) {
 			while(it.next()) {
-				flecs::field<Walk> &walk_p = it.field<Walk>(0);
+				flecs::field<Walk> walk_p = it.field<Walk>(0);
 				for (size_t i = 0; i < it.count(); i ++) {
 					++walk_p[i].t;
 					if(walk_p[i].t >= 7)
@@ -69,7 +69,7 @@ TEST(DISABLED_state_exclusive, bench)
 		.with(state, run)
 		.run([&state, &attack](flecs::iter& it) {
 			while(it.next()) {
-				flecs::field<Runn> &run_p = it.field<Runn>(0);
+				flecs::field<Runn> run_p = it.field<Runn>(0);
 				for (size_t i = 0; i < it.count(); i ++) {
 					++run_p[i].t;
 					if(run_p[i].t >= 12)
@@ -86,7 +86,7 @@ TEST(DISABLED_state_exclusive, bench)
 		.with(state, attack)
 		.run([&state, &walk](flecs::iter& it) {
 			while(it.next()) {
-				flecs::field<Attack> &attack_p = it.field<Attack>(0);
+				flecs::field<Attack> attack_p = it.field<Attack>(0);
 				for (size_t i = 0; i < it.count(); i ++) {
 					++attack_p[i].t;
 					if(attack_p[i].t >= 16)

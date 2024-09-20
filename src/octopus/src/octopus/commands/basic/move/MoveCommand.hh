@@ -42,7 +42,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 				{
 					flecs::entity flock_l = flock_ref_l->ref;
 					Flock const *flock_comp_l = flock_l.get<Flock>();
-					manager_p.get_last_layer().back().get<FlockArrivedStep>().add_step(flock_l, {flock_comp_l->arrived + 1});
+					manager_p.get_last_layer().back().template get<FlockArrivedStep>().add_step(flock_l, {flock_comp_l->arrived + 1});
 				}
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}

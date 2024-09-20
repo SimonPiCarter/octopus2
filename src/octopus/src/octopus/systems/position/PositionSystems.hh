@@ -37,7 +37,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 				aabb box {pos.pos, pos.pos};
 				box = expand_aabb(box, 2*pos.ray);
 				int32_t idx_l = add_new_leaf(posContext_p.tree, box, e);
-				manager_p.get_last_layer().back().get<PositionInTreeStep>().add_step(e, PositionInTreeStep{PositionInTree{idx_l}});
+				manager_p.get_last_layer().back().template get<PositionInTreeStep>().add_step(e, PositionInTreeStep{PositionInTree{idx_l}});
 			}
 			else
 			{
@@ -64,7 +64,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	ecs.system<Position const, Move>()
 		.kind(ecs.entity(MovingPhase))
 		.multi_threaded()
-		.each([&](flecs::entity &e, Position const &pos_p, Move &move_p) {
+		.each([&](flecs::entity e, Position const &pos_p, Move &move_p) {
 			START_TIME(position_system)
 
 			Vector f;  // forces
@@ -103,8 +103,8 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	ecs.system<Move>()
 		.kind(ecs.entity(MovingPhase))
 		.each([&ecs, &manager_p](flecs::entity e, Move &move_p) {
-			manager_p.get_last_layer().back().get<PositionStep>().add_step(e, PositionStep{move_p.move});
-			manager_p.get_last_layer().back().get<VelocityStep>().add_step(e, VelocityStep{move_p.move});
+			manager_p.get_last_layer().back().template get<PositionStep>().add_step(e, PositionStep{move_p.move});
+			manager_p.get_last_layer().back().template get<VelocityStep>().add_step(e, VelocityStep{move_p.move});
 			move_p.move = Vector();
 		});
 

@@ -88,14 +88,14 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 			{
 				if(attack_p.target)
 				{
-					manager_p.get_last_layer().back().get<HitPointStep>().add_step(attack_p.target, {-attack_p.damage});
+					manager_p.get_last_layer().back().template get<HitPointStep>().add_step(attack_p.target, {-attack_p.damage});
 				}
-				manager_p.get_last_layer().back().get<AttackTestStep>().add_step(e, {0});
+				manager_p.get_last_layer().back().template get<AttackTestStep>().add_step(e, {0});
 				cQueue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 			else
 			{
-				manager_p.get_last_layer().back().get<AttackTestStep>().add_step(e, {attack_p.windup+1});
+				manager_p.get_last_layer().back().template get<AttackTestStep>().add_step(e, {attack_p.windup+1});
 			}
 		});
 
@@ -104,7 +104,7 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 		.kind(ecs.entity(CleanUpPhase))
 		.with(CustomCommandQueue::cleanup(ecs), ecs.component<AttackTestComponent::State>())
 		.each([&manager_p](flecs::entity e, AttackTestComponent &attack_p, CustomCommandQueue &cQueue_p) {
-				manager_p.get_last_prelayer().back().get<AttackTestStep>().add_step(e, {0});
+				manager_p.get_last_prelayer().back().template get<AttackTestStep>().add_step(e, {0});
 		});
 }
 

@@ -340,7 +340,7 @@ int32_t findBestSibling( const aabb_tree<data_t>& tree, aabb const &boxD )
 		bool leaf2 = nodes[right].height == 0;
 
 		// Cost of descending into child 1
-		Fixed lowerCost1 = numeric::infinity<Fixed>();
+		Fixed lowerCost1 = octopus::numeric::infinity<Fixed>();
 		aabb box1 = nodes[left].box;
 		Fixed directCost1 = peritmeter_aabb( union_aabb( box1, boxD ) );
 		Fixed area1 = Fixed::Zero();
@@ -367,7 +367,7 @@ int32_t findBestSibling( const aabb_tree<data_t>& tree, aabb const &boxD )
 		}
 
 		// Cost of descending into child 2
-		Fixed lowerCost2 = numeric::infinity<Fixed>();
+		Fixed lowerCost2 = octopus::numeric::infinity<Fixed>();
 		aabb box2 = nodes[right].box;
 		Fixed directCost2 = peritmeter_aabb( union_aabb( box2, boxD ) );
 		Fixed area2 = Fixed::Zero();
@@ -407,8 +407,8 @@ int32_t findBestSibling( const aabb_tree<data_t>& tree, aabb const &boxD )
 
 		if ( lowerCost1 == lowerCost2 && leaf1 == false )
 		{
-			assert( lowerCost1 < numeric::infinity<Fixed>() );
-			assert( lowerCost2 < numeric::infinity<Fixed>() );
+			assert( lowerCost1 < octopus::numeric::infinity<Fixed>() );
+			assert( lowerCost2 < octopus::numeric::infinity<Fixed>() );
 
 			// No clear choice based on lower bound surface area. This can happen when both
 			// children fully contain D. Fall back to node distance.
@@ -461,17 +461,6 @@ void free_node( aabb_tree<data_t>& tree, int32_t idx)
 	tree.nodes[idx].parent = tree.first_free;
 	tree.nodes[idx].height = -1;
 	tree.first_free = idx;
-}
-
-template<typename data_t>
-int32_t add_new_leaf( aabb_tree<data_t>& tree, aabb const &new_box, data_t const &data)
-{
-	int32_t new_idx = allocate_node(tree);
-	tree.nodes[new_idx].box = new_box;
-	tree.nodes[new_idx].data = data;
-
-	insert_leaf<data_t>(tree, new_idx, true);
-	return new_idx;
 }
 
 template<typename data_t>
@@ -548,6 +537,17 @@ void insert_leaf( aabb_tree<data_t>& tree, int32_t leaf, bool shouldRotate )
 
 		index = nodes[index].parent;
 	}
+}
+
+template<typename data_t>
+int32_t add_new_leaf( aabb_tree<data_t>& tree, aabb const &new_box, data_t const &data)
+{
+	int32_t new_idx = allocate_node(tree);
+	tree.nodes[new_idx].box = new_box;
+	tree.nodes[new_idx].data = data;
+
+	insert_leaf<data_t>(tree, new_idx, true);
+	return new_idx;
 }
 
 template<typename data_t>

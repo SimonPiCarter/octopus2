@@ -8,6 +8,7 @@
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/player/Team.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/world/position/closest_neighbours.hh"
 #include "octopus/world/position/PositionContext.hh"
 #include "octopus/world/stats/TimeStats.hh"
@@ -112,7 +113,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 						{
 							flecs::entity flock_l = flock_ref_l->ref;
 							Flock const *flock_comp_l = flock_l.get<Flock>();
-							manager_p.get_last_layer().back().get<FlockArrivedStep>().add_step(flock_l, {flock_comp_l->arrived + 1});
+							manager_p.get_last_layer().back().template get<FlockArrivedStep>().add_step(flock_l, {flock_comp_l->arrived + 1});
 						}
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
 					}
@@ -120,9 +121,9 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				else
 				{
 					// update target
-					manager_p.get_last_layer().back().get<AttackCommandStep>().add_step(e, {new_target});
+					manager_p.get_last_layer().back().template get<AttackCommandStep>().add_step(e, {new_target});
 					// reset windup
-					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {0});
+					manager_p.get_last_layer().back().template get<AttackWindupStep>().add_step(e, {0});
 				}
 
 				END_TIME(attack_command)
@@ -137,16 +138,16 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				if(attack_p.windup >= attack_p.windup_time)
 				{
 					// damage
-					manager_p.get_last_layer().back().get<HitPointStep>().add_step(attackCommand_p.target, {-attack_p.damage});
+					manager_p.get_last_layer().back().template get<HitPointStep>().add_step(attackCommand_p.target, {-attack_p.damage});
 					// reset windup
-					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {0});
+					manager_p.get_last_layer().back().template get<AttackWindupStep>().add_step(e, {0});
 					// reset reload
-					manager_p.get_last_layer().back().get<AttackReloadStep>().add_step(e, {time});
+					manager_p.get_last_layer().back().template get<AttackReloadStep>().add_step(e, {time});
 				}
 				else
 				{
 					// increment windup
-					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
+					manager_p.get_last_layer().back().template get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
 				}
 			}
 			// if not in range we need to move
@@ -155,7 +156,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				// reset mass if necessary
 				if(pos_p.mass > 1)
 				{
-					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
+					manager_p.get_last_layer().back().template get<MassStep>().add_step(e, {1});
 				}
 
 				flecs::entity new_target;
@@ -172,7 +173,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				&& in_attack_range(new_target.get<Position>(), pos_p, attack_p))
 				{
 					// update target
-					manager_p.get_last_layer().back().get<AttackCommandStep>().add_step(e, {new_target});
+					manager_p.get_last_layer().back().template get<AttackCommandStep>().add_step(e, {new_target});
 				}
 
 				move_p.move = get_speed_direction(ecs, pos_p, *target_pos, move_p.speed);
@@ -183,12 +184,12 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				// set mass if necessary
 				if(pos_p.mass < 5)
 				{
-					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1000});
+					manager_p.get_last_layer().back().template get<MassStep>().add_step(e, {1000});
 				}
 				if(has_reloaded(manager_p.steps_added, attack_p))
 				{
 					// increment windup
-					manager_p.get_last_layer().back().get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
+					manager_p.get_last_layer().back().template get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
 				}
 			}
 
@@ -201,11 +202,11 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 		.with(CommandQueue_t::cleanup(ecs), ecs.component<AttackCommand::State>())
 		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, Position const &pos_p, CommandQueue_t &cQueue_p) {
 			// reset windup
-			manager_p.get_last_prelayer().back().get<AttackWindupStep>().add_step(e, {0});
+			manager_p.get_last_prelayer().back().template get<AttackWindupStep>().add_step(e, {0});
 			// reset mass if necessary
 			if(pos_p.mass > 1)
 			{
-				manager_p.get_last_prelayer().back().get<MassStep>().add_step(e, {1});
+				manager_p.get_last_prelayer().back().template get<MassStep>().add_step(e, {1});
 			}
 		});
 }

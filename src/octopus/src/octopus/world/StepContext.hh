@@ -8,7 +8,7 @@ namespace octopus
 {
 
 /// @brief Store all steps required to progress or go back into the states of the world
-/// @tparam variant_t the command variant sued by the CommandQueue
+/// @tparam variant_t the command variant used by the CommandQueue
 /// @tparam StepManager_t An instanciation of StepManager (from StepContainer.hh)
 /// @tparam StateStepManager_t An instanciation of StateStepContainer (from StateStepChange.hh)
 template<typename variant_t, typename... steps_t>
@@ -39,15 +39,15 @@ struct DefaultStepContext : StepContext<variant_t, DEFAULT_STEPS_T>
 {};
 
 template<typename variant_t>
-StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T> makeDefaultStepContext()
+StepContext<variant_t, DEFAULT_STEPS_T> makeDefaultStepContext()
 {
-	return StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T>();
+	return StepContext<variant_t, DEFAULT_STEPS_T>();
 }
 
 template<typename variant_t, class... Ts>
-StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T, Ts...> makeStepContext()
+StepContext<variant_t, DEFAULT_STEPS_T, Ts...> makeStepContext()
 {
-	return StepContext<variant_t, HitPointStep, DEFAULT_STEPS_T, Ts...>();
+	return StepContext<variant_t, DEFAULT_STEPS_T, Ts...>();
 }
 
 

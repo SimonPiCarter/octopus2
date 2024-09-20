@@ -3,15 +3,16 @@
 
 #include <iostream>
 #include <limits>
+#include <cstdint>
 
 namespace octopus
 {
 	/// @brief store a real x e as an integer
-	template<long long e>
+	template<int64_t e>
 	struct FixedPoint
 	{
 	public:
-		static constexpr long long OneAsLong() { return e; }
+		static constexpr int64_t OneAsLong() { return e; }
 		static constexpr FixedPoint<e> Zero() { FixedPoint<e> zero_l(0, true); return zero_l; }
 		static constexpr FixedPoint<e> One() { FixedPoint<e> one_l(e, true); return one_l; }
 		static constexpr FixedPoint<e> MinusOne() { FixedPoint<e> one_l(-e, true); return one_l; }
@@ -26,12 +27,12 @@ namespace octopus
 
 		FixedPoint<e> operator*(FixedPoint<e> const &f) const
 		{
-			long long tmp_l = _data * f._data;
+			int64_t tmp_l = _data * f._data;
 			return FixedPoint<e>(tmp_l/e, true);
 		}
 		FixedPoint<e> operator/(FixedPoint<e> const &f) const
 		{
-			long long tmp_l = e * _data;
+			int64_t tmp_l = e * _data;
 			return FixedPoint<e>(tmp_l/f._data, true);
 		}
 		FixedPoint<e> operator+(FixedPoint<e> const &f) const
@@ -103,7 +104,7 @@ namespace octopus
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		FixedPoint<e> operator*(Number const &f) const
 		{
-			long long tmp_l = _data * f;
+			int64_t tmp_l = _data * f;
 			return FixedPoint<e>(tmp_l, true);
 		}
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
@@ -125,70 +126,70 @@ namespace octopus
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		FixedPoint<e> &operator*=(Number const &f)
 		{
-			_data = static_cast<long long>(_data * f);
+			_data = static_cast<int64_t>(_data * f);
 			return *this;
 		}
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		FixedPoint<e> &operator/=(Number const &f)
 		{
-			_data = static_cast<long long>(_data / f);
+			_data = static_cast<int64_t>(_data / f);
 			return *this;
 		}
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		FixedPoint<e> &operator+=(Number const &f)
 		{
-			_data += static_cast<long long>(f*e);
+			_data += static_cast<int64_t>(f*e);
 			return *this;
 		}
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		FixedPoint<e> &operator-=(Number const &f)
 		{
-			_data -= static_cast<long long>(f*e);
+			_data -= static_cast<int64_t>(f*e);
 			return *this;
 		}
 
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		bool operator>(Number const &f) const
 		{
-			return _data > static_cast<long long>(f*e);
+			return _data > static_cast<int64_t>(f*e);
 		}
 
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		bool operator<(Number const &f) const
 		{
-			return _data < static_cast<long long>(f*e);
+			return _data < static_cast<int64_t>(f*e);
 		}
 
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		bool operator>=(Number const &f) const
 		{
-			return _data >= static_cast<long long>(f*e);
+			return _data >= static_cast<int64_t>(f*e);
 		}
 
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		bool operator<=(Number const &f) const
 		{
-			return _data <= static_cast<long long>(f*e);
+			return _data <= static_cast<int64_t>(f*e);
 		}
 
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		bool operator==(Number const &f) const
 		{
-			return _data == static_cast<long long>(f*e);
+			return _data == static_cast<int64_t>(f*e);
 		}
 
 		template <class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 		bool operator!=(Number const &f) const
 		{
-			return _data != static_cast<long long>(f*e);
+			return _data != static_cast<int64_t>(f*e);
 		}
 
-		long long to_int() const
+		int64_t to_int() const
 		{
 			return _data/e;
 		}
 
-		unsigned long long to_uint() const
+		uint64_t to_uint() const
 		{
 			return std::abs(_data/e);
 		}
@@ -198,12 +199,12 @@ namespace octopus
 			return _data/double(e);
 		}
 
-		long long data() const
+		int64_t data() const
 		{
 			return _data;
 		}
 
-		long long _data;
+		int64_t _data;
 	};
 
 	template<typename Fixed>
@@ -213,7 +214,7 @@ namespace octopus
 	}
 
 	template<typename Fixed>
-	long long to_int(Fixed const &f)
+	int64_t to_int(Fixed const &f)
 	{
 		return f.to_int();
 	}
@@ -221,7 +222,7 @@ namespace octopus
 	namespace numeric
 	{
 
-	template <long long e>
+	template <int64_t e>
 	octopus::FixedPoint<e> square_root(octopus::FixedPoint<e> const &v)
 	{
 		// quick win for exact match
@@ -244,20 +245,20 @@ namespace octopus
 		return res_l;
 	}
 
-	template <long long e>
+	template <int64_t e>
 	octopus::FixedPoint<e> abs(octopus::FixedPoint<e> const &f)
 	{
 		return octopus::FixedPoint<e>(std::abs(f.data()), true);
 	}
 
-	template <long long e>
+	template <int64_t e>
 	octopus::FixedPoint<e> ceil(octopus::FixedPoint<e> const &f)
 	{
-		long long data_l = f.data() + e - 1;
+		int64_t data_l = f.data() + e - 1;
 		return octopus::FixedPoint<e>((data_l/e)*e, true);
 	}
 
-	template <long long e>
+	template <int64_t e>
 	octopus::FixedPoint<e> floor(octopus::FixedPoint<e> const &f)
 	{
 		return octopus::FixedPoint<e>((f.data()/e)*e, true);
@@ -272,7 +273,7 @@ namespace octopus
 	template<class Fixed>
 	Fixed infinity()
 	{
-		return Fixed(std::numeric_limits<long long>::max(), true);
+		return Fixed(std::numeric_limits<int64_t>::max(), true);
 	}
 
 	} // namespace numeric
@@ -281,77 +282,80 @@ namespace octopus
 
 } // octopus
 
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 octopus::FixedPoint<e> operator*(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp * f;
 }
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 octopus::FixedPoint<e> operator/(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return octopus::FixedPoint<e>(f) / fp;
 }
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 octopus::FixedPoint<e> operator+(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp + f;
 }
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 octopus::FixedPoint<e> operator-(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return -fp + f;
 }
 
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 bool operator>(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp < f;
 }
 
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 bool operator<(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp > f;
 }
 
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 bool operator>=(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp <= f;
 }
 
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 bool operator<=(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp >= f;
 }
 
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 bool operator==(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp == f;
 }
 
-template <long long e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
+template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 bool operator!=(Number const &f, octopus::FixedPoint<e> const &fp)
 {
 	return fp != f;
 }
 
-template <long long e>
-std::ostream &operator<<(std::ostream &os, octopus::FixedPoint<e> f) {
+namespace std
+{
+template <int64_t e>
+std::ostream &operator<<(std::ostream &os, octopus::FixedPoint<e> const &f) {
 	os << f.to_double();
 	return os;
 }
+}
 
-template <long long e>
+template <int64_t e>
 octopus::FixedPoint<e> sqr(octopus::FixedPoint<e> const &f) {
 	return f*f;
 }
 
 double sqr(double const &f);
 
-template <long long e>
+template <int64_t e>
 bool is_zero(octopus::FixedPoint<e> const &f) {
 	return std::abs(f.data()) < 1;
 }

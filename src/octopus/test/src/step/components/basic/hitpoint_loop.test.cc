@@ -59,7 +59,7 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 			{
 				if(attack_p.target)
 				{
-					manager_p.get_last_layer().back().get<HitPointStep>().add_step(attack_p.target, {-attack_p.damage});
+					manager_p.get_last_layer().back().template get<HitPointStep>().add_step(attack_p.target, {-attack_p.damage});
 				}
 				attack_p.windup = 0;
 				cQueue_p._queuedActions.push_back(CommandQueueActionDone());

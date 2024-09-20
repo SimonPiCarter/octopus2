@@ -38,7 +38,7 @@ TEST(step_container, hit_point_simple)
 	ecs.system<HitPoint>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.each([&res, &manager_l](flecs::entity e, HitPoint &hp_p) {
-			manager_l.get_last_layer().back().get<HitPointStep>().add_step(e, {Fixed(-1)});
+			manager_l.get_last_layer().back().template get<HitPointStep>().add_step(e, {Fixed(-1)});
 			res<<" h"<<hp_p.qty.to_int();
 		});
 
@@ -74,7 +74,7 @@ TEST(step_container, hit_point_revert)
 	ecs.system<HitPoint>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.each([&res, &manager_l](flecs::entity e, HitPoint &hp_p) {
-			manager_l.get_last_layer().back().get<HitPointStep>().add_step(e, {Fixed(-1)});
+			manager_l.get_last_layer().back().template get<HitPointStep>().add_step(e, {Fixed(-1)});
 			res<<" h"<<hp_p.qty.to_int();
 		});
 
@@ -115,7 +115,7 @@ TEST(step_container, hit_point_revert_validator)
 	ecs.system<HitPoint>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.each([&res, &manager_l](flecs::entity e, HitPoint &hp_p) {
-			manager_l.get_last_layer().back().get<HitPointStep>().add_step(e, {Fixed(5)});
+			manager_l.get_last_layer().back().template get<HitPointStep>().add_step(e, {Fixed(5)});
 			res<<" h"<<hp_p.qty.to_int();
 		});
 

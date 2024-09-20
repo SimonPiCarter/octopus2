@@ -34,8 +34,8 @@ void revert_n_steps(flecs::world &ecs, ThreadPool &pool_p, size_t steps_p,
 			queue_p._queuedActions.clear();
 		});
 		// apply all mementos
-		std::vector<CommandQueueMemento<custom_variant> > const &mementos_l = *rit_l;
-		for(CommandQueueMemento<custom_variant> const &memento_l : mementos_l)
+		std::vector<CommandQueueMemento<typename CommandMementoManager_t::variant> > const &mementos_l = *rit_l;
+		for(CommandQueueMemento<typename CommandMementoManager_t::variant> const &memento_l : mementos_l)
 		{
 			restore(ecs, memento_l);
 		}

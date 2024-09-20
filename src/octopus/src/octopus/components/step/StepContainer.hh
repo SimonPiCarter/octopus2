@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <variant>
+#include <list>
 #include "flecs.h"
 
 #include "Step.hh"
@@ -10,7 +11,6 @@
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/position/Position.hh"
-#include "octopus/commands/basic/move/AttackCommand.hh"
 
 #include "octopus/utils/ThreadPool.hh"
 
@@ -28,7 +28,7 @@ struct StepContainerCascade<T, Ts...> : StepContainerCascade<Ts...> {
 	typename std::enable_if<!std::is_same<G, T>::value, StepVector<G> &>::type get() {
 		// cascade
 		StepContainerCascade<Ts...>& base = *this;
-		return base.get<G>();
+		return base.template get<G>();
 	}
 
 	template <class G>
