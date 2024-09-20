@@ -83,17 +83,21 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
 			if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 			{
-				if(pos_p.mass > 1)
-				{
-					manager_p.get_last_layer().back().get<MassStep>().add_step(e, {1});
-				}
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || ecs.get_info()->frame_count_total % attack_retarget_wait == 0)
+				if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0)
 				{
 					START_TIME(attack_command_new_target)
 
 					new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(8), attack_p.range));
+
+					if(!new_target)
+					{
+						if(pos_p.mass > 1)
+						{
+							manager_p.get_last_layer().back().template get<MassStep>().add_step(e, {1});
+						}
+					}
 
 					END_TIME(attack_command_new_target)
 				}
@@ -160,7 +164,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || ecs.get_info()->frame_count_total % attack_retarget_wait == 0)
+				if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0)
 				{
 					START_TIME(attack_command_new_target)
 
@@ -181,6 +185,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// if in range and reload ready initiate windup
 			else
 			{
+				move_p.target_move = target_pos->pos - pos_p.pos;
 				// set mass if necessary
 				if(pos_p.mass < 5)
 				{

@@ -19,7 +19,10 @@ bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Posi
 	{
 		return true;
 	}
+	// this will be updated
 	move_p.move = get_speed_direction(ecs, pos_p, target_p, move_p.speed);
+	// this is kept to know in which direction we wanted to move
+	move_p.target_move = move_p.move;
 	return false;
 }
 

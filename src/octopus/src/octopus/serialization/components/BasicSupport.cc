@@ -39,7 +39,7 @@ void basic_components_support(flecs::world& ecs)
 
     ecs.component<Move>()
 		.member("move", &Move::move)
-		.member("velocity", &Move::velocity)
+		.member("target_move", &Move::target_move)
 		.member("speed", &Move::speed);
 
     ecs.component<FlockRef>();

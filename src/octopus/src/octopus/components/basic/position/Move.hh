@@ -9,7 +9,7 @@ namespace octopus
 
 struct Move {
 	Vector move;
-	Vector velocity;
+	Vector target_move;
 	Fixed speed = Fixed(1);
 };
 
