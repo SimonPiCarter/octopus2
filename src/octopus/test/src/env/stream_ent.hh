@@ -35,7 +35,7 @@ void stream_second_component(std::ostream &oss, flecs::entity e, flecs::entity f
 template<typename T, typename... Ts>
 void stream_second_component(std::ostream &oss, flecs::entity e, flecs::entity first, T t, Ts... ts)
 {
-	if(e.has_second<T::State>(first))
+	if(e.has_second<typename T::State>(first))
 	{
 		oss<<"("<<first.name()<<", "<<T::naming()<<") ";
 	}
