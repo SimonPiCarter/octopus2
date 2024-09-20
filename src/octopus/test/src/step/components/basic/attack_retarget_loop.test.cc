@@ -53,7 +53,7 @@ TEST(attack_retarget_loop, simple)
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 
-	set_up_systems(world, step_context);
+	set_up_systems(world, step_context, false);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()

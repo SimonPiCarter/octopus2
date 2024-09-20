@@ -6,6 +6,6 @@
 namespace octopus
 {
 
-void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool);
+void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, bool destroy_entities);
 
 } // namespace octopus

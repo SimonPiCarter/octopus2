@@ -41,6 +41,7 @@ struct RevertTester
 		for(size_t i = 0 ; i < tracked_entities.size() ; ++ i)
 		{
 			flecs::entity const &e = tracked_entities[i];
+			if(!e.is_alive()) { continue; }
 			std::stringstream ss_l;
 			stream_ent<Ts...>(ss_l, ecs, e);
 			for(flecs::entity const &first_l : tracked_pairs)
@@ -63,6 +64,7 @@ struct RevertTester
 			for(size_t i = 0 ; i < tracked_entities.size() ; ++ i)
 			{
 				flecs::entity const &e = tracked_entities[i];
+				if(!e.is_alive()) { continue; }
 				std::stringstream ss_l;
 				stream_ent<Ts...>(ss_l, world.ecs, e);
 				for(flecs::entity const &first_l : tracked_pairs)

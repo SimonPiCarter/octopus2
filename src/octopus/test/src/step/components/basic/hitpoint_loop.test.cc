@@ -95,7 +95,7 @@ TEST(hitpoint_loop, simple)
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 
-	set_up_systems(world, step_context);
+	set_up_systems(world, step_context, false);
 
 	set_up_attack_test_systems(ecs, step_context.step_manager);
 

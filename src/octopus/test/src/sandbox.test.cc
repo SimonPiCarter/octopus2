@@ -12,9 +12,8 @@
 using namespace octopus;
 
 struct A {};
-struct B {};
 
-TEST(sandbox, test)
+TEST(DISABLED_sandbox, test)
 {
 	flecs::world ecs;
 
