@@ -53,7 +53,7 @@ TEST(attack_move_loop, simple)
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;

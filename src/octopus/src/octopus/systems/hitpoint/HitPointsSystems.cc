@@ -10,7 +10,7 @@
 
 namespace octopus
 {
-void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, bool destroy_entities)
+void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, uint32_t step_kept_p)
 {
 	// Validators
 
@@ -46,7 +46,7 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, bool destroy_e
 			}
 		});
 
-	if(destroy_entities)
+	if(step_kept_p!=0)
 	{
 		ecs.system<HitPoint const>()
 			.multi_threaded()

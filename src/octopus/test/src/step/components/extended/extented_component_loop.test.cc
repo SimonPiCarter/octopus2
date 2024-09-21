@@ -127,7 +127,7 @@ TEST(extended_loop, simple)
 	command_queue_support<octopus::NoOpCommand, AttackTestComponent>(ecs);
 
 	auto step_context = makeStepContext<custom_variant, AttackTestStep>();
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 
 	set_up_attack_test_systems(ecs, step_context.step_manager);
 

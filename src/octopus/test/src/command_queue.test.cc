@@ -93,7 +93,7 @@ TEST(command_queue, simple)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	flecs::world &ecs = world.ecs;
 
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 
 	auto e1 = ecs.entity()
@@ -122,7 +122,7 @@ TEST(command_queue, simple_multiple)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	flecs::world &ecs = world.ecs;
 
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -154,7 +154,7 @@ TEST(command_queue, simple_multiple_queuing_front)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	flecs::world &ecs = world.ecs;
 
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -190,7 +190,7 @@ TEST(command_queue, simple_multiple_queuing_back)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	flecs::world &ecs = world.ecs;
 
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
@@ -226,7 +226,7 @@ TEST(command_queue, simple_replaced)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	flecs::world &ecs = world.ecs;
 
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 

@@ -22,7 +22,7 @@ void set_up_phases(flecs::world &ecs);
 
 /// @brief Set up all required system for the engine to run
 template<typename StepContext_t>
-void set_up_systems(WorldContext &world, StepContext_t &step_context, bool destroy_entities=true)
+void set_up_systems(WorldContext &world, StepContext_t &step_context, uint32_t step_kept_p=0)
 {
 	set_up_phases(world.ecs);
 
@@ -36,7 +36,7 @@ void set_up_systems(WorldContext &world, StepContext_t &step_context, bool destr
 	set_up_step_systems(world.ecs, world.pool, step_context.step_manager, step_context.state_step_manager);
 
 	// components systems
-	set_up_hitpoint_systems(world.ecs, world.pool, destroy_entities);
+	set_up_hitpoint_systems(world.ecs, world.pool, step_kept_p);
 
 	// commands systems
 	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.time_stats);

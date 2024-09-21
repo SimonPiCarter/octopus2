@@ -91,7 +91,7 @@ TEST(command_queue_chaining, simple)
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 
-	set_up_systems(world, step_context, false);
+	set_up_systems(world, step_context);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 
