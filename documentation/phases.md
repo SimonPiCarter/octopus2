@@ -72,6 +72,6 @@ Apply all steps :
 
 - sync with display
 
-## EndCleanup (EndCleanupPhase)
+## EndCleanup (EndCleanUpPhase)
 
 - destroy entities

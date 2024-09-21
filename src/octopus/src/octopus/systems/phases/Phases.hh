@@ -11,4 +11,4 @@
 #define SteppingPhase "Stepping"
 #define ValidatePhase "Validate"
 #define DisplaySyncPhase "DisplaySync"
-#define EndCleanupPhase "EndCleanup"
+#define EndCleanUpPhase "EndCleanUp"
