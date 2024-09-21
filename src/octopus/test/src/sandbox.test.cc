@@ -11,18 +11,46 @@
 
 using namespace octopus;
 
-struct A {};
-
 TEST(DISABLED_sandbox, test)
 {
+	struct Position {
+		double x, y;
+	};
+
+	// Create tag type to use as event (could also use entity)
+	struct MyEvent { };
 	flecs::world ecs;
 
-	auto cmp = ecs.entity("cmp").add(flecs::Exclusive);
+    // Create observer for custom event
+    // ecs.observer<Position>()
+    //     .event<MyEvent>()
+    //     .each([](flecs::iter& it, size_t i, Position&) {
+    //         std::cout << " - " << it.event().name() << ": "
+    //             << it.event_id().str() << ": "
+    //             << it.entity(i).name() << "\n";
+    //     });
+    ecs.observer<Position>()
+        .event<MyEvent>()
+        .each([](flecs::entity e, Position&) {
+            std::cout << " - " << e.name() << "\n";
+        });
 
-	auto e = ecs.entity("e")
-		.add_second<A>(cmp);
+    // The observer query can be matched against the entity, so make sure it
+    // has the Position component before emitting the event. This does not
+    // trigger the observer yet.
+    flecs::entity e = ecs.entity("e")
+        .set<Position>({10, 20});
 
-	EXPECT_TRUE(e.has_second<A>(cmp));
+	ecs.system<Position>()
+        .each([&ecs](flecs::entity e, Position const &p) {
+			// Emit the custom event
+			ecs.event<MyEvent>()
+				.id<Position>()
+				.entity(e)
+				.emit();
+        });
 
-	std::cout<<e.get_second<A>(cmp)<<std::endl;
+	ecs.progress();
+    // Output
+    //   - MyEvent: Position: e
 }
