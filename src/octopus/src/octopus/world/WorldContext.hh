@@ -21,6 +21,16 @@ struct WorldContext
 	ThreadPool pool;
 	PositionContext position_context;
 	TimeStats time_stats;
+
+	/// @brief tell if the AttackSystems should wait for
+	/// some time before looking for new target
+	/// This is a the number of step between to
+	/// target scan.
+	/// @note increasing this number will speed up
+	/// the engine but slow down reactiveness of units
+	/// @note should be either 1 or powers of 2
+	/// @note this is the number of step between to target scan.
+	int64_t attack_retarget_wait = 1;
 };
 
 } // namespace octopus

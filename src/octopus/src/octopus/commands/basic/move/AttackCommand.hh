@@ -69,7 +69,7 @@ bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack
 bool has_reloaded(uint32_t time_p, Attack const&attack_p);
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionContext const &context_p, TimeStats &time_stats_p)
+void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionContext const &context_p, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
 {
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
@@ -88,11 +88,12 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || ecs.get_info()->frame_count_total % 32 == 0)
+				if(!ecs.get_info() || ecs.get_info()->frame_count_total % attack_retarget_wait == 0)
 				{
 					START_TIME(attack_command_new_target)
 
 					new_target = get_new_target(e, context_p, pos_p);
+					std::cout<<"loop up target (1) : "<<new_target<<std::endl;
 
 					END_TIME(attack_command_new_target)
 				}
@@ -159,11 +160,12 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || ecs.get_info()->frame_count_total % 32 == 0)
+				if(!ecs.get_info() || ecs.get_info()->frame_count_total % attack_retarget_wait == 0)
 				{
 					START_TIME(attack_command_new_target)
 
 					new_target = get_new_target(e, context_p, pos_p);
+					std::cout<<"loop up target (2) : "<<new_target<<std::endl;
 
 					END_TIME(attack_command_new_target)
 				}
@@ -176,6 +178,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 
 				move_p.move = get_speed_direction(ecs, pos_p, *target_pos, move_p.speed);
+				std::cout<<"move = "<<move_p.move<<std::endl;
 			}
 			// if in range and reload ready initiate windup
 			else
