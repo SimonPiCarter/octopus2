@@ -55,18 +55,22 @@ TEST(attack_move_loop, simple)
 
 	set_up_systems(world, step_context, false);
 
+	Position pos_l = {{10,10}};
+	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<AttackCommand>()
 		.add<Move>()
 		.set<Team>({{1}})
-		.set<Position>({{10,10}})
+		.set<Position>(pos_l)
+		.add<PositionInTree>()
 		.set<Attack>({0, 1, 0, 1, 2, 2});
 
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<Team>({{0}})
+		.add<PositionInTree>()
 		.set<HitPoint>({10})
 		.set<Position>({{10,0}});
 

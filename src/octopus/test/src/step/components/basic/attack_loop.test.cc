@@ -57,10 +57,12 @@ TEST(attack_loop, simple)
 
 	set_up_systems(world, step_context, false);
 
+	Position pos_l = {{10,10}};
+	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<Move>()
-		.set<Position>({{10,10}})
+		.set<Position>(pos_l)
 		.set<Attack>({0, 1, 0, 1, 2, 2});
 
 	auto e2 = ecs.entity("e2")
