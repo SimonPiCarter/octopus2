@@ -2,6 +2,7 @@
 
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
+#include "octopus/components/basic/hitpoint/Destroyable.hh"
 
 namespace octopus
 {
@@ -22,6 +23,7 @@ struct StepContext
 
 #define DEFAULT_STEPS_T HitPointStep, \
 HitPointMaxStep, \
+DestroyableStep, \
 PositionStep, \
 PositionInTreeStep, \
 MassStep, \

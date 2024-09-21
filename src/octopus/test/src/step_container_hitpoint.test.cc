@@ -105,7 +105,7 @@ TEST(step_container, hit_point_revert_validator)
 
 	ThreadPool pool_l(1);
 	StateStepContainer<std::variant<NoOpCommand, octopus::AttackCommand>> state_step_manager_l;
-	StepManager<HitPointStep, AttackWindupStep, AttackReloadStep> manager_l;
+	StepManager<HitPointStep, DestroyableStep, AttackWindupStep, AttackReloadStep> manager_l;
 	manager_l.add_layer(pool_l.size());
 
 	auto e1 = ecs.entity()

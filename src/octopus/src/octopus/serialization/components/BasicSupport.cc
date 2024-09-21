@@ -1,6 +1,7 @@
 #include "BasicSupport.hh"
 
 #include "octopus/components/basic/flock/Flock.hh"
+#include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/position/Move.hh"
@@ -23,6 +24,8 @@ void basic_components_support(flecs::world& ecs)
         .member("qty", &HitPoint::qty);
     ecs.component<HitPointMax>()
         .member("qty", &HitPointMax::qty);
+    ecs.component<Destroyable>()
+        .member("timestamp", &Destroyable::timestamp);
     ecs.component<Position>()
         .member("pos", &Position::pos);
 

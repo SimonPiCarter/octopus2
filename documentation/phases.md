@@ -47,6 +47,10 @@ Apply all steps :
 
 - Update AABB Tree in PositionContext (PositionSystems)
 
+### Hitpoints
+
+- Update Destroyable from Hitpoints
+
 ## PostUpdate (PostUpdatePhase)
 
 - all actions from commands

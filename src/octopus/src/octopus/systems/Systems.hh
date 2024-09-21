@@ -36,7 +36,7 @@ void set_up_systems(WorldContext &world, StepContext_t &step_context, uint32_t s
 	set_up_step_systems(world.ecs, world.pool, step_context.step_manager, step_context.state_step_manager);
 
 	// components systems
-	set_up_hitpoint_systems(world.ecs, world.pool, step_kept_p);
+	set_up_hitpoint_systems(world.ecs, world.pool, step_context.step_manager, step_kept_p);
 
 	// commands systems
 	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.time_stats);
