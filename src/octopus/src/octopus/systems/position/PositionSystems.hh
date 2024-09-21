@@ -11,6 +11,7 @@
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/position/Move.hh"
+#include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/systems/phases/Phases.hh"
 #include "octopus/world/stats/TimeStats.hh"
 
@@ -48,12 +49,13 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			END_TIME(tree_update)
 		});
 
-	ecs.observer<PositionInTree const>()
-		.event(flecs::OnRemove)
-		.each([&posContext_p](flecs::entity e, PositionInTree const& pos_in_tree) {
-			if(pos_in_tree.idx_leaf >= 0)
+	ecs.observer<Destroyable const>()
+		.event<Destroyed>()
+		.each([&posContext_p](flecs::entity e, Destroyable const&) {
+			PositionInTree const* pos_in_tree = e.get<PositionInTree>();
+			if(pos_in_tree && pos_in_tree->idx_leaf >= 0)
 			{
-				remove_leaf(posContext_p.tree, pos_in_tree.idx_leaf);
+				remove_leaf(posContext_p.tree, pos_in_tree->idx_leaf);
 			}
 		});
 

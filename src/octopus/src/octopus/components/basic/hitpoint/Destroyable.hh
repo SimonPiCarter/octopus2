@@ -7,6 +7,8 @@
 namespace octopus
 {
 
+struct Destroyed {};
+
 struct Destroyable {
 	int64_t timestamp = 0;
 };

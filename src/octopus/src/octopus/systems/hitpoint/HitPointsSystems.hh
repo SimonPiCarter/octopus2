@@ -54,28 +54,32 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 	// Destroyable handling
 
-	if(step_kept_p!=0)
-	{
-		ecs.system<HitPoint const, Destroyable>()
-			.kind(ecs.entity(UpdatePhase))
-			.each([&ecs, &manager_p](flecs::entity e, HitPoint const &hp_p, Destroyable &destroyable_p) {
-				if(hp_p.qty == Fixed::Zero() && destroyable_p.timestamp == 0)
-				{
-					manager_p.get_last_layer().back().template get<DestroyableStep>().add_step(e, {ecs.get_info()->frame_count_total});
-				}
-			});
+	ecs.system<HitPoint const, Destroyable>()
+		.multi_threaded()
+		.kind(ecs.entity(UpdatePhase))
+		.each([&ecs, &manager_p](flecs::entity e, HitPoint const &hp_p, Destroyable &destroyable_p) {
+			if(hp_p.qty == Fixed::Zero() && destroyable_p.timestamp == 0)
+			{
+				manager_p.get_last_layer().back().template get<DestroyableStep>().add_step(e, {ecs.get_info()->frame_count_total});
+				e.disable();
+				ecs.event<Destroyed>()
+					.id<Destroyable>()
+					.entity(e)
+					.emit();
+			}
+		});
 
-		ecs.system<Destroyable const &>()
-			.multi_threaded()
-			.kind(ecs.entity(EndCleanUpPhase))
-			.each([&ecs, step_kept_p](flecs::entity e, Destroyable const &destroyable_p) {
-				if(destroyable_p.timestamp != 0
-				&& destroyable_p.timestamp + step_kept_p > ecs.get_info()->frame_count_total)
-				{
-					e.destruct();
-				}
-			});
-	}
+	ecs.system<Destroyable const &>()
+		.multi_threaded()
+		.kind(ecs.entity(EndCleanUpPhase))
+		.with(flecs::Disabled)
+		.each([&ecs, step_kept_p](flecs::entity e, Destroyable const &destroyable_p) {
+			if(destroyable_p.timestamp != 0
+			&& destroyable_p.timestamp + step_kept_p > ecs.get_info()->frame_count_total)
+			{
+				e.destruct();
+			}
+		});
 }
 
 } // namespace octopus
