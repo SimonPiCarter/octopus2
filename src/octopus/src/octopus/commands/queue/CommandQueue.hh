@@ -80,7 +80,7 @@ struct CommandQueue
 
 	std::list<CommandQueueAction> _queuedActions;
 
-	// PostLoad (1)
+	// PrepingUpdatePhase (1)
 	// set clean up state
 	void clean_up_current(flecs::world &ecs, flecs::entity &e, StateStepContainer<variant_t> &stateStep_p)
 	{
@@ -109,7 +109,7 @@ struct CommandQueue
 		state_layer_p._setComp.push_back({e, new_comp, old_comp});
 	}
 
-	// OnUpdate (1)
+	// PostCleanUpPhase (1)
 	void update_current(flecs::world &ecs, flecs::entity &e, StateStepContainer<variant_t> &stateStep_p)
 	{
 		e.remove(cleanup(ecs), flecs::Wildcard);

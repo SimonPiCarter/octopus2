@@ -68,15 +68,15 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
+		.immediate()
 		.kind(ecs.entity(PrepingUpdatePhase))
-		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
 		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
 			queue_p.clean_up_current(ecs, e, stateStep_p);
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
+		.immediate()
 		.kind(ecs.entity(PostCleanUpPhase))
-		.write(CommandQueue<variant_t>::cleanup(ecs), flecs::Wildcard)
 		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
 			queue_p.update_current(ecs, e, stateStep_p);
 		});

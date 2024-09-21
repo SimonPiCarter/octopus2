@@ -24,7 +24,6 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 	ecs.system<>()
         .immediate()
 		.kind(ecs.entity(PreUpdatePhase))
-		// .write(CommandQueue<typename StateStepManager_t::Variant>::state(ecs), flecs::Wildcard)
 		.run([&ecs, &pool, &manager_p, &state_step_container_p](flecs::iter& ) {
 			dispatch_apply(manager_p.get_last_prelayer(), pool);
 			state_step_container_p.get_last_prelayer().apply(ecs);
@@ -34,7 +33,6 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 	ecs.system<>()
         .immediate()
 		.kind(ecs.entity(SteppingPhase))
-		// .write(CommandQueue<typename StateStepManager_t::Variant>::state(ecs), flecs::Wildcard)
 		.run([&ecs, &pool, &manager_p, &state_step_container_p](flecs::iter&) {
 			dispatch_apply(manager_p.get_last_layer(), pool);
 			state_step_container_p.get_last_layer().apply(ecs);
