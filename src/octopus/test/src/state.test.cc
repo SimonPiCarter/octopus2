@@ -3,68 +3,46 @@
 #include "flecs.h"
 
 
-TEST(DISABLED_simple, simple)
+TEST(simple, simple)
 {
-	enum Movement {
-		Walking,
-		Running,
-		None
+	struct Position {
+		double x, y;
 	};
 
-	enum Direction {
-		Front,
-		Back,
-		Left,
-		Right
-	};
-
+	// Create tag type to use as event (could also use entity)
+	struct MyEvent { };
 	flecs::world ecs;
 
-    ecs.component<Movement>().add(flecs::Union);
-    ecs.component<Direction>().add(flecs::Union);
+    // Create observer for custom event
+    // ecs.observer<Position>()
+    //     .event<MyEvent>()
+    //     .each([](flecs::iter& it, size_t i, Position&) {
+    //         std::cout << " - " << it.event().name() << ": "
+    //             << it.event_id().str() << ": "
+    //             << it.entity(i).name() << "\n";
+    //     });
+    ecs.observer<Position>()
+        .event<MyEvent>()
+        .each([](flecs::entity e, Position&) {
+            std::cout << " - " << e.name() << "\n";
+        });
 
-    // Create a query that subscribes for all entities that have a Direction
-    // and that are walking.
-    // with<T>() requests no data by default, so we must specify what we want.
-    // in() requests Read-Only
-    flecs::query<> q = ecs.query_builder()
-        .with(Walking).in()
-        .with<Direction>(flecs::Wildcard).in()
-        .build();
+    // The observer query can be matched against the entity, so make sure it
+    // has the Position component before emitting the event. This does not
+    // trigger the observer yet.
+    flecs::entity e = ecs.entity("e")
+        .set<Position>({10, 20});
 
-    // Create a few entities with various state combinations
-    ecs.entity("e1")
-        .add(Walking)
-        .add(Front);
+	ecs.system<Position>()
+        .each([&ecs](flecs::entity e, Position const &p) {
+			// Emit the custom event
+			ecs.event<MyEvent>()
+				.id<Position>()
+				.entity(e)
+				.emit();
+        });
 
-    ecs.entity("e2")
-        .add(Running)
-        .add(Left);
-
-    flecs::entity e3 = ecs.entity("e3")
-        .add(Running)
-        .add(Back);
-
-    // Add Walking to e3. This will remove the Running case
-    e3.add(Walking);
-
-    // Iterate the query
-    q.run([&](flecs::iter& it) {
-		while (it.next()) {
-			// Get the column with direction states. This is stored as an array
-			// with identifiers to the individual states
-			auto movement = it.field<Movement const>(0);
-			auto direction = it.field<Direction const>(1);
-
-			for (auto i : it) {
-				// Movement will always be Walking, Direction can be any state
-				std::cout << it.entity(i).name()
-					<< ": Movement: "
-					<< it.world().get_alive(movement[i]).name()
-					<< ", Direction: "
-					<< it.world().get_alive(direction[i]).name()
-					<< std::endl;
-			}
-		}
-    });
+	ecs.progress();
+    // Output
+    //   - MyEvent: Position: e
 }
