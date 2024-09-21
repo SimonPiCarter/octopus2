@@ -1,5 +1,6 @@
 #include "BasicSupport.hh"
 
+#include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/position/Move.hh"
@@ -35,6 +36,11 @@ void basic_components_support(flecs::world& ecs)
 		.member("move", &Move::move)
 		.member("velocity", &Move::velocity)
 		.member("speed", &Move::speed);
+
+    ecs.component<FlockRef>();
+
+    ecs.component<Flock>()
+		.member("arrived", &Flock::arrived);
 }
 
 } // namespace octopus
