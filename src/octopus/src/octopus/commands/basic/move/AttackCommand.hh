@@ -93,7 +93,6 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					START_TIME(attack_command_new_target)
 
 					new_target = get_new_target(e, context_p, pos_p);
-					std::cout<<"loop up target (1) : "<<new_target<<std::endl;
 
 					END_TIME(attack_command_new_target)
 				}
@@ -165,7 +164,6 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					START_TIME(attack_command_new_target)
 
 					new_target = get_new_target(e, context_p, pos_p);
-					std::cout<<"loop up target (2) : "<<new_target<<std::endl;
 
 					END_TIME(attack_command_new_target)
 				}
@@ -178,7 +176,6 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 
 				move_p.move = get_speed_direction(ecs, pos_p, *target_pos, move_p.speed);
-				std::cout<<"move = "<<move_p.move<<std::endl;
 			}
 			// if in range and reload ready initiate windup
 			else
