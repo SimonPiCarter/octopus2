@@ -27,7 +27,7 @@ TEST(DISABLED_simple, simple)
     // and that are walking.
     // with<T>() requests no data by default, so we must specify what we want.
     // in() requests Read-Only
-    flecs::query<Movement const, Direction const> q = ecs.query_builder()
+    flecs::query<> q = ecs.query_builder()
         .with(Walking).in()
         .with<Direction>(flecs::Wildcard).in()
         .build();
