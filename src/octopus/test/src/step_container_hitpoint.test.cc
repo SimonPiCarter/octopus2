@@ -120,8 +120,8 @@ TEST(step_container, hit_point_revert_validator)
 		});
 
 	set_up_phases(ecs);
-	set_up_step_systems(ecs, pool_l, manager_l, state_step_manager_l);
-	set_up_hitpoint_systems(ecs, pool_l, 0);
+	set_up_step_systems(ecs, pool_l, manager_l, state_step_manager_l, 10);
+	set_up_hitpoint_systems(ecs, pool_l, manager_l, 10);
 
 	for(size_t i = 0 ; i < 10 ; ++ i)
 	{
