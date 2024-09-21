@@ -15,10 +15,10 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 	// new layer steps
 	ecs.system<>()
 		.kind(ecs.entity(InitializationPhase))
-		.run([&](flecs::iter& ) {
+		.run([&, step_kept_p](flecs::iter& ) {
 			manager_p.add_layer(pool.size());
 			state_step_container_p.add_layer();
-			if(step_kept_p != 0 && manager_p.steps_added > step_kept_p)
+			if(step_kept_p != 0 && manager_p.steps.size() > step_kept_p)
 			{
 				manager_p.pop_layer();
 				state_step_container_p.pop_layer();

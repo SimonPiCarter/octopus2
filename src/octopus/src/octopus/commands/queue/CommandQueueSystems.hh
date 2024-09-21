@@ -31,7 +31,7 @@ void handle_action(CommandQueue<variant_t> &queue_p, CommandQueueActionAddBack<v
 }
 
 template<typename variant_t>
-void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<variant_t> &mementoManager_p, StateStepContainer<variant_t> &stateStep_p)
+void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<variant_t> &mementoManager_p, StateStepContainer<variant_t> &stateStep_p, uint32_t step_kept_p)
 {
 	// set up relations
     CommandQueue<variant_t>::state(ecs).add(flecs::Exclusive);
@@ -40,8 +40,12 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 	// Add memento
 	ecs.system("CommandQueueMementoSetup")
 		.kind(ecs.entity(InitializationPhase))
-		.run([&mementoManager_p](flecs::iter& it) {
+		.run([&mementoManager_p, step_kept_p](flecs::iter& it) {
 			mementoManager_p.lMementos.push_back(typename CommandQueueMementoManager<variant_t>::vMemento());
+			if(step_kept_p != 0 && mementoManager_p.lMementos.size() > step_kept_p)
+			{
+				mementoManager_p.lMementos.pop_front();
+			}
 		});
 
 	// Apply actions

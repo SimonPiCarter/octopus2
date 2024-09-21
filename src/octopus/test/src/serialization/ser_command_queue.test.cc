@@ -97,7 +97,7 @@ TEST(ser_command_queue, simple)
 	StateStepContainer<custom_variant> step_manager;
 	CommandQueueMementoManager<custom_variant> memento_manager;
 	set_up_phases(ecs);
-	set_up_command_queue_systems<custom_variant>(ecs, memento_manager, step_manager);
+	set_up_command_queue_systems<custom_variant>(ecs, memento_manager, step_manager, 0);
 	set_up_walk_systems(ecs, res);
 	set_up_attack_systems(ecs, res);
 

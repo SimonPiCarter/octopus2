@@ -27,7 +27,7 @@ void set_up_systems(WorldContext &world, StepContext_t &step_context, uint32_t s
 	set_up_phases(world.ecs);
 
 	// command handling systems
-	set_up_command_queue_systems<typename StepContext_t::variant>(world.ecs, step_context.memento_manager, step_context.state_step_manager);
+	set_up_command_queue_systems<typename StepContext_t::variant>(world.ecs, step_context.memento_manager, step_context.state_step_manager, step_kept_p);
 
 	// position systems
 	set_up_position_systems(world.ecs, world.pool, step_context.step_manager, world.position_context, world.time_stats);
