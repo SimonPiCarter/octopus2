@@ -5,7 +5,9 @@
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
+#include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/attack/Attack.hh"
+#include "octopus/components/basic/player/Team.hh"
 
 #include "octopus/serialization/utils/UtilsSupport.hh"
 
@@ -41,6 +43,9 @@ void basic_components_support(flecs::world& ecs)
 
     ecs.component<Flock>()
 		.member("arrived", &Flock::arrived);
+
+	ecs.component<PositionInTree>();
+	ecs.component<Team>();
 }
 
 } // namespace octopus
