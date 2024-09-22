@@ -42,6 +42,12 @@ struct InputAddProduction
 	std::string production;
 };
 
+struct InputCancelProduction
+{
+	flecs::entity producer;
+	int idx = 0;
+};
+
 struct Input
 {
 	Input() { stack_input(); }
@@ -54,7 +60,11 @@ struct Input
 		std::lock_guard<std::mutex> lock_l(mutex);
 		container_add_production.get_back_layer().push_back(input_p);
 	}
-	void cancelProduction();
+	void cancelProduction(InputCancelProduction const &input_p)
+	{
+		std::lock_guard<std::mutex> lock_l(mutex);
+		container_cancel_production.get_back_layer().push_back(input_p);
+	}
 
 	template<typename StepManager_t>
 	void unstack_input(flecs::world &ecs, ProductionTemplateLibrary<StepManager_t> const *prod_lib_p, StepManager_t &manager_p)
@@ -68,7 +78,11 @@ struct Input
 			// Input add production
 			for(InputAddProduction const &input_l : container_add_production.get_front_layer())
 			{
-				if(!input_l.producer.get<PlayerAppartenance>()) { continue; }
+				if(!input_l.producer.get<PlayerAppartenance>()
+				|| !input_l.producer.get<ProductionQueue>())
+				{
+					continue;
+				}
 				// get production information
 				ProductionTemplate<StepManager_t> const * prod_l = prod_lib_p->try_get(input_l.production);
 
@@ -83,7 +97,7 @@ struct Input
 				&& prod_l->check_requirement(input_l.producer, ecs)
 				&& check_resources(player_info_l->resource, map_locked_resources[player_info_l->idx], prod_l->resource_consumption()))
 				{
-					manager_p.get_last_layer().back().template get<ProductionQueueAddStep>().add_step(input_l.producer, {input_l.production});
+					manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {input_l.production, -1});
 					for(auto &&pair_l : prod_l->resource_consumption())
 					{
 						std::string const &resource_l = pair_l.first;
@@ -97,19 +111,55 @@ struct Input
 
 				}
 			}
+
+			for(InputCancelProduction const &input_l : container_cancel_production.get_front_layer())
+			{
+				ProductionQueue const * prod_queue_l = input_l.producer.get<ProductionQueue>();
+				if(!input_l.producer.get<PlayerAppartenance>()
+				|| !prod_queue_l
+				|| input_l.idx >= prod_queue_l->queue.size())
+				{
+					continue;
+				}
+
+				// get production information
+				ProductionTemplate<StepManager_t> const * prod_l = prod_lib_p->try_get(prod_queue_l->queue[input_l.idx]);
+
+				// get player info
+				flecs::entity player = query_player.find([&input_l](PlayerInfo& p) {
+					return p.idx == input_l.producer.get<PlayerAppartenance>()->idx;
+				});
+				if(!player.is_valid()) { continue; }
+
+				manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {"", input_l.idx});
+				if(input_l.idx == 0)
+				{
+					manager_p.get_last_layer().back().template get<ProductionQueueTimestampStep>().add_step(input_l.producer, {0});
+				}
+				for(auto &&pair_l : prod_l->resource_consumption())
+				{
+					std::string const &resource_l = pair_l.first;
+					Fixed resource_consumed_l = pair_l.second;
+					// add step for consumption
+					manager_p.get_last_layer().back().template get<ResourceInfoQuantityStep>().add_step(player, {resource_consumed_l, resource_l});
+				}
+			}
 		}
 
 		container_add_production.pop_layer();
+		container_cancel_production.pop_layer();
 	}
 
 	void stack_input()
 	{
 		container_add_production.push_layer();
+		container_cancel_production.push_layer();
 	}
 private:
 	std::mutex mutex;
 
 	InputLayerContainer<InputAddProduction> container_add_production;
+	InputLayerContainer<InputCancelProduction> container_cancel_production;
 };
 
 template<typename StepManager_t>

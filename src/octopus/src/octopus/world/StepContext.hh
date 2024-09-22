@@ -36,8 +36,7 @@ AttackReloadStep, \
 AttackCommandStep, \
 FlockArrivedStep, \
 ProductionQueueTimestampStep, \
-ProductionQueueAddStep, \
-ProductionQueueCancelStep, \
+ProductionQueueOperationStep, \
 ResourceInfoQuantityStep
 
 template<typename variant_t>

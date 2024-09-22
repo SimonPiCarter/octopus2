@@ -27,34 +27,22 @@ struct ProductionQueueTimestampStep {
 	void revert_step(Data &d, Memento const &memento) const;
 };
 
-struct ProductionQueueAddMemento {
+struct ProductionQueueOperationMemento {
+	std::vector<std::string> old_queue;
 };
 
-struct ProductionQueueAddStep {
-	std::string production;
+struct ProductionQueueOperationStep {
+	// empty to not add anything
+	std::string added_production;
+	// < 0 to no cancel anything
+	int canceled_idx = -1;
 
 	typedef ProductionQueue Data;
-	typedef ProductionQueueAddMemento Memento;
+	typedef ProductionQueueOperationMemento Memento;
 
 	void apply_step(Data &d, Memento &memento) const;
 
 	void revert_step(Data &d, Memento const &memento) const;
 };
-
-struct ProductionQueueCancelMemento {
-    ProductionQueue old;
-};
-
-struct ProductionQueueCancelStep {
-	int idx = 0;
-
-	typedef ProductionQueue Data;
-	typedef ProductionQueueCancelMemento Memento;
-
-	void apply_step(Data &d, Memento &memento) const;
-
-	void revert_step(Data &d, Memento const &memento) const;
-};
-
 
 } // namespace octopus

@@ -208,6 +208,76 @@ TEST(input_production, simple_not_enough_resource)
 	revert_test.revert_and_check_records(world, step_context);
 }
 
+TEST(input_production, simple_cancel)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
+	lib_l.add_template(new ProdA());
+	lib_l.add_template(new ProdB());
+
+	set_up_systems(world, step_context, &lib_l);
+
+	Position pos_l = {{10,10}};
+	pos_l.collision = false;
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0, {
+			{"food", {10,0} }
+		}});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 0 || i == 4)
+		{
+			ecs.get_mut<Input>()->addProduction({e1, "b"});
+		}
+		if(i == 1)
+		{
+			ecs.get_mut<Input>()->cancelProduction({e1, 0});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
 TEST(input_production, simple_not_enough_resource_same_input)
 {
 	WorldContext world;

@@ -14,29 +14,22 @@ void ProductionQueueTimestampStep::revert_step(Data &d, Memento const &m) const
 	d.start_timestamp = m.old_timestamp;
 }
 
-void ProductionQueueAddStep::apply_step(Data &d, Memento &) const
+void ProductionQueueOperationStep::apply_step(Data &d, Memento &m) const
 {
-	d.queue.push_back(production);
-}
-
-void ProductionQueueAddStep::revert_step(Data &d, Memento const &) const
-{
-	d.queue.pop_back();
-}
-
-void ProductionQueueCancelStep::apply_step(Data &d, Memento &m) const
-{
-	m.old = d;
-	d.queue.erase(d.queue.begin()+idx);
-	if(idx == 0)
+	m.old_queue = d.queue;
+	if(canceled_idx >= 0 && canceled_idx < d.queue.size())
 	{
-		d.start_timestamp = 0;
+		d.queue.erase(d.queue.begin()+canceled_idx);
+	}
+	if(added_production != "")
+	{
+		d.queue.push_back(added_production);
 	}
 }
 
-void ProductionQueueCancelStep::revert_step(Data &d, Memento const &m) const
+void ProductionQueueOperationStep::revert_step(Data &d, Memento const &m) const
 {
-	d = m.old;
+	d.queue = m.old_queue;
 }
 
 } // namespace octopus

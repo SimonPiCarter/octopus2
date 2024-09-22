@@ -35,8 +35,10 @@ void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
                 // add production step
                 prod_template_l.produce(e, ecs, manager_p);
 
-                // remove first element (will reset timestamp to 0)
-				manager_p.get_last_layer().back().template get<ProductionQueueCancelStep>().add_step(e, ProductionQueueCancelStep{0});
+                // remove first element
+				manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(e, ProductionQueueOperationStep{"", 0});
+                // reset timestamp
+                manager_p.get_last_layer().back().template get<ProductionQueueTimestampStep>().add_step(e, ProductionQueueTimestampStep{0});
             }
         });
 }
