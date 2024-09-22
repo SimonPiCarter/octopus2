@@ -12,15 +12,10 @@ void set_up_phases(flecs::world &ecs)
 		.add(flecs::Phase)
 		.depends_on(flecs::OnUpdate);
 
-	/// InputPhase
-	flecs::entity inputPhase = ecs.entity(InputPhase)
-		.add(flecs::Phase)
-		.depends_on(initializationPhase);
-
 	/// PrepingUpdatePhase
 	flecs::entity prepingUpdatePhase = ecs.entity(PrepingUpdatePhase)
 		.add(flecs::Phase)
-		.depends_on(inputPhase);
+		.depends_on(initializationPhase);
 
 	/// CleanUpPhase
 	flecs::entity cleanUpPhase = ecs.entity(CleanUpPhase)
@@ -52,10 +47,15 @@ void set_up_phases(flecs::world &ecs)
 		.add(flecs::Phase)
 		.depends_on(postUpdatePhase);
 
+	/// InputPhase
+	flecs::entity inputPhase = ecs.entity(InputPhase)
+		.add(flecs::Phase)
+		.depends_on(movingPhase);
+
 	/// SteppingPhase
 	flecs::entity steppingPhase = ecs.entity(SteppingPhase)
 		.add(flecs::Phase)
-		.depends_on(movingPhase);
+		.depends_on(inputPhase);
 
 	/// ValidatePhase
 	flecs::entity validatePhase = ecs.entity(ValidatePhase)
