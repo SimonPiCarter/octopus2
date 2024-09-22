@@ -32,7 +32,10 @@ CollisionStep, \
 AttackWindupStep, \
 AttackReloadStep, \
 AttackCommandStep, \
-FlockArrivedStep
+FlockArrivedStep, \
+ProductionQueueTimestampStep, \
+ProductionQueueAddStep, \
+ProductionQueueCancelStep
 
 template<typename variant_t>
 struct DefaultStepContext : StepContext<variant_t, DEFAULT_STEPS_T>

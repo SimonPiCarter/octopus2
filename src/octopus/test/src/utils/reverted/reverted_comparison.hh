@@ -83,8 +83,8 @@ struct RevertTester
 			ASSERT_EQ(recorded_steps, records[i].records.size());
 			for(size_t step = 0 ; step < recorded_steps; ++step)
 			{
-				// std::cout<<records[i][step]<<std::endl;
-				// std::cout<<reverted_records[i][step]<<std::endl<<std::endl;
+				// std::cout<<"p "<<records[i][step]<<std::endl;
+				// std::cout<<"r "<<reverted_records[i][step]<<std::endl<<std::endl;
 				EXPECT_EQ(reverted_records[i][step], records[i][step]) << "error while comparing step "<< step;
 			}
 		}

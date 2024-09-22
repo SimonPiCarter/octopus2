@@ -9,9 +9,11 @@
 #include "octopus/systems/hitpoint/HitPointsSystems.hh"
 #include "octopus/systems/position/PositionSystems.hh"
 #include "octopus/systems/step/StepSystems.hh"
+#include "octopus/systems/production/ProductionSystem.hh"
 
-#include "octopus/world/WorldContext.hh"
+#include "octopus/world/ProductionTemplateLibrary.hh"
 #include "octopus/world/StepContext.hh"
+#include "octopus/world/WorldContext.hh"
 
 #include "octopus/systems/phases/Phases.hh"
 
@@ -22,7 +24,12 @@ void set_up_phases(flecs::world &ecs);
 
 /// @brief Set up all required system for the engine to run
 template<typename StepContext_t>
-void set_up_systems(WorldContext &world, StepContext_t &step_context, uint32_t step_kept_p=0)
+void set_up_systems(
+	WorldContext &world,
+	StepContext_t &step_context,
+	ProductionTemplateLibrary<typename StepContext_t::step> *production_library = nullptr,
+	uint32_t step_kept_p = 0
+)
 {
 	set_up_phases(world.ecs);
 
@@ -42,6 +49,12 @@ void set_up_systems(WorldContext &world, StepContext_t &step_context, uint32_t s
 	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.time_stats);
 	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
 		world.ecs, step_context.step_manager, world.position_context, world.time_stats, world.attack_retarget_wait);
+
+	// production systems
+	if(production_library != nullptr)
+	{
+		set_up_production_systems(world.ecs, world.pool, step_context.step_manager, *production_library, world.time_stats);
+	}
 }
 
 }

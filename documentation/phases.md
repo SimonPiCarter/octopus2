@@ -53,7 +53,13 @@ Apply all steps :
 
 ## PostUpdate (PostUpdatePhase)
 
-- all actions from commands
+### commands
+
+- All actions from commands
+
+### production
+
+- All production
 
 ## Moving (MovingPhase)
 
