@@ -1,6 +1,7 @@
 #pragma once
 
 #define InitializationPhase "Initialization"
+#define InputPhase "Input"
 #define PrepingUpdatePhase "PrepingUpdate"
 #define CleanUpPhase "CleanUp"
 #define PostCleanUpPhase "PostCleanUp"

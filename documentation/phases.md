@@ -16,6 +16,12 @@ Here are all the default phases in the running order :
 - Push new step layer for command clean up actions (StepManager.get_last_prelayer)
 - Push new step layer for state modifiction (StateChangeSteps) : modifying components
 
+## Input (InputPhase)
+
+Handle all inputs and inject them into the world
+- Production
+- Commands actions
+
 ## PrepingUpdate (PrepingUpdatePhase)
 
 ### CommandQueueSystems

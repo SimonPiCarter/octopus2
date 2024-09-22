@@ -3,6 +3,7 @@
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
+#include "octopus/world/player/PlayerInfo.hh"
 
 namespace octopus
 {
@@ -36,7 +37,8 @@ AttackCommandStep, \
 FlockArrivedStep, \
 ProductionQueueTimestampStep, \
 ProductionQueueAddStep, \
-ProductionQueueCancelStep
+ProductionQueueCancelStep, \
+ResourceInfoQuantityStep
 
 template<typename variant_t>
 struct DefaultStepContext : StepContext<variant_t, DEFAULT_STEPS_T>

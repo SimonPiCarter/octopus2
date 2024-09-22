@@ -3,6 +3,7 @@
 #include "flecs.h"
 #include <cstdint>
 #include "octopus/components/basic/player/Player.hh"
+#include "octopus/utils/FixedPoint.hh"
 
 namespace octopus
 {
@@ -14,9 +15,8 @@ struct ProductionTemplate
     /// @brief This checks if the given player has the
     /// requirements to produce this template
     virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const = 0;
-    /// @brief This checks if the given player has
-    /// the ressources to produce this template
-    virtual bool check_resources(flecs::entity producer_p, flecs::world const &ecs) const = 0;
+    /// @brief This is used to handle resource consumption and restoration
+    virtual std::unordered_map<std::string, Fixed> resource_consumption() const = 0;
     /// @brief This is called when the production is done
     /// this must materialize the production into the world
     /// @note example : spawn a unit

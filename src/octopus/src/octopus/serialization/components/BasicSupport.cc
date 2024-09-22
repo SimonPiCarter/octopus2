@@ -11,6 +11,8 @@
 #include "octopus/components/basic/player/Player.hh"
 #include "octopus/components/basic/player/Team.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
+#include "octopus/systems/input/Input.hh"
+#include "octopus/world/player/PlayerInfo.hh"
 
 #include "octopus/serialization/utils/UtilsSupport.hh"
 #include "octopus/serialization/containers/VectorSupport.hh"
@@ -65,6 +67,10 @@ void basic_components_support(flecs::world& ecs)
 	ecs.component<ProductionQueue>()
 		.member("start_timestamp", &ProductionQueue::start_timestamp)
 		.member("queue", &ProductionQueue::queue);
+
+	ecs.component<Input>();
+
+	ecs.component<PlayerInfo>();
 }
 
 } // namespace octopus

@@ -42,7 +42,7 @@ struct ProdEntity : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 {
 	ProdEntity(flecs::entity &e) : new_ent(e) {}
     virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
-    virtual bool check_resources(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
+    virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
     virtual void produce(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const
 	{
 		EntityCreationStep step_l;

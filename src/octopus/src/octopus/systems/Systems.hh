@@ -10,6 +10,7 @@
 #include "octopus/systems/position/PositionSystems.hh"
 #include "octopus/systems/step/StepSystems.hh"
 #include "octopus/systems/production/ProductionSystem.hh"
+#include "octopus/systems/input/Input.hh"
 
 #include "octopus/world/ProductionTemplateLibrary.hh"
 #include "octopus/world/StepContext.hh"
@@ -55,6 +56,9 @@ void set_up_systems(
 	{
 		set_up_production_systems(world.ecs, world.pool, step_context.step_manager, *production_library, world.time_stats);
 	}
+
+	// input systems
+	set_up_input_system(world.ecs, production_library, step_context.step_manager);
 }
 
 }
