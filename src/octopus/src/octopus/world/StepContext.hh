@@ -16,6 +16,7 @@ struct StepContext
 {
 	typedef variant_t variant;
 	typedef StepManager<steps_t...> step;
+
 	CommandQueueMementoManager<variant_t> memento_manager;
 	StepManager<steps_t...> step_manager;
 	StateStepContainer<variant_t> state_step_manager;

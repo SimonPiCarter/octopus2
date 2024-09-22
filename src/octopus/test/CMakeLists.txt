@@ -37,6 +37,7 @@ target_sources (unit_tests
 	src/step/components/basic/hitpoint_loop.test.cc
 	src/step/components/basic/move_loop.test.cc
 	src/step/components/extended/extented_component_loop.test.cc
+	src/step/entity/entity_creation_step.test.cc
 	src/command_queue_chaining.test.cc
 	src/command_queue.test.cc
 	src/sandbox.test.cc

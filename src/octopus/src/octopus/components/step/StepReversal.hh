@@ -24,6 +24,27 @@ void revert_n_steps(flecs::world &ecs, ThreadPool &pool_p, size_t steps_p,
 	StateStepContainer_t & state_step_container_p
 )
 {
+	// revert entity steps
+	flecs::query<StepEntityManager> query_step_entity_manager_l = ecs.query<StepEntityManager>();
+	size_t entity_steps_reverted = 0;
+
+	if(ecs.get<StepEntityManager>())
+	{
+		StepEntityManager const &step_entity_manager_p = *ecs.get<StepEntityManager>();
+		for(auto rit_l = step_entity_manager_p.creation_steps_memento.rbegin() ; entity_steps_reverted < steps_p && rit_l != step_entity_manager_p.creation_steps_memento.rend() ; ++ rit_l)
+		{
+			std::vector<EntityCreationMemento> const &mementos_l = *rit_l;
+
+			// revert creation steps
+			for(auto rit_memento_l = mementos_l.rbegin() ;  rit_memento_l != mementos_l.rend() ; ++ rit_memento_l)
+			{
+				revert_entity_creation_step(ecs, *rit_memento_l);
+			}
+
+			++entity_steps_reverted;
+		}
+	}
+
 	flecs::query<CommandQueue<typename CommandMementoManager_t::variant>> q = ecs.query<CommandQueue<typename CommandMementoManager_t::variant>>();
 
 	size_t memento_reverted = 0;
@@ -78,7 +99,9 @@ void revert_n_steps(flecs::world &ecs, ThreadPool &pool_p, size_t steps_p,
 	}
 
 	// sanity check
-	if(steps_reverted != memento_reverted)
+	if(steps_reverted != memento_reverted
+	|| presteps_state_reverted != memento_reverted
+	|| (entity_steps_reverted != 0 && entity_steps_reverted != memento_reverted))
 	{
 		throw std::logic_error("Tried to revert in an incoherent state, not the same number of reverted steps for steps and command mementos");
 	}
@@ -88,11 +111,12 @@ void revert_n_steps(flecs::world &ecs, ThreadPool &pool_p, size_t steps_p,
 /// @tparam StepManager_t instance of StepManager in StepContainer.hh
 /// @tparam CommandMementoManager_t CommandQueueMementoManager in CommandQueue.hh
 /// @tparam StateStepContainer_t StateStepContainer in StateChangeStep.hh
+/// @param ecs
 /// @param steps_p
 /// @param step_manager_p
 /// @param command_memento_p
 template<class StepManager_t, class CommandMementoManager_t, class StateStepContainer_t>
-void clear_n_steps(size_t steps_p, StepManager_t &step_manager_p,
+void clear_n_steps(flecs::world &ecs, size_t steps_p, StepManager_t &step_manager_p,
 	CommandMementoManager_t &command_memento_p,
 	StateStepContainer_t & state_step_container_p)
 {
@@ -102,6 +126,14 @@ void clear_n_steps(size_t steps_p, StepManager_t &step_manager_p,
 		state_step_container_p.pop_last_layer();
 		if(!command_memento_p.lMementos.empty())
 			command_memento_p.lMementos.pop_back();
+	}
+
+	if(ecs.get<StepEntityManager>())
+	{
+		for(size_t i = 0 ; i < steps_p; ++i)
+		{
+			ecs.get_mut<StepEntityManager>()->pop_last_layer();
+		}
 	}
 }
 

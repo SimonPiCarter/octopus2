@@ -8,6 +8,7 @@
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
 #include "octopus/serialization/commands/CommandSupport.hh"
+#include "octopus/world/step/StepEntityManager.hh"
 
 #include "env/custom_components.hh"
 
@@ -23,6 +24,7 @@ class Environment : public ::testing::Environment {
 		flecs::world ecs;
 		octopus::basic_components_support(ecs);
 		octopus::basic_commands_support(ecs);
+		ecs.component<octopus::StepEntityManager>();
 
 		// serialize states
 		ecs.component<WalkTest>()

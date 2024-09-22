@@ -118,6 +118,7 @@ struct StepManager
 {
 	typedef std::variant<Ts...> Variant;
 	typedef StepContainerCascade<Ts...> StepContainer;
+
 	std::list<std::vector<StepContainer> > steps;
 	std::list<std::vector<StepContainer> > presteps;
 

@@ -74,7 +74,7 @@ struct RevertTester
 				reverted_records[i].records.push_front(ss_l.str());
 			}
 			revert_n_steps(world.ecs, world.pool, 1, stepContext_p.step_manager, stepContext_p.memento_manager, stepContext_p.state_step_manager);
-			clear_n_steps(1, stepContext_p.step_manager, stepContext_p.memento_manager, stepContext_p.state_step_manager);
+			clear_n_steps(world.ecs, 1, stepContext_p.step_manager, stepContext_p.memento_manager, stepContext_p.state_step_manager);
 		}
 
 		for(size_t i = 0 ; i < tracked_entities.size() ; ++ i)

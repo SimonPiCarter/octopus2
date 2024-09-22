@@ -5,6 +5,7 @@
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/utils/ThreadPool.hh"
+#include "octopus/world/step/StepEntityManager.hh"
 
 namespace octopus
 {
@@ -25,6 +26,16 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 			}
 		});
 
+	ecs.system<StepEntityManager>()
+		.kind(ecs.entity(InitializationPhase))
+		.each([step_kept_p](StepEntityManager &step_entity_manager_p) {
+			step_entity_manager_p.add_layer();
+			if(step_kept_p != 0 && step_entity_manager_p.creation_steps.size() > step_kept_p)
+			{
+				step_entity_manager_p.pop_layer();
+			}
+		});
+
 	// apply state steps and clean up steps
 	ecs.system<>()
         .immediate()
@@ -41,6 +52,19 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 		.run([&](flecs::iter&) {
 			dispatch_apply(manager_p.get_last_layer(), pool);
 			state_step_container_p.get_last_layer().apply(ecs);
+		});
+
+	ecs.system<StepEntityManager>()
+		.kind(ecs.entity(SteppingPhase))
+		.each([&ecs](StepEntityManager &step_entity_manager_p) {
+			step_entity_manager_p.get_last_memento_layer().reserve(step_entity_manager_p.get_last_layer().size());
+
+			for(EntityCreationStep const &step_l : step_entity_manager_p.get_last_layer())
+			{
+				EntityCreationMemento memento_l;
+				apply_entity_creation_step(ecs, step_l, memento_l);
+				step_entity_manager_p.get_last_memento_layer().push_back(memento_l);
+			}
 		});
 }
 
