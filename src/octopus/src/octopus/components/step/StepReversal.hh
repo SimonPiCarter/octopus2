@@ -4,6 +4,7 @@
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/world/step/StepEntityManager.hh"
 
 namespace octopus
 {

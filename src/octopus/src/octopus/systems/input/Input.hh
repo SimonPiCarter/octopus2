@@ -5,7 +5,10 @@
 #include <list>
 #include <vector>
 
+#include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/world/ProductionTemplateLibrary.hh"
+#include "octopus/world/player/PlayerInfo.hh"
+#include "octopus/systems/phases/Phases.hh"
 
 namespace octopus
 {
