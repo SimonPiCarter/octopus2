@@ -1,5 +1,6 @@
 #pragma once
 
+#include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
