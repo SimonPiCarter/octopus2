@@ -445,6 +445,7 @@ int32_t allocate_node(aabb_tree<data_t>& tree)
 	if(tree.first_free >= 0)
 	{
 		tree.first_free = tree.nodes[idx].parent;
+		tree.nodes[idx].height = 0;
 	}
 	else
 	{
@@ -460,6 +461,8 @@ void free_node( aabb_tree<data_t>& tree, int32_t idx)
 	assert(idx < tree.nodes.size());
 	tree.nodes[idx].parent = tree.first_free;
 	tree.nodes[idx].height = -1;
+	tree.nodes[idx].left = -1;
+	tree.nodes[idx].right = -1;
 	tree.first_free = idx;
 }
 
