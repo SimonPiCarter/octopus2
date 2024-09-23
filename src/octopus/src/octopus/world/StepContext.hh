@@ -6,6 +6,22 @@
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 
+#define DEFAULT_STEPS_T octopus::HitPointStep, \
+octopus::HitPointMaxStep, \
+octopus::DestroyableStep, \
+octopus::PositionStep, \
+octopus::PositionInTreeStep, \
+octopus::MassStep, \
+octopus::VelocityStep, \
+octopus::CollisionStep, \
+octopus::AttackWindupStep, \
+octopus::AttackReloadStep, \
+octopus::AttackCommandStep, \
+octopus::FlockArrivedStep, \
+octopus::ProductionQueueTimestampStep, \
+octopus::ProductionQueueOperationStep, \
+octopus::ResourceInfoQuantityStep
+
 namespace octopus
 {
 
@@ -24,21 +40,6 @@ struct StepContext
 	StateStepContainer<variant_t> state_step_manager;
 };
 
-#define DEFAULT_STEPS_T HitPointStep, \
-HitPointMaxStep, \
-DestroyableStep, \
-PositionStep, \
-PositionInTreeStep, \
-MassStep, \
-VelocityStep, \
-CollisionStep, \
-AttackWindupStep, \
-AttackReloadStep, \
-AttackCommandStep, \
-FlockArrivedStep, \
-ProductionQueueTimestampStep, \
-ProductionQueueOperationStep, \
-ResourceInfoQuantityStep
 
 template<typename variant_t>
 struct DefaultStepContext : StepContext<variant_t, DEFAULT_STEPS_T>
