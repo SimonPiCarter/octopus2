@@ -20,6 +20,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # External requirements
 # ===========================================================
 
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
 # ----------------------------------------------------------------------------
 # Optional conan setup
 # ----------------------------------------------------------------------------
@@ -40,12 +43,14 @@ set (CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
 set (CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 set (CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
 
-# find_package(Boost 1.75.0 REQUIRED)
-# add_definitions(-DBOOST_ALLOW_DEPRECATED_HEADERS)
+find_package(Boost 1.83.0 REQUIRED)
+add_definitions(-DBOOST_ALLOW_DEPRECATED_HEADERS)
 
 # ============================================================================
 # Game Engine configuration
 # ============================================================================
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(src/flecs)
 add_subdirectory(src/octopus)
@@ -55,12 +60,32 @@ add_subdirectory(src/exe)
 # Installation
 # ============================================================================
 
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install/${PROJECT_NAME}-${PROJECT_VERSION}" CACHE PATH "${PROJECT_NAME} default install path" FORCE)
-endif ()
-
-
 set (ConfigPackageLocation "lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
+
+# ----------------------------------------------------------------------------
+# Configuration files
+# ----------------------------------------------------------------------------
+write_basic_package_version_file ("${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake"
+	VERSION ${PROJECT_VERSION}
+	COMPATIBILITY SameMajorVersion)
+
+configure_package_config_file (cmake/${PROJECT_NAME}-config.cmake.in
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config.cmake"
+	INSTALL_DESTINATION "${ConfigPackageLocation}"
+	NO_SET_AND_CHECK_MACRO
+	NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+# ----------------------------------------------------------------------------
+# Export
+# ----------------------------------------------------------------------------
+
+set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install/${PROJECT_NAME}-${PROJECT_VERSION}" CACHE PATH "${PROJECT_NAME} default install path" FORCE)
+
+install (FILES
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake"
+	DESTINATION "${ConfigPackageLocation}"
+)
 
 install (EXPORT ${PROJECT_NAME}-export
 	FILE ${PROJECT_NAME}-targets.cmake

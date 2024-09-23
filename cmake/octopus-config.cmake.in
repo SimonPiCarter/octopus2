@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(NOT TARGET octopus::octopus)
+    include ("${CMAKE_CURRENT_LIST_DIR}/octopus-targets.cmake")
+endif ()

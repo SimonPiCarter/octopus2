@@ -15,7 +15,7 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
 
 add_library(octopus ${SOURCES})
 
-target_link_libraries(octopus PUBLIC flecs::flecs_static)
+target_link_libraries(octopus PUBLIC flecs::flecs_static Boost::boost)
 target_include_directories(octopus
 	PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/>
