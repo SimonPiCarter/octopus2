@@ -6,6 +6,7 @@
 
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/world/ProductionTemplateLibrary.hh"
+#include "octopus/utils/log/Logger.hh"
 
 namespace octopus
 {
@@ -19,6 +20,7 @@ void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
 	ecs.system<ProductionQueue const>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.each([&](flecs::entity e, ProductionQueue const &queue_p) {
+			Logger::getDebug() << "Production System :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 
             if(queue_p.queue.empty()) { return; }
 
@@ -40,6 +42,7 @@ void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
                 // reset timestamp
                 manager_p.get_last_layer().back().template get<ProductionQueueTimestampStep>().add_step(e, ProductionQueueTimestampStep{0});
             }
+			Logger::getDebug() << "Production System :: end" << std::endl;
         });
 }
 

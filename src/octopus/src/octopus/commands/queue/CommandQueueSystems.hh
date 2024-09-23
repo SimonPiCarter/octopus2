@@ -1,6 +1,7 @@
 #pragma once
 
 #include "octopus/systems/phases/Phases.hh"
+#include "octopus/utils/log/Logger.hh"
 
 namespace octopus
 {
@@ -41,17 +42,20 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 	ecs.system("CommandQueueMementoSetup")
 		.kind(ecs.entity(InitializationPhase))
 		.run([&mementoManager_p, step_kept_p](flecs::iter& it) {
+			Logger::getDebug() << "CommandQueueMementoSetup :: start" << std::endl;
 			mementoManager_p.lMementos.push_back(typename CommandQueueMementoManager<variant_t>::vMemento());
 			if(step_kept_p != 0 && mementoManager_p.lMementos.size() > step_kept_p)
 			{
 				mementoManager_p.lMementos.pop_front();
 			}
+			Logger::getDebug() << "CommandQueueMementoSetup :: end" << std::endl;
 		});
 
 	// Apply actions
 	ecs.system<CommandQueue<variant_t>>()
 		.kind(ecs.entity(PrepingUpdatePhase))
 		.each([&ecs, &mementoManager_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			Logger::getDebug() << "CommandQueue Run :: name=" << e.name() << " idx=" << e.id() << std::endl;
 
 			if(queue_p._queuedActions.size() > 0)
 			{
@@ -69,20 +73,25 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 			// clear once done
 			queue_p._queuedActions.clear();
 
+			Logger::getDebug() << "CommandQueue Run :: done"<< std::endl;
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
 		.immediate()
 		.kind(ecs.entity(PrepingUpdatePhase))
 		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			Logger::getDebug() << "CommandQueue clean up current :: name=" << e.name() << " idx=" << e.id() <<" :: done"<< std::endl;
 			queue_p.clean_up_current(ecs, e, stateStep_p);
+			Logger::getDebug() << "CommandQueue clean up current :: done"<< std::endl;
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
 		.immediate()
 		.kind(ecs.entity(PostCleanUpPhase))
 		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
+			Logger::getDebug() << "CommandQueue update current :: name=" << e.name() << " idx=" << e.id() <<" :: done"<< std::endl;
 			queue_p.update_current(ecs, e, stateStep_p);
+			Logger::getDebug() << "CommandQueue update current :: done"<< std::endl;
 		});
 }
 

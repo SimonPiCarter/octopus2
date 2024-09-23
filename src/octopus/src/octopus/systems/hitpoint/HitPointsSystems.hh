@@ -11,6 +11,7 @@
 
 #include "octopus/systems/phases/Phases.hh"
 #include "octopus/utils/FixedPoint.hh"
+#include "octopus/utils/log/Logger.hh"
 
 namespace octopus
 {
@@ -55,11 +56,12 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	// Destroyable handling
 
 	ecs.system<HitPoint const, Destroyable>()
-		.multi_threaded()
+		// .multi_threaded() cannot be multithreaded because destroyed event will cause data race
 		.kind(ecs.entity(UpdatePhase))
 		.each([&ecs, &manager_p](flecs::entity e, HitPoint const &hp_p, Destroyable &destroyable_p) {
 			if(hp_p.qty == Fixed::Zero() && destroyable_p.timestamp == 0)
 			{
+				Logger::getDebug() << "Destroy :: name=" << e.name() << " idx=" << e.id() << std::endl;
 				manager_p.get_last_layer().back().template get<DestroyableStep>().add_step(e, {ecs.get_info()->frame_count_total});
 				e.disable();
 				ecs.event<Destroyed>()
@@ -77,6 +79,7 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			if(destroyable_p.timestamp != 0
 			&& destroyable_p.timestamp + step_kept_p > ecs.get_info()->frame_count_total)
 			{
+				Logger::getDebug() << "Destruct :: name=" << e.name() << " idx=" << e.id() << std::endl;
 				e.destruct();
 			}
 		});

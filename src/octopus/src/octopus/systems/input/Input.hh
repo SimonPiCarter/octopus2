@@ -9,6 +9,7 @@
 #include "octopus/world/ProductionTemplateLibrary.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/systems/phases/Phases.hh"
+#include "octopus/utils/log/Logger.hh"
 
 namespace octopus
 {
@@ -172,8 +173,10 @@ void set_up_input_system(flecs::world &ecs, ProductionTemplateLibrary<StepManage
 	ecs.system<Input>()
 		.kind(ecs.entity(InputPhase))
 		.each([&, prod_lib_p](flecs::entity e, Input &input_p) {
+			Logger::getDebug() << "Input :: start" << std::endl;
 			input_p.stack_input();
 			input_p.unstack_input<StepManager_t>(ecs, prod_lib_p, manager_p);
+			Logger::getDebug() << "Input :: end" << std::endl;
 		});
 }
 

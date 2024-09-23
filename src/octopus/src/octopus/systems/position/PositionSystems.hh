@@ -4,8 +4,10 @@
 
 #include "flecs.h"
 
+#include "octopus/utils/log/Logger.hh"
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/utils/aabb/aabb_tree.hh"
+#include "octopus/utils/log/Logger.hh"
 #include "octopus/world/position/PositionContext.hh"
 
 #include "octopus/components/basic/position/Position.hh"
@@ -32,9 +34,11 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	ecs.system<PositionInTree const, Position const>()
 		.kind(ecs.entity(UpdatePhase))
 		.each([&](flecs::entity e, PositionInTree const &pos_in_tree, Position const &pos) {
+			Logger::getDebug() << "Positon system :: start name=" << e.name()<<" id="<<e.id()<<std::endl;
 			START_TIME(tree_update)
 			if(pos_in_tree.idx_leaf < 0)
 			{
+				Logger::getDebug() << "\tnew" << std::endl;
 				aabb box {pos.pos, pos.pos};
 				box = expand_aabb(box, 2*pos.ray);
 				int32_t idx_l = add_new_leaf(posContext_p.tree, box, e);
@@ -42,21 +46,25 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			}
 			else
 			{
+				Logger::getDebug() << "\tupdate" << std::endl;
 				aabb box {pos.pos, pos.pos};
 				box = expand_aabb(box, pos.ray);
 				update_leaf(posContext_p.tree, pos_in_tree.idx_leaf, box, pos.ray);
 			}
 			END_TIME(tree_update)
+			Logger::getDebug() << "Positon system :: end" << std::endl;
 		});
 
 	ecs.observer<Destroyable const>()
 		.event<Destroyed>()
 		.each([&posContext_p](flecs::entity e, Destroyable const&) {
+			Logger::getDebug() << "Removed from tree name=" << e.name() << " idx=" << e.id() << std::endl;
 			PositionInTree const* pos_in_tree = e.get<PositionInTree>();
 			if(pos_in_tree && pos_in_tree->idx_leaf >= 0)
 			{
 				remove_leaf(posContext_p.tree, pos_in_tree->idx_leaf);
 			}
+			Logger::getDebug() << "Removed from tree :: end" << std::endl;
 		});
 
 	static Fixed max_force = 100;
@@ -67,6 +75,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 		.kind(ecs.entity(MovingPhase))
 		.multi_threaded()
 		.each([&](flecs::entity e, Position const &pos_p, Move &move_p) {
+			Logger::getDebug() << "Flocking :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 			START_TIME(position_system)
 
 			Vector f;  // forces
@@ -100,14 +109,17 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 			move_p.move = v * move_p.speed / max_speed;
 			END_TIME(position_system)
+			Logger::getDebug() << "Flocking :: end" << std::endl;
 		});
 
 	ecs.system<Move>()
 		.kind(ecs.entity(MovingPhase))
 		.each([&ecs, &manager_p](flecs::entity e, Move &move_p) {
+			Logger::getDebug() << "Apply move :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 			manager_p.get_last_layer().back().template get<PositionStep>().add_step(e, PositionStep{move_p.move});
 			manager_p.get_last_layer().back().template get<VelocityStep>().add_step(e, VelocityStep{move_p.move});
 			move_p.move = Vector();
+			Logger::getDebug() << "Apply move :: end" << std::endl;
 		});
 
 	// Validators
