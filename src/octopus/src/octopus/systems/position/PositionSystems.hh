@@ -35,6 +35,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 		.kind(ecs.entity(UpdatePhase))
 		.each([&](flecs::entity e, PositionInTree const &pos_in_tree, Position const &pos) {
 			Logger::getDebug() << "Positon system :: start name=" << e.name()<<" id="<<e.id()<<std::endl;
+			time_stats_p.moving_entities += 1;
 			START_TIME(tree_update)
 			if(pos_in_tree.idx_leaf < 0)
 			{
@@ -99,7 +100,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 			a = f / pos_p.mass;
 			// tail force (to slow down when no other force)
-			if(square_length(a) < Fixed::One() / 10)
+			if(square_length(a) < Fixed(1000, true) )
 			{
 				a = Vector(0,0)-v;
 			}

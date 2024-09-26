@@ -6,6 +6,7 @@ struct TimeStats
 	double tree_update = 0.;
 	double attack_command = 0.;
 	double attack_command_new_target = 0.;
+	uint64_t moving_entities = 0;
 };
 
 #define START_TIME(name) const auto start_##name{std::chrono::high_resolution_clock::now()};

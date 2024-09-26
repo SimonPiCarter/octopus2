@@ -8,7 +8,7 @@ namespace octopus
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p)
 {
 	Vector force;
-	if(square_length(direction_p) > 0.01)
+	if(square_length(direction_p) > Fixed::Zero())
 	{
 		force = direction_p/length(direction_p) * max_speed_p;
 		force = force - velocity_p;
