@@ -21,6 +21,7 @@
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
 
+#include "env/custom_components.hh"
 #include "env/stream_ent.hh"
 #include "utils/reverted/reverted_comparison.hh"
 
@@ -38,15 +39,7 @@ namespace
 /// New component definition //
 ///////////////////////////////
 
-struct AttackTestComponent {
-	uint32_t windup = 0;
-	uint32_t windup_time = 0;
-	Fixed damage;
-	flecs::entity target;
-
-	static constexpr char const * const naming()  { return "attack"; }
-	struct State {};
-};
+// See in custom_components
 
 struct AttackTestMemento {
 	uint32_t old_windup = 0;

@@ -20,6 +20,7 @@
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
 
+#include "env/custom_components.hh"
 #include "env/stream_ent.hh"
 
 using namespace octopus;
@@ -32,16 +33,6 @@ using namespace octopus;
 
 namespace
 {
-
-struct AttackTestHP {
-	uint32_t windup = 0;
-	uint32_t windup_time = 0;
-	Fixed damage;
-	flecs::entity target;
-
-	static constexpr char const * const naming()  { return "attack"; }
-	struct State {};
-};
 
 using custom_variant = std::variant<octopus::NoOpCommand, AttackTestHP>;
 using CustomCommandQueue = CommandQueue<custom_variant>;

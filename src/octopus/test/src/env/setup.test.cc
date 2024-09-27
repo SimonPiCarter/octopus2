@@ -5,9 +5,9 @@
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 
-#include "octopus/serialization/queue/CommandQueueSupport.hh"
+#include "octopus/serialization/components/AdvancedSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
-#include "octopus/serialization/commands/CommandSupport.hh"
+#include "octopus/world/StepContext.hh"
 #include "octopus/world/step/StepEntityManager.hh"
 
 #include "env/custom_components.hh"
@@ -33,12 +33,13 @@ class Environment : public ::testing::Environment {
 			.member<uint32_t>("t");
 
 		// set up all command queues in test
-		octopus::command_queue_support<octopus::NoOpCommand, octopus::MoveCommand>(ecs);
-		octopus::command_queue_support<octopus::NoOpCommand, WalkTest, AttackTest>(ecs);
-		octopus::command_queue_support<octopus::NoOpCommand, AttackTest>(ecs);
-		octopus::command_queue_support<octopus::NoOpCommand, octopus::MoveCommand>(ecs);
-		octopus::command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
-
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, WalkTest, AttackTest>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, AttackTest>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, AttackTestHP>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, AttackTestComponent>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 	}
 
 	// Override this to define how to tear down the environment.

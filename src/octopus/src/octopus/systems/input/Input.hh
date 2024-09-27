@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 
+#include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/world/ProductionTemplateLibrary.hh"
 #include "octopus/world/player/PlayerInfo.hh"
@@ -52,12 +53,27 @@ struct InputCancelProduction
 	int idx = 0;
 };
 
+template<typename command_variant_t>
+struct InputCommand
+{
+	flecs::entity entity;
+	command_variant_t command;
+	bool front = false;
+};
+
+template<typename command_variant_t, typename StepManager_t>
 struct Input
 {
 	Input() { stack_input(); }
 
-	void addFrontCommand();
-	void addBackCommand();
+	void addFrontCommand(command_variant_t const &command_p)
+	{
+		container_command.get_back_layer().push_back({command_p, true});
+	}
+	void addBackCommand(command_variant_t const &command_p)
+	{
+		container_command.get_back_layer().push_back({command_p, false});
+	}
 
 	void addProduction(InputAddProduction const &input_p)
 	{
@@ -70,7 +86,6 @@ struct Input
 		container_cancel_production.get_back_layer().push_back(input_p);
 	}
 
-	template<typename StepManager_t>
 	void unstack_input(flecs::world &ecs, ProductionTemplateLibrary<StepManager_t> const *prod_lib_p, StepManager_t &manager_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
@@ -102,6 +117,7 @@ struct Input
 				&& check_resources(player_info_l->resource, map_locked_resources[player_info_l->idx], prod_l->resource_consumption()))
 				{
 					manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {input_l.production, -1});
+					prod_l->enqueue(input_l.producer, ecs, manager_p);
 					for(auto &&pair_l : prod_l->resource_consumption())
 					{
 						std::string const &resource_l = pair_l.first;
@@ -136,6 +152,7 @@ struct Input
 				if(!player.is_valid()) { continue; }
 
 				manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {"", input_l.idx});
+				prod_l->dequeue(input_l.producer, ecs, manager_p);
 				if(input_l.idx == 0)
 				{
 					manager_p.get_last_layer().back().template get<ProductionQueueTimestampStep>().add_step(input_l.producer, {0});
@@ -150,32 +167,48 @@ struct Input
 			}
 		}
 
+		// Handling command inputs
+		for(InputCommand<command_variant_t> const & input : container_command.get_front_layer())
+		{
+			if(input.front)
+			{
+				input.entity.template get_mut<CommandQueue<command_variant_t>>()->_queuedActions.push_back(CommandQueueActionAddFront<command_variant_t> {input.command});
+			}
+			else
+			{
+				input.entity.template get_mut<CommandQueue<command_variant_t>>()->_queuedActions.push_back(CommandQueueActionAddBack<command_variant_t> {input.command});
+			}
+		}
+
 		container_add_production.pop_layer();
 		container_cancel_production.pop_layer();
+		container_command.pop_layer();
 	}
 
 	void stack_input()
 	{
 		container_add_production.push_layer();
 		container_cancel_production.push_layer();
+		container_command.push_layer();
 	}
 private:
 	std::mutex mutex;
 
 	InputLayerContainer<InputAddProduction> container_add_production;
 	InputLayerContainer<InputCancelProduction> container_cancel_production;
+	InputLayerContainer<InputCommand<command_variant_t> > container_command;
 };
 
-template<typename StepManager_t>
+template<typename command_variant_t,  typename StepManager_t>
 void set_up_input_system(flecs::world &ecs, ProductionTemplateLibrary<StepManager_t> const *prod_lib_p, StepManager_t &manager_p)
 {
 	// Hangle input
-	ecs.system<Input>()
+	ecs.system<Input<command_variant_t, StepManager_t>>()
 		.kind(ecs.entity(InputPhase))
-		.each([&, prod_lib_p](flecs::entity e, Input &input_p) {
+		.each([&, prod_lib_p](flecs::entity e, Input<command_variant_t, StepManager_t> &input_p) {
 			Logger::getDebug() << "Input :: start" << std::endl;
 			input_p.stack_input();
-			input_p.unstack_input<StepManager_t>(ecs, prod_lib_p, manager_p);
+			input_p.unstack_input(ecs, prod_lib_p, manager_p);
 			Logger::getDebug() << "Input :: end" << std::endl;
 		});
 }

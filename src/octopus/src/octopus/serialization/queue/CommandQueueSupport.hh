@@ -12,6 +12,12 @@
 namespace octopus
 {
 
+template<typename type_t>
+void add_custom_state_component(flecs::world &world)
+{
+	world.component<typename type_t::State>();
+}
+
 // Reusable reflection support for std::vector
 template<typename... tArgs>
 void command_queue_support(flecs::world& world) {
@@ -20,6 +26,10 @@ void command_queue_support(flecs::world& world) {
 		.member<uint32_t>("no_op");
 
 	variant_support<tArgs...>(world);
+
+	// adding all State from commands
+	// cf https://stackoverflow.com/questions/12515616/expression-contains-unexpanded-parameter-packs/12515637#12515637
+    int _[] = {0, (add_custom_state_component<tArgs>(world), 0)...}; (void)_;
 
 	typedef std::variant<tArgs...> variant_args;
 

@@ -20,9 +20,8 @@
 
 #include "octopus/utils/ThreadPool.hh"
 
-#include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
-#include "octopus/serialization/commands/CommandSupport.hh"
+#include "octopus/serialization/components/AdvancedSupport.hh"
 
 #include "octopus/world/WorldContext.hh"
 #include "octopus/world/StepContext.hh"
@@ -84,10 +83,9 @@ TEST(input_production, simple)
 	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
-	basic_commands_support(ecs);
-	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 
-	ecs.add<Input>();
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
@@ -131,7 +129,7 @@ TEST(input_production, simple)
 
 		if(i == 2)
 		{
-			ecs.get_mut<Input>()->addProduction({e1, "a"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
@@ -151,7 +149,7 @@ TEST(input_production, simple_not_enough_resource)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 
-	ecs.add<Input>();
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
@@ -197,7 +195,7 @@ TEST(input_production, simple_not_enough_resource)
 
 		if(i == 0 || i == 4)
 		{
-			ecs.get_mut<Input>()->addProduction({e1, "b"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
@@ -217,7 +215,7 @@ TEST(input_production, simple_cancel)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 
-	ecs.add<Input>();
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
@@ -263,11 +261,11 @@ TEST(input_production, simple_cancel)
 
 		if(i == 0 || i == 4)
 		{
-			ecs.get_mut<Input>()->addProduction({e1, "b"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 		if(i == 1)
 		{
-			ecs.get_mut<Input>()->cancelProduction({e1, 0});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->cancelProduction({e1, 0});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
@@ -287,7 +285,7 @@ TEST(input_production, simple_not_enough_resource_same_input)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
 
-	ecs.add<Input>();
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
@@ -333,8 +331,8 @@ TEST(input_production, simple_not_enough_resource_same_input)
 
 		if(i == 0)
 		{
-			ecs.get_mut<Input>()->addProduction({e1, "b"});
-			ecs.get_mut<Input>()->addProduction({e1, "b"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);

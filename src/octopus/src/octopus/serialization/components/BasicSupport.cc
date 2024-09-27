@@ -59,16 +59,12 @@ void basic_components_support(flecs::world& ecs)
 	ecs.component<Player>()
 		.member("team", &Player::team);
 
-	// Advanced
-
     ecs.component<std::vector<std::string> >()
         .opaque(std_vector_support<std::string>);
 
 	ecs.component<ProductionQueue>()
 		.member("start_timestamp", &ProductionQueue::start_timestamp)
 		.member("queue", &ProductionQueue::queue);
-
-	ecs.component<Input>();
 
 	ecs.component<PlayerInfo>();
 }

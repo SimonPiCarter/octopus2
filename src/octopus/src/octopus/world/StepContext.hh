@@ -40,6 +40,7 @@ struct StepContext
 	StateStepContainer<variant_t> state_step_manager;
 };
 
+using DefaultStepManager = StepManager<DEFAULT_STEPS_T>;
 
 template<typename variant_t>
 struct DefaultStepContext : StepContext<variant_t, DEFAULT_STEPS_T>
