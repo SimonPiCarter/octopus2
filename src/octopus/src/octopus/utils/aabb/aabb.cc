@@ -64,10 +64,13 @@ aabb expand_aabb(aabb const &a, octopus::Fixed const &margin_p)
 	};;
 }
 
+namespace std
+{
 std::ostream &operator<<(std::ostream &os_p, aabb const &a)
 {
 	os_p<<"aabb[lb = "
 		<<a.lb<<", ub = "
 		<<a.ub<<"]";
 	return os_p;
+}
 }

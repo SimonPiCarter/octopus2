@@ -42,8 +42,10 @@ octopus::Vector & operator/=(octopus::Vector & a, octopus::Fixed const & b);
 octopus::Vector operator*(octopus::Vector const & a, octopus::Fixed const & b);
 octopus::Vector & operator*=(octopus::Vector & a, octopus::Fixed const & b);
 
-
+namespace std
+{
 std::ostream &operator<<(std::ostream &os_p, octopus::Vector const &vec_p);
+}
 
 template<>
 struct std::hash<octopus::Vector>

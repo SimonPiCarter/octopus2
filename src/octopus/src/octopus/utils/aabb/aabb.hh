@@ -19,7 +19,6 @@ bool overlap_aabb(aabb const &a, aabb const &b);
 bool included_aabb(aabb const &inner, aabb const &outter);
 aabb expand_aabb(aabb const &a, octopus::Fixed const &margin_p = 1);
 
-std::ostream &operator<<(std::ostream &os_p, aabb const &a);
 
 template<typename data_t>
 struct aabb_node
@@ -34,6 +33,9 @@ struct aabb_node
 	bool is_leaf() const { return height == 0; }
 };
 
+namespace std
+{
+std::ostream &operator<<(std::ostream &os_p, aabb const &a);
 template<typename data_t>
 std::ostream &operator<<(std::ostream &os_p, aabb_node<data_t> const &a)
 {
@@ -45,6 +47,7 @@ std::ostream &operator<<(std::ostream &os_p, aabb_node<data_t> const &a)
 		<<a.box<<", data = "
 		<<a.data<<"]";
 	return os_p;
+}
 }
 
 template<typename data_t>
