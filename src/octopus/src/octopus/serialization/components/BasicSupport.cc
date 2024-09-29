@@ -17,6 +17,7 @@
 
 #include "octopus/serialization/utils/UtilsSupport.hh"
 #include "octopus/serialization/containers/VectorSupport.hh"
+#include "octopus/utils/fast_map/fast_map.hh"
 
 
 namespace octopus
@@ -63,12 +64,25 @@ void basic_components_support(flecs::world& ecs)
     ecs.component<std::vector<std::string> >()
         .opaque(std_vector_support<std::string>);
 
+	ecs.component<ResourceInfo>()
+		.member("quantity", &ResourceInfo::quantity)
+		.member("cap", &ResourceInfo::cap);
+
+    ecs.component<fast_map<std::string, ResourceInfo> >()
+        .opaque(fast_map_support<std::string, ResourceInfo>);
+
+    ecs.component<fast_map<std::string, int64_t> >()
+        .opaque(fast_map_support<std::string, int64_t>);
 	ecs.component<ProductionQueue>()
 		.member("start_timestamp", &ProductionQueue::start_timestamp)
 		.member("queue", &ProductionQueue::queue);
 
-	ecs.component<PlayerInfo>();
-	ecs.component<ResourceStock>();
+	ecs.component<PlayerInfo>()
+		.member("idx", &PlayerInfo::idx)
+		.member("team", &PlayerInfo::team);
+	;
+	ecs.component<ResourceStock>()
+		.member("resource", &ResourceStock::resource);
 }
 
 } // namespace octopus

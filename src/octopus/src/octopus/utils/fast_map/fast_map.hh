@@ -23,6 +23,9 @@ flecs::opaque<Map, Elem> fast_map_support(flecs::world& world);
 template<typename Key, typename Value>
 struct fast_map
 {
+    fast_map() = default;
+    fast_map(std::unordered_map<Key, Value> const &map_p) : map(map_p) {}
+
     Value &operator[](Key const key)
     {
         set_up();
@@ -32,6 +35,12 @@ struct fast_map
     {
         set_up();
         return map.at(key);
+    }
+
+    std::unordered_map<Key, Value> const &data() const
+    {
+        set_up();
+        return map;
     }
 
 private:
