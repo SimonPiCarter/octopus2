@@ -1,6 +1,7 @@
 #pragma once
 
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
+#include "octopus/components/basic/ability/Caster.hh"
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
@@ -20,7 +21,9 @@ octopus::AttackCommandStep, \
 octopus::FlockArrivedStep, \
 octopus::ProductionQueueTimestampStep, \
 octopus::ProductionQueueOperationStep, \
-octopus::ResourceStockStep
+octopus::ResourceStockStep, \
+octopus::CasterLastCastStep, \
+octopus::CasterWindupStep
 
 namespace octopus
 {

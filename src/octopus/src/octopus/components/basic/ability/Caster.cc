@@ -21,4 +21,15 @@ void CasterLastCastStep::revert_step(Data &d, Memento const &memento) const
     }
 }
 
+void CasterWindupStep::apply_step(Data &d, Memento &memento) const
+{
+    memento.old_value = d.timestamp_windup_start;
+    d.timestamp_windup_start = new_value;
+}
+
+void CasterWindupStep::revert_step(Data &d, Memento const &memento) const
+{
+    d.timestamp_windup_start = memento.old_value;
+}
+
 }

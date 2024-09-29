@@ -11,6 +11,7 @@ namespace octopus
 
 struct Caster {
     fast_map<std::string, int64_t> timestamp_last_cast;
+	int64_t timestamp_windup_start = 0;
 
     int64_t get_timestamp_last_call(std::string const &ability) const
     {
@@ -44,6 +45,25 @@ struct CasterLastCastStep {
 
 	typedef Caster Data;
 	typedef CasterLastCastMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const;
+
+	void revert_step(Data &d, Memento const &memento) const;
+};
+
+///////////////////////////
+/// CasterWindup STEP
+///////////////////////////
+
+struct CasterWindupMemento {
+	int64_t old_value = -1;
+};
+
+struct CasterWindupStep {
+	int64_t new_value = 0;
+
+	typedef Caster Data;
+	typedef CasterWindupMemento Memento;
 
 	void apply_step(Data &d, Memento &memento) const;
 
