@@ -1,5 +1,6 @@
 #include "BasicSupport.hh"
 
+#include "octopus/components/basic/ability/Caster.hh"
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
@@ -73,9 +74,13 @@ void basic_components_support(flecs::world& ecs)
 
     ecs.component<fast_map<std::string, int64_t> >()
         .opaque(fast_map_support<std::string, int64_t>);
+
 	ecs.component<ProductionQueue>()
 		.member("start_timestamp", &ProductionQueue::start_timestamp)
 		.member("queue", &ProductionQueue::queue);
+
+	ecs.component<Caster>()
+		.member("timestamp_last_cast", &Caster::timestamp_last_cast);
 
 	ecs.component<PlayerInfo>()
 		.member("idx", &PlayerInfo::idx)
