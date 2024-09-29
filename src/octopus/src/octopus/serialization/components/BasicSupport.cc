@@ -13,6 +13,7 @@
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/world/player/PlayerInfo.hh"
+#include "octopus/world/resources/ResourceStock.hh"
 
 #include "octopus/serialization/utils/UtilsSupport.hh"
 #include "octopus/serialization/containers/VectorSupport.hh"
@@ -67,6 +68,7 @@ void basic_components_support(flecs::world& ecs)
 		.member("queue", &ProductionQueue::queue);
 
 	ecs.component<PlayerInfo>();
+	ecs.component<ResourceStock>();
 }
 
 } // namespace octopus

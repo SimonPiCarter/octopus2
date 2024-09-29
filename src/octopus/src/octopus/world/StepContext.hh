@@ -4,7 +4,7 @@
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
-#include "octopus/world/player/PlayerInfo.hh"
+#include "octopus/world/resources/ResourceStock.hh"
 
 #define DEFAULT_STEPS_T octopus::HitPointStep, \
 octopus::HitPointMaxStep, \
@@ -20,7 +20,7 @@ octopus::AttackCommandStep, \
 octopus::FlockArrivedStep, \
 octopus::ProductionQueueTimestampStep, \
 octopus::ProductionQueueOperationStep, \
-octopus::ResourceInfoQuantityStep
+octopus::ResourceStockStep
 
 namespace octopus
 {

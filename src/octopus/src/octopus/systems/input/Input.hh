@@ -9,6 +9,7 @@
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/world/ProductionTemplateLibrary.hh"
 #include "octopus/world/player/PlayerInfo.hh"
+#include "octopus/world/resources/ResourceStock.hh"
 #include "octopus/systems/phases/Phases.hh"
 #include "octopus/utils/log/Logger.hh"
 
@@ -111,10 +112,12 @@ struct Input
 				});
 				if(!player.is_valid()) { continue; }
 				PlayerInfo const * player_info_l = player.get<PlayerInfo>();
+				ResourceStock const * resource_stock_l = player.get<ResourceStock>();
 
 				if(player_info_l
+				&& resource_stock_l
 				&& prod_l->check_requirement(input_l.producer, ecs)
-				&& check_resources(player_info_l->resource, map_locked_resources[player_info_l->idx], prod_l->resource_consumption()))
+				&& check_resources(resource_stock_l->resource, map_locked_resources[player_info_l->idx], prod_l->resource_consumption()))
 				{
 					manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {input_l.production, -1});
 					prod_l->enqueue(input_l.producer, ecs, manager_p);
@@ -126,7 +129,7 @@ struct Input
 						// lock resource for future checks
 						map_locked_resources[player_info_l->idx][resource_l] += resource_consumed_l;
 						// add step for consumption
-						manager_p.get_last_layer().back().template get<ResourceInfoQuantityStep>().add_step(player, {-resource_consumed_l, resource_l});
+						manager_p.get_last_layer().back().template get<ResourceStockStep>().add_step(player, {-resource_consumed_l, resource_l});
 					}
 
 				}
@@ -162,7 +165,7 @@ struct Input
 					std::string const &resource_l = pair_l.first;
 					Fixed resource_consumed_l = pair_l.second;
 					// add step for consumption
-					manager_p.get_last_layer().back().template get<ResourceInfoQuantityStep>().add_step(player, {resource_consumed_l, resource_l});
+					manager_p.get_last_layer().back().template get<ResourceStockStep>().add_step(player, {resource_consumed_l, resource_l});
 				}
 			}
 		}

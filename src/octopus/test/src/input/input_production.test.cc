@@ -103,7 +103,8 @@ TEST(input_production, simple)
 		.set<PlayerAppartenance>({0});
 
 	auto player = ecs.entity("player")
-		.set<PlayerInfo>({0, 0, {}});
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {}});
 
 	std::vector<octopus::Fixed> const expected_hp_l = {
 		octopus::Fixed(10),
@@ -167,7 +168,8 @@ TEST(input_production, simple_not_enough_resource)
 		.set<PlayerAppartenance>({0});
 
 	auto player = ecs.entity("player")
-		.set<PlayerInfo>({0, 0, {
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {
 			{"food", {10,0} }
 		}});
 
@@ -233,7 +235,8 @@ TEST(input_production, simple_cancel)
 		.set<PlayerAppartenance>({0});
 
 	auto player = ecs.entity("player")
-		.set<PlayerInfo>({0, 0, {
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {
 			{"food", {10,0} }
 		}});
 
@@ -303,7 +306,8 @@ TEST(input_production, simple_not_enough_resource_same_input)
 		.set<PlayerAppartenance>({0});
 
 	auto player = ecs.entity("player")
-		.set<PlayerInfo>({0, 0, {
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {
 			{"food", {10,0} }
 		}});
 
