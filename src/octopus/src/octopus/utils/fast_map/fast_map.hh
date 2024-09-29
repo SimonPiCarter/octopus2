@@ -43,6 +43,12 @@ struct fast_map
         return map;
     }
 
+    std::unordered_map<Key, Value> &data()
+    {
+        set_up();
+        return map;
+    }
+
 private:
     mutable std::unordered_map<Key, Value> map;
     mutable std::vector<Entry<Key, Value> > vector;
