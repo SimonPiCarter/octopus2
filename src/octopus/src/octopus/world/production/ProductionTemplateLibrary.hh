@@ -2,7 +2,7 @@
 
 #include <string>
 #include <unordered_map>
-#include "production/ProductionTemplate.hh"
+#include "ProductionTemplate.hh"
 
 namespace octopus
 {

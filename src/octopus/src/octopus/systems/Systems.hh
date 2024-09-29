@@ -12,7 +12,7 @@
 #include "octopus/systems/production/ProductionSystem.hh"
 #include "octopus/systems/input/Input.hh"
 
-#include "octopus/world/ProductionTemplateLibrary.hh"
+#include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/StepContext.hh"
 #include "octopus/world/WorldContext.hh"
 

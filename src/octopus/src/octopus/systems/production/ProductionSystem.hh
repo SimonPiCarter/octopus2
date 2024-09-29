@@ -5,7 +5,7 @@
 #include "flecs.h"
 
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
-#include "octopus/world/ProductionTemplateLibrary.hh"
+#include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/utils/log/Logger.hh"
 
 namespace octopus

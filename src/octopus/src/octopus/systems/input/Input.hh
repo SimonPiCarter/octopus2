@@ -7,7 +7,7 @@
 
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
-#include "octopus/world/ProductionTemplateLibrary.hh"
+#include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 #include "octopus/systems/phases/Phases.hh"
