@@ -27,6 +27,7 @@ target_sources (unit_tests
 	src/input/input_production.test.cc
 	src/serialization/ser_basic_components.test.cc
 	src/serialization/ser_command_queue.test.cc
+	src/serialization/ser_fast_map.test.cc
 	src/serialization/ser_list.test.cc
 	src/serialization/ser_variant.test.cc
 	src/serialization/ser_vector.test.cc
