@@ -67,13 +67,13 @@ struct Input
 {
 	Input() { stack_input(); }
 
-	void addFrontCommand(command_variant_t const &command_p)
+	void addFrontCommand(flecs::entity entity, command_variant_t const &command_p)
 	{
-		container_command.get_back_layer().push_back({command_p, true});
+		container_command.get_back_layer().push_back({entity, command_p, true});
 	}
-	void addBackCommand(command_variant_t const &command_p)
+	void addBackCommand(flecs::entity entity, command_variant_t const &command_p)
 	{
-		container_command.get_back_layer().push_back({command_p, false});
+		container_command.get_back_layer().push_back({entity, command_p, false});
 	}
 
 	void addProduction(InputAddProduction const &input_p)
