@@ -69,8 +69,16 @@ void basic_components_support(flecs::world& ecs)
 		.member("quantity", &ResourceInfo::quantity)
 		.member("cap", &ResourceInfo::cap);
 
+    ecs.component<Entry<std::string, ResourceInfo>>()
+        .member("key", &Entry<std::string, ResourceInfo>::key)
+        .member("val", &Entry<std::string, ResourceInfo>::val);
+
     ecs.component<fast_map<std::string, ResourceInfo> >()
         .opaque(fast_map_support<std::string, ResourceInfo>);
+
+    ecs.component<Entry<std::string, int64_t>>()
+        .member("key", &Entry<std::string, int64_t>::key)
+        .member("val", &Entry<std::string, int64_t>::val);
 
     ecs.component<fast_map<std::string, int64_t> >()
         .opaque(fast_map_support<std::string, int64_t>);
@@ -80,7 +88,8 @@ void basic_components_support(flecs::world& ecs)
 		.member("queue", &ProductionQueue::queue);
 
 	ecs.component<Caster>()
-		.member("timestamp_last_cast", &Caster::timestamp_last_cast);
+		.member("timestamp_last_cast", &Caster::timestamp_last_cast)
+		.member("timestamp_windup_start", &Caster::timestamp_windup_start);
 
 	ecs.component<PlayerInfo>()
 		.member("idx", &PlayerInfo::idx)
