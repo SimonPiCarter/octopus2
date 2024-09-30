@@ -105,7 +105,7 @@ void set_up_attack_test_systems(flecs::world &ecs, StepManager_t &manager_p)
 
 TEST(extended_loop, simple)
 {
-	WorldContext world;
+	WorldContext<StepManager<DEFAULT_STEPS_T, AttackTestStep>> world;
 	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);

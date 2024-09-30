@@ -74,10 +74,11 @@ TEST(input_ability, simple)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	AbilityTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
+	AbilityTemplateLibrary<DefaultStepManager> lib_l;
 	lib_l.add_template(new AbilityA());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, nullptr, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;

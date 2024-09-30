@@ -74,8 +74,9 @@ TEST(ability_loop, simple)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	AbilityTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
 	lib_l.add_template(new AbilityA());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, nullptr, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;
@@ -139,8 +140,9 @@ TEST(ability_loop, reload)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	AbilityTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
 	lib_l.add_template(new AbilityA());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, nullptr, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;
@@ -210,8 +212,9 @@ TEST(ability_loop, two_casts)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	AbilityTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
 	lib_l.add_template(new AbilityA());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, nullptr, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;
@@ -281,8 +284,9 @@ TEST(ability_loop, resource_missing)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	AbilityTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
 	lib_l.add_template(new AbilityA());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, nullptr, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;

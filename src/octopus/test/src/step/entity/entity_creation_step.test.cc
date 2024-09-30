@@ -83,9 +83,10 @@ TEST(entity_creation_step, simple)
 
 	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
 	lib_l.add_template(new ProdEntity(new_ent));
+	ecs.set(lib_l);
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	set_up_systems(world, step_context, &lib_l);
+	set_up_systems(world, step_context);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()

@@ -55,7 +55,7 @@ struct RevertTester
 	}
 
 	template<class StepContext_t>
-	void revert_and_check_records(octopus::WorldContext &world, StepContext_t &stepContext_p)
+	void revert_and_check_records(octopus::WorldContext<typename StepContext_t::step> &world, StepContext_t &stepContext_p)
 	{
 		// reverted records
 		std::vector<StreamedEntityRecord> reverted_records(records.size(), StreamedEntityRecord());

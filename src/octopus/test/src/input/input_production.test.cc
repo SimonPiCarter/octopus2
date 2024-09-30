@@ -42,21 +42,21 @@ namespace
 using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
-struct ProdA : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
+struct ProdA : ProductionTemplate<DefaultStepManager>
 {
     virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
     virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
-    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const
+    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
 	{
 		manager_p.get_last_layer().back().template get<HitPointStep>().add_step(producer_p, HitPointStep{1});
 	}
-    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
-    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
+    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
     virtual std::string name() const { return "a"; }
     virtual int64_t duration() const { return 2;}
 };
 
-struct ProdB : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
+struct ProdB : ProductionTemplate<DefaultStepManager>
 {
     virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
     virtual std::unordered_map<std::string, Fixed> resource_consumption() const
@@ -65,12 +65,12 @@ struct ProdB : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 			{"food", 10 }
 		};
 	}
-    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const
+    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
 	{
 		manager_p.get_last_layer().back().template get<HitPointStep>().add_step(producer_p, HitPointStep{10});
 	}
-    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
-    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
+    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
     virtual std::string name() const { return "b"; }
     virtual int64_t duration() const { return 3;}
 };
@@ -88,11 +88,12 @@ TEST(input_production, simple)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
 	lib_l.add_template(new ProdA());
 	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, &lib_l);
+	set_up_systems(world, step_context);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
@@ -151,11 +152,12 @@ TEST(input_production, simple_not_enough_resource)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
+	ProductionTemplateLibrary<DefaultStepManager > lib_l;
 	lib_l.add_template(new ProdA());
 	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;
@@ -218,11 +220,12 @@ TEST(input_production, simple_cancel)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
+	ProductionTemplateLibrary<DefaultStepManager > lib_l;
 	lib_l.add_template(new ProdA());
 	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;
@@ -289,11 +292,12 @@ TEST(input_production, simple_not_enough_resource_same_input)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
+	ProductionTemplateLibrary<DefaultStepManager > lib_l;
 	lib_l.add_template(new ProdA());
 	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
 
-	set_up_systems(world, step_context, &lib_l);
+	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
 	pos_l.collision = false;

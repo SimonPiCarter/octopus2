@@ -27,12 +27,13 @@ public:
         return _templates.at(id_p);
     }
 
-    ~AbilityTemplateLibrary()
+    void clean_up()
     {
         for(auto &&pair_l : _templates)
         {
             delete pair_l.second;
         }
+        _templates.clear();
     }
 private:
     std::unordered_map<std::string, AbilityTemplate<StepManager_t>*> _templates;

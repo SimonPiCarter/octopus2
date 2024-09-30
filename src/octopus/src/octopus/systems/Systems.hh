@@ -27,13 +27,15 @@ void set_up_phases(flecs::world &ecs);
 /// @brief Set up all required system for the engine to run
 template<typename StepContext_t>
 void set_up_systems(
-	WorldContext &world,
+	WorldContext<typename StepContext_t::step> &world,
 	StepContext_t &step_context,
-	ProductionTemplateLibrary<typename StepContext_t::step> *production_library = nullptr,
-	AbilityTemplateLibrary<typename StepContext_t::step> *ability_library = nullptr,
 	uint32_t step_kept_p = 0
 )
 {
+	flecs::world &ecs = world.ecs;
+	auto &&production_library = ecs.get<ProductionTemplateLibrary<typename StepContext_t::step> >();
+	auto &&ability_library = ecs.get<AbilityTemplateLibrary<typename StepContext_t::step> >();
+
 	set_up_phases(world.ecs);
 
 	// command handling systems

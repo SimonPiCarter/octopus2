@@ -3,6 +3,9 @@
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/world/position/PositionContext.hh"
 #include "octopus/world/stats/TimeStats.hh"
+#include "octopus/world/ability/AbilityTemplateLibrary.hh"
+#include "octopus/world/production/ProductionTemplateLibrary.hh"
+#include "octopus/world/StepContext.hh"
 #include "flecs.h"
 
 namespace octopus
@@ -10,11 +13,23 @@ namespace octopus
 
 /// @brief Store all context required for standard operation
 /// @note should contain the spatialisation and the pathfinding contexts for example
+template<class StepManager_t=DefaultStepManager>
 struct WorldContext
 {
 	WorldContext() : pool(1), position_context(ecs)
 	{
 		ecs.set_threads(12);
+	}
+	~WorldContext()
+	{
+		if(ecs.get<AbilityTemplateLibrary<StepManager_t>>())
+		{
+			ecs.get_mut<AbilityTemplateLibrary<StepManager_t>>()->clean_up();
+		}
+		if(ecs.get<ProductionTemplateLibrary<StepManager_t>>())
+		{
+			ecs.get_mut<ProductionTemplateLibrary<StepManager_t>>()->clean_up();
+		}
 	}
 
 	flecs::world ecs;

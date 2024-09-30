@@ -36,7 +36,7 @@ struct CastCommand {
 namespace octopus {
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemplateLibrary<StepManager_t> &lib_p)
+void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemplateLibrary<StepManager_t> const &lib_p)
 {
 	ecs.system<Position const, CastCommand const, Move, Caster const, ResourceStock const, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
