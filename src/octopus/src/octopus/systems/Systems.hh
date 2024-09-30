@@ -3,6 +3,7 @@
 #include "flecs.h"
 #include "octopus/utils/ThreadPool.hh"
 
+#include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
@@ -29,6 +30,7 @@ void set_up_systems(
 	WorldContext &world,
 	StepContext_t &step_context,
 	ProductionTemplateLibrary<typename StepContext_t::step> *production_library = nullptr,
+	AbilityTemplateLibrary<typename StepContext_t::step> *ability_library = nullptr,
 	uint32_t step_kept_p = 0
 )
 {
@@ -51,13 +53,20 @@ void set_up_systems(
 	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
 		world.ecs, step_context.step_manager, world.position_context, world.time_stats, world.attack_retarget_wait);
 
+	if(ability_library != nullptr)
+	{
+		set_up_cast_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
+			world.ecs, step_context.step_manager, *ability_library
+		);
+	}
+
 	// production systems
 	if(production_library != nullptr)
 	{
 		set_up_production_systems(world.ecs, world.pool, step_context.step_manager, *production_library, world.time_stats);
 	}
 
-	// // input systems
+	// input systems
 	set_up_input_system<typename StepContext_t::variant, typename StepContext_t::step>(world.ecs, production_library, step_context.step_manager);
 }
 

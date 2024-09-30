@@ -27,11 +27,18 @@ struct CastCommand {
 
 /// END State
 
+} // octopus
+
+// after AttackCommandStep definition
+#include "octopus/components/step/StepContainer.hh"
+#include "octopus/commands/basic/move/MoveCommand.hh"
+
+namespace octopus {
 
 template<class StepManager_t, class CommandQueue_t>
 void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemplateLibrary<StepManager_t> &lib_p)
 {
-	ecs.system<Caster const, Position const, CastCommand const, Move, Caster const, ResourceStock const, CommandQueue_t>()
+	ecs.system<Position const, CastCommand const, Move, Caster const, ResourceStock const, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<CastCommand::State>())
 		.each([&ecs, &manager_p, &lib_p](flecs::entity e, Position const&pos_p, CastCommand const &castCommand_p,
@@ -45,7 +52,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemp
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
             }
             // check reload
-			if(!check_timestamp_last_cast(ability_l->reload(), ecs.get_info()->frame_count_total, ability_l->name()))
+			if(!caster_p.check_timestamp_last_cast(ability_l->reload(), ecs.get_info()->frame_count_total, ability_l->name()))
 			{
                 // done if not enough
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
@@ -54,19 +61,19 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemp
 			if(ability_l->need_point_target() || ability_l->need_entity_target())
 			{
 				bool in_range = false;
-				Position target_pos;
+				Vector target_pos;
                 // check range
 				if(ability_l->need_point_target())
 				{
-					target_pos = Position { castCommand_p.point_target };
+					target_pos = castCommand_p.point_target;
 				}
 				if(ability_l->need_entity_target()
 				&& castCommand_p.entity_target
 				&& castCommand_p.entity_target.get<Position>())
 				{
-					target_pos = castCommand_p.entity_target.get<Position>();
+					target_pos = castCommand_p.entity_target.get<Position>()->pos;
 				}
-				if(square_length(target_pos.pos - pos_p.pos) <= ability_l->range()*ability_l->range())
+				if(square_length(target_pos - pos_p.pos) <= ability_l->range()*ability_l->range())
 				{
 					in_range = true;
 					// start windup if not started yet
@@ -79,7 +86,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemp
 				else
 				{
                     // move routine
-					move_routine(ecs, e, pos_p, target_pos, move_p);
+					move_routine(ecs, e, pos_p, Position {target_pos}, move_p);
 				}
             }
 			else
