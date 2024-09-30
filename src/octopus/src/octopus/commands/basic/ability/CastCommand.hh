@@ -36,15 +36,18 @@ struct CastCommand {
 namespace octopus {
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemplateLibrary<StepManager_t> const &lib_p)
+void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 {
+	auto &&ability_library = ecs.get<AbilityTemplateLibrary<StepManager_t> >();
+	if(!ability_library) { return; }
+
 	ecs.system<Position const, CastCommand const, Move, Caster const, ResourceStock const, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<CastCommand::State>())
-		.each([&ecs, &manager_p, &lib_p](flecs::entity e, Position const&pos_p, CastCommand const &castCommand_p,
+		.each([&ecs, &manager_p, ability_library](flecs::entity e, Position const&pos_p, CastCommand const &castCommand_p,
             Move &move_p, Caster const &caster_p, ResourceStock const &res_p, CommandQueue_t &queue_p) {
 			// get ability
-            AbilityTemplate<StepManager_t> const * ability_l = lib_p.try_get(castCommand_p.ability);
+            AbilityTemplate<StepManager_t> const * ability_l = ability_library->try_get(castCommand_p.ability);
             // check reources
             if(!check_resources(res_p.resource, {}, ability_l->resource_consumption()))
             {

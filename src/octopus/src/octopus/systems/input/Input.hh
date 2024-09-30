@@ -87,12 +87,13 @@ struct Input
 		container_cancel_production.get_back_layer().push_back(input_p);
 	}
 
-	void unstack_input(flecs::world &ecs, ProductionTemplateLibrary<StepManager_t> const *prod_lib_p, StepManager_t &manager_p)
+	void unstack_input(flecs::world &ecs, StepManager_t &manager_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
+		ProductionTemplateLibrary<StepManager_t> const *prod_lib = ecs.get<ProductionTemplateLibrary<StepManager_t>>();
 
     	flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
-		if(prod_lib_p)
+		if(prod_lib)
 		{
 			std::unordered_map<uint32_t, std::unordered_map<std::string, Fixed> > map_locked_resources;
 			// Input add production
@@ -104,7 +105,7 @@ struct Input
 					continue;
 				}
 				// get production information
-				ProductionTemplate<StepManager_t> const * prod_l = prod_lib_p->try_get(input_l.production);
+				ProductionTemplate<StepManager_t> const * prod_l = prod_lib->try_get(input_l.production);
 
 				// get player info
 				flecs::entity player = query_player.find([&input_l](PlayerInfo& p) {
@@ -146,7 +147,7 @@ struct Input
 				}
 
 				// get production information
-				ProductionTemplate<StepManager_t> const * prod_l = prod_lib_p->try_get(prod_queue_l->queue[input_l.idx]);
+				ProductionTemplate<StepManager_t> const * prod_l = prod_lib->try_get(prod_queue_l->queue[input_l.idx]);
 
 				// get player info
 				flecs::entity player = query_player.find([&input_l](PlayerInfo& p) {
@@ -203,15 +204,15 @@ private:
 };
 
 template<typename command_variant_t,  typename StepManager_t>
-void set_up_input_system(flecs::world &ecs, ProductionTemplateLibrary<StepManager_t> const *prod_lib_p, StepManager_t &manager_p)
+void set_up_input_system(flecs::world &ecs, StepManager_t &manager_p)
 {
 	// Hangle input
 	ecs.system<Input<command_variant_t, StepManager_t>>()
 		.kind(ecs.entity(InputPhase))
-		.each([&, prod_lib_p](flecs::entity e, Input<command_variant_t, StepManager_t> &input_p) {
+		.each([&](flecs::entity e, Input<command_variant_t, StepManager_t> &input_p) {
 			Logger::getDebug() << "Input :: start" << std::endl;
 			input_p.stack_input();
-			input_p.unstack_input(ecs, prod_lib_p, manager_p);
+			input_p.unstack_input(ecs, manager_p);
 			Logger::getDebug() << "Input :: end" << std::endl;
 		});
 }

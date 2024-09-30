@@ -32,10 +32,6 @@ void set_up_systems(
 	uint32_t step_kept_p = 0
 )
 {
-	flecs::world &ecs = world.ecs;
-	auto &&production_library = ecs.get<ProductionTemplateLibrary<typename StepContext_t::step> >();
-	auto &&ability_library = ecs.get<AbilityTemplateLibrary<typename StepContext_t::step> >();
-
 	set_up_phases(world.ecs);
 
 	// command handling systems
@@ -55,21 +51,15 @@ void set_up_systems(
 	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
 		world.ecs, step_context.step_manager, world.position_context, world.time_stats, world.attack_retarget_wait);
 
-	if(ability_library != nullptr)
-	{
-		set_up_cast_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
-			world.ecs, step_context.step_manager, *ability_library
-		);
-	}
+	set_up_cast_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
+		world.ecs, step_context.step_manager
+	);
 
 	// production systems
-	if(production_library != nullptr)
-	{
-		set_up_production_systems(world.ecs, world.pool, step_context.step_manager, *production_library, world.time_stats);
-	}
+	set_up_production_systems(world.ecs, world.pool, step_context.step_manager, world.time_stats);
 
 	// input systems
-	set_up_input_system<typename StepContext_t::variant, typename StepContext_t::step>(world.ecs, production_library, step_context.step_manager);
+	set_up_input_system<typename StepContext_t::variant, typename StepContext_t::step>(world.ecs, step_context.step_manager);
 }
 
 }

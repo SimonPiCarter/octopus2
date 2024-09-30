@@ -12,19 +12,20 @@ namespace octopus
 {
 
 template<class StepManager_t>
-void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p,
-    ProductionTemplateLibrary<StepManager_t> const &lib_p, TimeStats &time_stats_p)
+void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, TimeStats &time_stats_p)
 {
+	auto &&production_library = ecs.get<ProductionTemplateLibrary<StepManager_t> >();
+    if(!production_library) { return; }
 
 	// update position tree
 	ecs.system<ProductionQueue const>()
 		.kind(ecs.entity(PostUpdatePhase))
-		.each([&](flecs::entity e, ProductionQueue const &queue_p) {
+		.each([&, production_library](flecs::entity e, ProductionQueue const &queue_p) {
 			Logger::getDebug() << "Production System :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 
             if(queue_p.queue.empty()) { return; }
 
-            ProductionTemplate<StepManager_t> const & prod_template_l = lib_p.get(queue_p.queue[0]);
+            ProductionTemplate<StepManager_t> const & prod_template_l = production_library->get(queue_p.queue[0]);
 
             // start == 0 means we need to start producing
             if(queue_p.start_timestamp  == 0)
