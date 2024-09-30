@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "flecs.h"
+#include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
@@ -44,6 +45,7 @@ class Environment : public ::testing::Environment {
 		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, AttackTestComponent>(ecs);
 		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand>(ecs);
 		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::CastCommand>(ecs);
 	}
 
 	// Override this to define how to tear down the environment.

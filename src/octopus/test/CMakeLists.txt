@@ -32,6 +32,7 @@ target_sources (unit_tests
 	src/serialization/ser_variant.test.cc
 	src/serialization/ser_vector.test.cc
 	src/step/command/state_change_steps.test.cc
+	src/step/components/advanced/ability_loop.test.cc
 	src/step/components/advanced/production_loop.test.cc
 	src/step/components/basic/attack_loop.test.cc
 	src/step/components/basic/attack_move_loop.test.cc
