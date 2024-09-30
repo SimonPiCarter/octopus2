@@ -94,8 +94,6 @@ TEST(input_production, simple)
 
 	set_up_systems(world, step_context, &lib_l);
 
-	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<HitPoint>({10})
