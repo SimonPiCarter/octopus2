@@ -26,8 +26,8 @@ struct Caster {
     bool check_timestamp_last_cast(int64_t reload, int64_t timestamp, std::string const &ability) const
     {
         auto &&it = timestamp_last_cast.data().find(ability);
-        return timestamp_last_cast.data().cend() != it
-            && it->second + reload <= timestamp;
+        return timestamp_last_cast.data().cend() == it
+            || it->second + reload <= timestamp;
     }
 };
 
