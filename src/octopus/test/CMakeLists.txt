@@ -24,6 +24,7 @@ add_executable (unit_tests)
 target_sources (unit_tests
 	PRIVATE
 	src/env/setup.test.cc
+	src/input/input_ability.test.cc
 	src/input/input_production.test.cc
 	src/serialization/ser_basic_components.test.cc
 	src/serialization/ser_command_queue.test.cc
