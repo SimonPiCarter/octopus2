@@ -70,7 +70,7 @@ private:
 };
 
 // Reusable reflection support for fast map
-template <typename Key, typename Value, typename Elem = Entry<Key, Value>, typename Map = fast_map<Key, Value>>
+template <typename Key, typename Value, typename Elem, typename Map>
 flecs::opaque<Map, Elem> fast_map_support(flecs::world& world) {
     return flecs::opaque<Map, Elem>()
         .as_type(world.vector<Elem>())
