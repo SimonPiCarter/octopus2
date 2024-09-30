@@ -24,6 +24,7 @@ struct AbilityTemplate
     /// this must materialize the production into the world
     /// @note example : spawn a unit
     virtual void cast(flecs::entity caster_p, Vector target_point, flecs::entity target_entity, flecs::world const &ecs, StepManager_t &manager_p) const = 0;
+    /// @brief id of the ability
     virtual std::string name() const = 0;
     /// @brief This is the duration (in steps) during which
     /// the cast has to be prepared
