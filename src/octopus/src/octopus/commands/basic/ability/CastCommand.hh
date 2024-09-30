@@ -114,6 +114,8 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p, AbilityTemp
 				}
 				// reset windup
 				manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {0});
+				// reload set up
+				manager_p.get_last_layer().back().template get<CasterLastCastStep>().add_step(e, {ecs.get_info()->frame_count_total, ability_l->name()});
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 		});
