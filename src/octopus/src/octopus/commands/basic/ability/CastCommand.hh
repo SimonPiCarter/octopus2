@@ -45,27 +45,28 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<CastCommand::State>())
 		.each([&ecs, &manager_p, ability_library](flecs::entity e, Position const&pos_p, CastCommand const &castCommand_p,
-            Move &move_p, Caster const &caster_p, ResourceStock const &res_p, CommandQueue_t &queue_p) {
+			Move &move_p, Caster const &caster_p, ResourceStock const &res_p, CommandQueue_t &queue_p) {
+			move_p.target_move = Vector();
 			// get ability
-            AbilityTemplate<StepManager_t> const * ability_l = ability_library->try_get(castCommand_p.ability);
-            // check reources
-            if(!check_resources(res_p.resource, {}, ability_l->resource_consumption()))
-            {
-                // done if not enough
-				queue_p._queuedActions.push_back(CommandQueueActionDone());
-            }
-            // check reload
-			if(!caster_p.check_timestamp_last_cast(ability_l->reload(), ecs.get_info()->frame_count_total, ability_l->name()))
+			AbilityTemplate<StepManager_t> const * ability_l = ability_library->try_get(castCommand_p.ability);
+			// check reources
+			if(!check_resources(res_p.resource, {}, ability_l->resource_consumption()))
 			{
-                // done if not enough
+				// done if not enough
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
-            // check if target is required
+			// check reload
+			if(!caster_p.check_timestamp_last_cast(ability_l->reload(), ecs.get_info()->frame_count_total, ability_l->name()))
+			{
+				// done if not enough
+				queue_p._queuedActions.push_back(CommandQueueActionDone());
+			}
+			// check if target is required
 			if(ability_l->need_point_target() || ability_l->need_entity_target())
 			{
 				bool in_range = false;
 				Vector target_pos;
-                // check range
+				// check range
 				if(ability_l->need_point_target())
 				{
 					target_pos = castCommand_p.point_target;
@@ -85,13 +86,13 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 						manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {ecs.get_info()->frame_count_total});
 					}
 				}
-                // no range
+				// no range
 				else
 				{
-                    // move routine
+					// move routine
 					move_routine(ecs, e, pos_p, Position {target_pos}, move_p);
 				}
-            }
+			}
 			else
 			{
 				// start windup if not started yet

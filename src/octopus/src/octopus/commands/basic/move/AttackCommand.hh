@@ -77,6 +77,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
 		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
 			START_TIME(attack_command)
+			move_p.target_move = Vector();
 
 			// check if target is valid
 			HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.get<HitPoint>() : nullptr;
@@ -185,7 +186,6 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// if in range and reload ready initiate windup
 			else
 			{
-				move_p.target_move = target_pos->pos - pos_p.pos;
 				// set mass if necessary
 				if(pos_p.mass < 5)
 				{

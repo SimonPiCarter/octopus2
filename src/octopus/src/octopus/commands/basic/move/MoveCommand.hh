@@ -36,6 +36,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 		.with(CommandQueue_t::state(ecs), ecs.component<MoveCommand::State>())
 		.each([&ecs, &manager_p, &time_stats_p](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p, CommandQueue_t &queue_p) {
 			START_TIME(attack_command)
+			move_p.target_move = Vector();
 			if(move_routine(ecs, e, pos_p, moveCommand_p.target, move_p))
 			{
 				FlockRef const * flock_ref_l = e.get<FlockRef>();
