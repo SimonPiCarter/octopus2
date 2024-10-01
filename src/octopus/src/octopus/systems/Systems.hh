@@ -41,7 +41,7 @@ void set_up_systems(
 	set_up_position_systems(world.ecs, world.pool, step_context.step_manager, world.position_context, world.time_stats);
 
 	// step systems
-	set_up_step_systems(world.ecs, world.pool, step_context.step_manager, step_context.state_step_manager);
+	set_up_step_systems(world.ecs, world.pool, step_context.step_manager, step_context.state_step_manager, step_kept_p);
 
 	// components systems
 	set_up_hitpoint_systems(world.ecs, world.pool, step_context.step_manager, step_kept_p);
