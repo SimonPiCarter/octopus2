@@ -38,14 +38,13 @@ class Environment : public ::testing::Environment {
 			.member<uint32_t>("windup");
 
 		// set up all command queues in test
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, WalkTest, AttackTest>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, AttackTest>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, AttackTestHP>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, AttackTestComponent>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, WalkTest, AttackTest>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, AttackTest>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, AttackTestHP>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, AttackTestComponent>(ecs);
 		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::CastCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
 	}
 
 	// Override this to define how to tear down the environment.

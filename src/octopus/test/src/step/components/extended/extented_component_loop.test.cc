@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 
+#include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/step/StepReversal.hh"
 
@@ -20,6 +21,7 @@
 
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
+#include "octopus/serialization/commands/CommandSupport.hh"
 
 #include "env/custom_components.hh"
 #include "env/stream_ent.hh"
@@ -65,7 +67,7 @@ struct AttackTestStep {
 
 /// END component
 
-using custom_variant = std::variant<octopus::NoOpCommand, AttackTestComponent>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, AttackTestComponent>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 template<class StepManager_t>
@@ -109,6 +111,7 @@ TEST(extended_loop, simple)
 	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
+	basic_commands_support(ecs);
 
 	// serialize states
     ecs.component<AttackTestComponent>()
@@ -117,7 +120,7 @@ TEST(extended_loop, simple)
 		.member("damage", &AttackTestComponent::damage)
 		.member("target", &AttackTestComponent::target);
 
-	command_queue_support<octopus::NoOpCommand, AttackTestComponent>(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, AttackTestComponent>(ecs);
 
 	auto step_context = makeStepContext<custom_variant, AttackTestStep>();
 	set_up_systems(world, step_context);

@@ -64,6 +64,7 @@ struct CommandQueueMementoManager
 template<typename variant_t>
 struct CommandQueue
 {
+	typedef variant_t variant;
 	/// @warning this is just an out of date pointer
 	/// to get the type information of the current action
 	variant_t _current;

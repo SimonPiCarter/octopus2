@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 
+#include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 
@@ -34,7 +35,7 @@ using namespace octopus;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::MoveCommand>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 }
@@ -46,7 +47,7 @@ TEST(move_loop, simple)
 
 	basic_components_support(ecs);
 	basic_commands_support(ecs);
-	command_queue_support<octopus::NoOpCommand, octopus::MoveCommand>(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>(ecs);
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	set_up_systems(world, step_context);

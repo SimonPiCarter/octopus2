@@ -74,6 +74,29 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 {
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
+		.without(CommandQueue_t::state(ecs), flecs::Wildcard)
+		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
+			flecs::entity new_target;
+
+			if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0)
+			{
+				START_TIME(attack_command_new_target)
+
+				new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(8), attack_p.range));
+
+				if(new_target)
+				{
+					AttackCommand atk_l {new_target, *new_target.get<Position>(), true};
+					queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
+				}
+
+				END_TIME(attack_command_new_target)
+			}
+
+		});
+
+	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
+		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
 		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
 			START_TIME(attack_command)

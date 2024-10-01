@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 
+#include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
@@ -19,6 +20,7 @@
 
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/serialization/components/BasicSupport.hh"
+#include "octopus/serialization/commands/CommandSupport.hh"
 
 #include "env/custom_components.hh"
 #include "env/stream_ent.hh"
@@ -34,7 +36,7 @@ using namespace octopus;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, AttackTestHP>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, AttackTestHP>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 template<class StepManager_t>
@@ -74,6 +76,7 @@ TEST(hitpoint_loop, simple)
 	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
+	basic_commands_support(ecs);
 
 	// serialize states
     ecs.component<AttackTestHP>()
@@ -82,7 +85,7 @@ TEST(hitpoint_loop, simple)
 		.member("damage", &AttackTestHP::damage)
 		.member("target", &AttackTestHP::target);
 
-	command_queue_support<octopus::NoOpCommand, AttackTestHP>(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, AttackTestHP>(ecs);
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 
