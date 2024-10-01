@@ -1,10 +1,19 @@
 #pragma once
 
+#include <variant>
+
+#include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/components/basic/ability/Caster.hh"
+#include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/flock/Flock.hh"
-#include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
+#include "octopus/components/basic/hitpoint/HitPoint.hh"
+#include "octopus/components/basic/hitpoint/HitPointMax.hh"
+#include "octopus/components/basic/position/Move.hh"
+#include "octopus/components/basic/position/Position.hh"
+#include "octopus/components/basic/position/PositionInTree.hh"
+#include "octopus/components/step/StepContainer.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 
 #define DEFAULT_STEPS_T octopus::HitPointStep, \
