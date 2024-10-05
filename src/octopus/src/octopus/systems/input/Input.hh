@@ -60,6 +60,7 @@ struct InputCommand
 	flecs::entity entity;
 	command_variant_t command;
 	bool front = false;
+	bool stop = false;
 };
 
 template<typename command_variant_t, typename StepManager_t>
@@ -69,11 +70,21 @@ struct Input
 
 	void addFrontCommand(flecs::entity entity, command_variant_t const &command_p)
 	{
+		std::lock_guard<std::mutex> lock_l(mutex);
 		container_command.get_back_layer().push_back({entity, command_p, true});
 	}
 	void addBackCommand(flecs::entity entity, command_variant_t const &command_p)
 	{
+		std::lock_guard<std::mutex> lock_l(mutex);
 		container_command.get_back_layer().push_back({entity, command_p, false});
+	}
+	void addStopCommand(flecs::entity entity)
+	{
+		std::lock_guard<std::mutex> lock_l(mutex);
+		InputCommand<command_variant_t> stop;
+		stop.entity = entity;
+		stop.stop = true;
+		container_command.get_back_layer().push_back(stop);
 	}
 
 	void addProduction(InputAddProduction const &input_p)
@@ -174,13 +185,24 @@ struct Input
 		// Handling command inputs
 		for(InputCommand<command_variant_t> const & input : container_command.get_front_layer())
 		{
-			if(input.front)
+			auto &&command_queue = input.entity.template get_mut<CommandQueue<command_variant_t>>();
+			if(!command_queue) { continue; }
+			auto &&queue_l = command_queue->_queuedActions;
+			if(input.stop)
 			{
-				input.entity.template get_mut<CommandQueue<command_variant_t>>()->_queuedActions.push_back(CommandQueueActionAddFront<command_variant_t> {input.command});
+				// replace queue and finish current action
+				queue_l.push_back(CommandQueueActionReplace<command_variant_t> {{}});
+				queue_l.push_back(CommandQueueActionDone());
+			}
+			else if(input.front)
+			{
+				// replace queue and finish current action
+				queue_l.push_back(CommandQueueActionReplace<command_variant_t> {{input.command}});
+				queue_l.push_back(CommandQueueActionDone());
 			}
 			else
 			{
-				input.entity.template get_mut<CommandQueue<command_variant_t>>()->_queuedActions.push_back(CommandQueueActionAddBack<command_variant_t> {input.command});
+				queue_l.push_back(CommandQueueActionAddBack<command_variant_t> {input.command});
 			}
 		}
 
