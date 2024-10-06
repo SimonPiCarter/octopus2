@@ -26,15 +26,26 @@ struct fast_map
     fast_map() = default;
     fast_map(std::unordered_map<Key, Value> const &map_p) : map(map_p) {}
 
-    Value &operator[](Key const key)
+    Value &operator[](Key const &key)
     {
         set_up();
         return map[key];
     }
-    Value const &operator[](Key const key) const
+    Value const &operator[](Key const &key) const
     {
         set_up();
         return map.at(key);
+    }
+
+    /// @brief return the value in the map or the default value if not found
+    Value const &safe_get(Key const &key, Value const &def) const
+    {
+        auto &&it = map.find(key);
+        if(it != map.cend())
+        {
+            return it->second;
+        }
+        return def;
     }
 
     std::unordered_map<Key, Value> const &data() const
