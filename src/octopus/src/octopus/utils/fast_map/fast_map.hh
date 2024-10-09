@@ -37,9 +37,16 @@ struct fast_map
         return map.at(key);
     }
 
+    bool has(Key const &key) const
+    {
+        set_up();
+        return map.find(key) != map.cend();
+    }
+
     /// @brief return the value in the map or the default value if not found
     Value const &safe_get(Key const &key, Value const &def) const
     {
+        set_up();
         auto &&it = map.find(key);
         if(it != map.cend())
         {
