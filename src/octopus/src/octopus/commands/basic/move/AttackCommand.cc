@@ -27,8 +27,13 @@ flecs::entity get_new_target(flecs::entity const &e, PositionContext const &cont
 
 bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack const&attack_p)
 {
+	Fixed range_ray = attack_p.range + pos_p.ray;
+	if(target_pos_p)
+	{
+		range_ray += target_pos_p->ray;
+	}
 	return target_pos_p
-		&& square_length(pos_p.pos - target_pos_p->pos) <= attack_p.range*attack_p.range;
+		&& square_length(pos_p.pos - target_pos_p->pos) <= range_ray*range_ray;
 }
 
 bool has_reloaded(uint32_t time_p, Attack const&attack_p)

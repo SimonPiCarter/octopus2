@@ -57,19 +57,17 @@ TEST(attack_loop, simple)
 
 	set_up_systems(world, step_context);
 
-	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<Move>()
-		.set<Position>(pos_l)
+		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false})
 		.set<Attack>({0, 1, 0, 1, 2, 2});
 
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<HitPoint>({10})
-		.set<Position>({{10,5}});
+		.set<Position>({{10,5}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false});
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{

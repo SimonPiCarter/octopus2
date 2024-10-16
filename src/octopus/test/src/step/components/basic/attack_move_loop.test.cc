@@ -55,14 +55,12 @@ TEST(attack_move_loop, simple)
 
 	set_up_systems(world, step_context);
 
-	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<AttackCommand>()
 		.add<Move>()
 		.set<Team>({{1}})
-		.set<Position>(pos_l)
+		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false})
 		.add<PositionInTree>()
 		.set<Attack>({0, 1, 0, 1, 2, 2});
 
@@ -72,7 +70,7 @@ TEST(attack_move_loop, simple)
 		.set<Team>({{0}})
 		.add<PositionInTree>()
 		.set<HitPoint>({10})
-		.set<Position>({{10,0}});
+		.set<Position>({{10,0}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false});
 
 	RevertTester<custom_variant, Position, Attack, AttackCommand, CustomCommandQueue> revert_test({e1, e2});
 	revert_test.add_second_recorder(CustomCommandQueue::state(ecs));
