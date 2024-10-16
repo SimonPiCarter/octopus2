@@ -14,6 +14,7 @@ struct aabb
 
 aabb union_aabb(aabb const &a, aabb const &b);
 octopus::Vector center_aabb(aabb const &a);
+octopus::Fixed largest_side_aabb(aabb const &a);
 octopus::Fixed peritmeter_aabb(aabb const &a);
 bool overlap_aabb(aabb const &a, aabb const &b);
 bool included_aabb(aabb const &inner, aabb const &outter);

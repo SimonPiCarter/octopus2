@@ -19,6 +19,13 @@ octopus::Vector center_aabb(aabb const &a)
 	return {(a.lb.x + a.ub.x) / 2, (a.lb.y + a.ub.y) / 2};
 }
 
+octopus::Fixed largest_side_aabb(aabb const &a)
+{
+	octopus::Fixed wx = a.ub.x - a.lb.x;
+	octopus::Fixed wy = a.ub.y - a.lb.y;
+	return std::max(wx, wy);
+}
+
 octopus::Fixed peritmeter_aabb(aabb const &a)
 {
 	octopus::Fixed wx = a.ub.x - a.lb.x;
