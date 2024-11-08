@@ -64,7 +64,6 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 			// check if target is required
 			if(ability_l->need_point_target() || ability_l->need_entity_target())
 			{
-				bool in_range = false;
 				Vector target_pos;
 				// check range
 				if(ability_l->need_point_target())
@@ -79,7 +78,6 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				}
 				if(square_length(target_pos - pos_p.pos) <= ability_l->range()*ability_l->range())
 				{
-					in_range = true;
 					// start windup if not started yet
 					if(caster_p.timestamp_windup_start == 0)
 					{

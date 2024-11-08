@@ -82,7 +82,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Vector f;  // forces
 			Vector a;  // acceleration
 			Vector v = pos_p.velocity * max_speed / move_p.speed;  // velocity
-			Vector const &p = pos_p.pos;  // position
+			// Vector const &p = pos_p.pos;  // position
 
 			if(!pos_p.collision || pos_p.mass == Fixed::Zero())
 			{

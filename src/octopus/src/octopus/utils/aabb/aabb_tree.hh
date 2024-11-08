@@ -678,7 +678,7 @@ void tree_circle_query( const aabb_tree<data_t> &tree, octopus::Vector const &ce
 
 	// build circle bounding box
 	aabb box = {{center.x-ray, center.y-ray}, {center.x+ray, center.y+ray}};
-	octopus::Fixed const sq_ray = ray*ray;
+	// octopus::Fixed const sq_ray = ray*ray;
 
 	while ( stackCount > 0 )
 	{
