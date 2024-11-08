@@ -82,11 +82,11 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			{
 				START_TIME(attack_command_new_target)
 
-				new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(8), attack_p.range));
+				new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(11), attack_p.range));
 
 				if(new_target)
 				{
-					AttackCommand atk_l {new_target, *new_target.get<Position>(), true};
+					AttackCommand atk_l {new_target, pos_p, true};
 					queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
 				}
 
