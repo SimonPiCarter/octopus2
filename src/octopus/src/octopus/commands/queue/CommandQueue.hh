@@ -114,16 +114,24 @@ struct CommandQueue
 	void update_current(flecs::world &ecs, flecs::entity &e, StateStepContainer<variant_t> &stateStep_p)
 	{
 		e.remove(cleanup(ecs), flecs::Wildcard);
-		if(std::holds_alternative<NoOpCommand>(_current) && !_queued.empty())
+		if(std::holds_alternative<NoOpCommand>(_current))
 		{
-			_current = _queued.front();
-			_queued.pop_front();
+			if(_queued.empty())
+			{
+				// set state
+				stateStep_p.get_last_prelayer()._addPair.push_back({e, state(ecs), NoOpCommand()});
+			}
+			else
+			{
+				_current = _queued.front();
+				_queued.pop_front();
 
-			// set state
-			stateStep_p.get_last_prelayer()._addPair.push_back({e, state(ecs), _current});
+				// set state
+				stateStep_p.get_last_prelayer()._addPair.push_back({e, state(ecs), _current});
 
-			// set component
-			std::visit([this, &e, &stateStep_p](auto&& arg) { update_comp(e, stateStep_p.get_last_prelayer(), arg); }, _current);
+				// set component
+				std::visit([this, &e, &stateStep_p](auto&& arg) { update_comp(e, stateStep_p.get_last_prelayer(), arg); }, _current);
+			}
 		}
 	}
 
