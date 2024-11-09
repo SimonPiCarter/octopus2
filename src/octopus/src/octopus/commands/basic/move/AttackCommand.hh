@@ -26,6 +26,7 @@ struct AttackCommand {
 	flecs::entity target;
 	Position target_pos;
 	bool move = false;
+	bool init = false;
 
 	static constexpr char const * const naming()  { return "attack"; }
 	struct State {};
@@ -50,6 +51,28 @@ struct AttackCommandStep {
 	void revert_step(Data &d, Memento const &memento) const
 	{
 		d.target = memento.old_target;
+	}
+};
+
+struct AttackCommandInitMemento {
+	bool old_init = false;
+};
+
+struct AttackCommandInitStep {
+	bool new_init = false;
+
+	typedef AttackCommand Data;
+	typedef AttackCommandInitMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const
+	{
+		memento.old_init = d.init;
+		d.init = new_init;
+	}
+
+	void revert_step(Data &d, Memento const &memento) const
+	{
+		d.init = memento.old_init;
 	}
 };
 
@@ -78,7 +101,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
 			flecs::entity new_target;
 
-			if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0)
+			if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
 			{
 				START_TIME(attack_command_new_target)
 
@@ -86,7 +109,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 
 				if(new_target)
 				{
-					AttackCommand atk_l {new_target, pos_p, true};
+					AttackCommand atk_l {new_target, pos_p, true, true};
 					queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
 				}
 
@@ -107,9 +130,13 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
 			if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 			{
+				// override retaget wait in certain case
+				// - not initialized yet
+				// - target died
+				bool should_scan_l = !attackCommand_p.init || !hp || hp->qty <= Fixed::Zero();
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0)
+				if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0 || should_scan_l)
 				{
 					START_TIME(attack_command_new_target)
 
@@ -121,6 +148,12 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 						{
 							manager_p.get_last_layer().back().template get<MassStep>().add_step(e, {1});
 						}
+					}
+
+					if(!attackCommand_p.init)
+					{
+						// set up attack command as initialized
+						manager_p.get_last_layer().back().template get<AttackCommandInitStep>().add_step(e, {true});
 					}
 
 					END_TIME(attack_command_new_target)
