@@ -91,24 +91,31 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 			// steering to target
 			Vector seek_l = seek_force(move_p.move, v, max_speed);
+			Logger::getDebug() << "Flocking :: seeking force = "<<seek_l<<std::endl;
 			f = seek_l;
 			// separation force
 			Vector sep_l = separation_force(posContext_p, pos_p);
+			Logger::getDebug() << "Flocking :: separation force = "<<sep_l<<std::endl;
 			f += sep_l;
 
 			limit_length(f, max_force);
+			Logger::getDebug() << "Flocking :: total force = "<<f<<std::endl;
 
 			a = f / pos_p.mass;
+			Logger::getDebug() << "Flocking :: acceleration = "<<a<<std::endl;
 			// tail force (to slow down when no other force)
 			if(manhattan_length(a) < Fixed(10, true) )
 			{
+				Logger::getDebug() << "Flocking :: reset acceleration"<<std::endl;
 				a = Vector(0,0)-v;
 			}
 
 			v += a;
 			limit_length(v, pos_p.mass > 999 ? Fixed::Zero() : max_speed);
+			Logger::getDebug() << "Flocking :: v = "<<v<<std::endl;
 
 			move_p.move = v * move_p.speed / max_speed;
+			Logger::getDebug() << "Flocking :: move = "<<move_p.move<<std::endl;
 			END_TIME(position_system)
 			Logger::getDebug() << "Flocking :: end" << std::endl;
 		});

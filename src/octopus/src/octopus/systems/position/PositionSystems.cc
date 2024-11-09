@@ -7,12 +7,16 @@ namespace octopus
 
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p)
 {
+	Logger::getDebug() << "seek_force :: direction = "<<direction_p<<std::endl;
+	Logger::getDebug() << "seek_force :: velocity = "<<velocity_p<<std::endl;
+	Logger::getDebug() << "seek_force :: max_speed = "<<max_speed_p<<std::endl;
 	Vector force;
 	if(square_length(direction_p) > Fixed::Zero())
 	{
 		force = direction_p/length(direction_p) * max_speed_p;
 		force = force - velocity_p;
 	}
+	Logger::getDebug() << "seek_force :: force = "<<force<<std::endl;
 	return force;
 }
 
@@ -20,7 +24,6 @@ Vector separation_force(PositionContext const &posContext_p, Position const &pos
 {
 	Vector force;
 	Fixed force_factor = 500;
-	Logger::getDebug() << "separation_force :: "<<std::endl;
 
 	std::function<bool(int32_t, flecs::entity)> func_l = [&](int32_t idx_l, flecs::entity e) -> bool {
 		Position const *pos_l = e.get<Position>();
