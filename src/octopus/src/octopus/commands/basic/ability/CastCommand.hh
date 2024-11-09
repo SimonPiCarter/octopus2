@@ -29,7 +29,7 @@ struct CastCommand {
 
 } // octopus
 
-// after AttackCommandStep definition
+// after CastCommand definition
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 
@@ -120,6 +120,15 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				manager_p.get_last_layer().back().template get<CasterLastCastStep>().add_step(e, {ecs.get_info()->frame_count_total, ability_l->name()});
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
+		});
+
+	// clean up
+	ecs.system<CastCommand const, Move, CommandQueue_t>()
+		.kind(ecs.entity(CleanUpPhase))
+		.with(CommandQueue_t::cleanup(ecs), ecs.component<CastCommand::State>())
+		.each([](flecs::entity e, CastCommand const &, Move &move_p, CommandQueue_t &) {
+			// reset target move
+			move_p.target_move = Vector();
 		});
 }
 

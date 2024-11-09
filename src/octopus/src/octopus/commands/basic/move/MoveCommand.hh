@@ -50,6 +50,15 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 			}
 			END_TIME(attack_command)
 		});
+
+	// clean up
+	ecs.system<MoveCommand const, Move, CommandQueue_t>()
+		.kind(ecs.entity(CleanUpPhase))
+		.with(CommandQueue_t::cleanup(ecs), ecs.component<MoveCommand::State>())
+		.each([](flecs::entity e, MoveCommand const &, Move &move_p, CommandQueue_t &) {
+			// reset target move
+			move_p.target_move = Vector();
+		});
 }
 
 } // octopus

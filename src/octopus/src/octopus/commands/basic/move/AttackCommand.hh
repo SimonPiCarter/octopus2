@@ -225,10 +225,10 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 		});
 
 	// clean up
-	ecs.system<AttackCommand const, Attack const, Position const, CommandQueue_t>()
+	ecs.system<AttackCommand const, Attack const, Position const, Move, CommandQueue_t>()
 		.kind(ecs.entity(CleanUpPhase))
 		.with(CommandQueue_t::cleanup(ecs), ecs.component<AttackCommand::State>())
-		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, Position const &pos_p, CommandQueue_t &cQueue_p) {
+		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, Position const &pos_p, Move &move_p, CommandQueue_t &cQueue_p) {
 			// reset windup
 			manager_p.get_last_prelayer().back().template get<AttackWindupStep>().add_step(e, {0});
 			// reset mass if necessary
@@ -236,6 +236,10 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			{
 				manager_p.get_last_prelayer().back().template get<MassStep>().add_step(e, {1});
 			}
+			// reset target move
+			move_p.target_move = Vector();
+			// set up attack command as not initialized
+			manager_p.get_last_layer().back().template get<AttackCommandInitStep>().add_step(e, {false});
 		});
 }
 
