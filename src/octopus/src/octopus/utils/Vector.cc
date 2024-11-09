@@ -19,6 +19,11 @@ octopus::Fixed octopus::square_length(Vector const &vec_p)
 	return vec_p.x * vec_p.x + vec_p.y * vec_p.y;
 }
 
+octopus::Fixed octopus::manhattan_length(Vector const &vec_p)
+{
+	return numeric::abs(vec_p.x) + numeric::abs(vec_p.y);
+}
+
 octopus::Fixed octopus::dot_product(Vector const &a, Vector const &b)
 {
 	return a.x*b.x + a.y*b.y;

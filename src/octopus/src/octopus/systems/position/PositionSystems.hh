@@ -100,7 +100,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 			a = f / pos_p.mass;
 			// tail force (to slow down when no other force)
-			if(square_length(a) < Fixed(1000, true) )
+			if(manhattan_length(a) < Fixed(10, true) )
 			{
 				a = Vector(0,0)-v;
 			}
