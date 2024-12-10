@@ -47,8 +47,10 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 		.kind(ecs.entity(PreUpdatePhase))
 		.run([&](flecs::iter& ) {
 			Logger::getDebug() << "Apply Pre Steps :: start" << std::endl;
+			ecs.defer_suspend();
 			dispatch_apply(manager_p.get_last_prelayer(), pool);
 			state_step_container_p.get_last_prelayer().apply(ecs);
+			ecs.defer_resume();
 			Logger::getDebug() << "Apply Pre Steps :: end" << std::endl;
 		});
 
@@ -58,23 +60,27 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 		.kind(ecs.entity(SteppingPhase))
 		.run([&](flecs::iter&) {
 			Logger::getDebug() << "Apply Steps :: start" << std::endl;
+			ecs.defer_suspend();
 			dispatch_apply(manager_p.get_last_layer(), pool);
 			state_step_container_p.get_last_layer().apply(ecs);
+			ecs.defer_resume();
 			Logger::getDebug() << "Apply Steps :: end" << std::endl;
 		});
 
 	ecs.system<StepEntityManager>()
+		.immediate()
 		.kind(ecs.entity(SteppingPhase))
 		.each([&ecs](StepEntityManager &step_entity_manager_p) {
 			Logger::getDebug() << "Apply Entity Steps :: start" << std::endl;
 			step_entity_manager_p.get_last_memento_layer().reserve(step_entity_manager_p.get_last_layer().size());
-
+			ecs.defer_suspend();
 			for(EntityCreationStep const &step_l : step_entity_manager_p.get_last_layer())
 			{
 				EntityCreationMemento memento_l;
 				apply_entity_creation_step(ecs, step_l, memento_l);
 				step_entity_manager_p.get_last_memento_layer().push_back(memento_l);
 			}
+			ecs.defer_resume();
 			Logger::getDebug() << "Apply Entity Steps :: end" << std::endl;
 		});
 }
