@@ -7,6 +7,7 @@
 namespace octopus
 {
 
+struct Created {};
 struct Destroyed {};
 
 struct Destroyable {
