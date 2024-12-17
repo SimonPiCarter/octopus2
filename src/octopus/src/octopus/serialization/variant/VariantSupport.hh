@@ -33,9 +33,10 @@ template<typename... tArgs>
 void variant_support(flecs::world& world) {
 
 	flecs::untyped_component comp_l = world.component();
-	// cf https://stackoverflow.com/questions/12515616/expression-contains-unexpanded-parameter-packs/12515637#12515637
-    int _[] = {0, (add_member<tArgs>(comp_l), 0)...}; (void)_;
-
+	{
+		// cf https://stackoverflow.com/questions/12515616/expression-contains-unexpanded-parameter-packs/12515637#12515637
+		int _[] = {0, (add_member<tArgs>(comp_l), 0)...}; (void)_;
+	}
 	using variant_t = std::variant<tArgs...>;
 
 	world.component<variant_t>()

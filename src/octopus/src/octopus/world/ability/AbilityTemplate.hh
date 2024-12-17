@@ -13,6 +13,8 @@ namespace octopus
 template<class StepManager_t>
 struct AbilityTemplate
 {
+    virtual ~AbilityTemplate() = default;
+
     /// @brief This checks if the given player has the
     /// requirements to cast this template
     virtual bool check_requirement(flecs::entity caster_p, flecs::world const &ecs) const = 0;
