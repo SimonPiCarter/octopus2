@@ -45,7 +45,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 			{
 				if(flock_entity.is_valid() && flock)
 				{
-					Logger::getNormal() << "MoveCommand :: arrived = "<<flock->arrived <<std::endl;
+					Logger::getDebug() << "MoveCommand :: arrived = "<<flock->arrived <<std::endl;
 					manager_p.get_last_layer().back().template get<FlockArrivedStep>().add_step(flock_entity, {flock->arrived + 1});
 				}
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
