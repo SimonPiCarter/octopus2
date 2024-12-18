@@ -66,6 +66,7 @@ TEST(attack_move_loop, simple)
 
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()
+		.add<AttackCommand>()
 		.add<Move>()
 		.set<Team>({{0}})
 		.add<PositionInTree>()
@@ -84,16 +85,19 @@ TEST(attack_move_loop, simple)
 		{
 			AttackCommand atk_l {flecs::entity(), {{10,0}}, true};
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
+			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionDone());
 		}
 
 		revert_test.add_record(ecs);
 		// stream_ent<Position, Attack, AttackCommand, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
+		// stream_ent<Position, HitPoint>(std::cout, ecs, e2);
+		// std::cout<<std::endl;
 	}
 
 	EXPECT_EQ(Fixed(10), e1.get<Position>()->pos.x) << "10 != "<<e1.get<Position>()->pos.x;
 	EXPECT_EQ(Fixed(2), e1.get<Position>()->pos.y) << "2 != "<<e1.get<Position>()->pos.y;
-	EXPECT_EQ(Fixed(2), e2.get<HitPoint>()->qty) << "2 != "<<e2.get<HitPoint>()->qty;
+	EXPECT_EQ(Fixed(0), e2.get<HitPoint>()->qty) << "2 != "<<e2.get<HitPoint>()->qty;
 
 	revert_test.revert_and_check_records(world, step_context);
 }
