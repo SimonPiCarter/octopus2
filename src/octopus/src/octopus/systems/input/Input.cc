@@ -3,27 +3,26 @@
 namespace octopus
 {
 
-FlockHandle register_flock(flecs::ref<FlockManager> flock_manager)
+FlockHandle register_flock(flecs::entity flock_manager)
 {
-	return {flock_manager, flock_manager->register_flock()};
+	uint32_t idx = 0;
+	if(flock_manager && flock_manager.get<FlockManager>())
+	{
+		idx = flock_manager.get_mut<FlockManager>()->register_flock();
+	}
+	return {flock_manager, idx};
 }
 
-void consolidate_command(flecs::ref<FlockManager> flock_manager, MoveCommand &cmd)
+void add_flock_information(flecs::entity flock_manager, MoveCommand &cmd)
 {
 	Logger::getDebug() << "adding flock to move command" <<std::endl;
-	if(flock_manager.has())
-	{
-		cmd.flock_handle = register_flock(flock_manager);
-	}
+	cmd.flock_handle = register_flock(flock_manager);
 }
 
-void consolidate_command(flecs::ref<FlockManager> flock_manager, AttackCommand &cmd)
+void add_flock_information(flecs::entity flock_manager, AttackCommand &cmd)
 {
 	Logger::getDebug() << "adding flock to attack command" <<std::endl;
-	if(flock_manager.has())
-	{
-		cmd.flock_handle = register_flock(flock_manager);
-	}
+	cmd.flock_handle = register_flock(flock_manager);
 }
 
 } // namespace octopus

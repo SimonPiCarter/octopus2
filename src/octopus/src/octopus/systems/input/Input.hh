@@ -67,13 +67,13 @@ struct InputCommand
 };
 
 template<typename T>
-void consolidate_command(flecs::ref<FlockManager> flock_manager, T &cmd)
+void add_flock_information(flecs::entity flock_manager, T &cmd)
 {
 	// NA
 }
 
-void consolidate_command(flecs::ref<FlockManager> flock_manager, MoveCommand &cmd);
-void consolidate_command(flecs::ref<FlockManager> flock_manager, AttackCommand &cmd);
+void add_flock_information(flecs::entity flock_manager, MoveCommand &cmd);
+void add_flock_information(flecs::entity flock_manager, AttackCommand &cmd);
 
 template<typename command_variant_t, typename StepManager_t>
 struct Input
@@ -94,7 +94,10 @@ struct Input
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
 		Logger::getDebug() << "adding front command" <<std::endl;
-		std::visit([this](auto&& arg) { consolidate_command(flock_manager, arg); }, command_p);
+		if(entities.size() > 1)
+		{
+			std::visit([this](auto&& arg) { add_flock_information(flock_manager, arg); }, command_p);
+		}
 		for(auto entity : entities)
 		{
 			container_command.get_back_layer().push_back({entity, command_p, true});
@@ -104,8 +107,11 @@ struct Input
 	void addBackCommand(std::vector<flecs::entity> const &entities, command_variant_t command_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
-		Logger::getDebug() << "adding front command" <<std::endl;
-		std::visit([this](auto&& arg) { consolidate_command(flock_manager, arg); }, command_p);
+		Logger::getDebug() << "adding back command" <<std::endl;
+		if(entities.size() > 1)
+		{
+			std::visit([this](auto&& arg) { add_flock_information(flock_manager, arg); }, command_p);
+		}
 		for(auto entity : entities)
 		{
 			container_command.get_back_layer().push_back({entity, command_p, false});
@@ -137,7 +143,10 @@ struct Input
 		std::lock_guard<std::mutex> lock_l(mutex);
 
 		// declare all flocks into the ecs
-		flock_manager->init_flocks(ecs);
+		if(flock_manager && flock_manager.get<FlockManager>())
+		{
+			flock_manager.get_mut<FlockManager>()->init_flocks(ecs);
+		}
 
 		ProductionTemplateLibrary<StepManager_t> const *prod_lib = ecs.get<ProductionTemplateLibrary<StepManager_t>>();
 
@@ -255,7 +264,7 @@ struct Input
 		container_cancel_production.push_layer();
 		container_command.push_layer();
 	}
-	flecs::ref<FlockManager> flock_manager;
+	flecs::entity flock_manager;
 private:
 	std::mutex mutex;
 

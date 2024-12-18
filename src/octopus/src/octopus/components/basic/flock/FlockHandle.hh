@@ -10,8 +10,7 @@ struct FlockManager;
 
 struct FlockHandle
 {
-	// have to because operators on ref are non const...
-	mutable flecs::ref<FlockManager> manager;
+	flecs::entity manager;
 	uint32_t idx = 0;
 
 	flecs::entity get() const;

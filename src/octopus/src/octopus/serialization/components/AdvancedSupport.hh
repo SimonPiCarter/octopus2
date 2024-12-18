@@ -5,6 +5,8 @@
 #include "octopus/serialization/commands/CommandSupport.hh"
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/systems/input/Input.hh"
+#include "octopus/components/basic/flock/FlockManager.hh"
+#include "octopus/world/step/StepEntityManager.hh"
 
 namespace octopus
 {
@@ -17,7 +19,11 @@ void advanced_components_support(flecs::world& ecs)
 	basic_commands_support(ecs);
 	command_queue_support<tArgs...>(ecs);
 
+    ecs.component<StepEntityManager>();
     ecs.component<Input<command_variant_t, StepManager_t>>();
+    ecs.component<FlockManager>()
+		.member("flocks", &FlockManager::flocks)
+		.member("last_init", &FlockManager::last_init);
 }
 
 } // namespace octopus

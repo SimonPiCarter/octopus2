@@ -2,6 +2,7 @@
 
 #include "octopus/components/basic/ability/Caster.hh"
 #include "octopus/components/basic/flock/Flock.hh"
+#include "octopus/components/basic/flock/FlockManager.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
@@ -55,6 +56,10 @@ void basic_components_support(flecs::world& ecs)
     ecs.component<Flock>()
 		.member("arrived", &Flock::arrived);
 
+    ecs.component<FlockHandle>()
+		.member("manager", &FlockHandle::manager)
+		.member("idx", &FlockHandle::idx);
+
 	ecs.component<PositionInTree>();
 
 	ecs.component<Team>()
@@ -64,6 +69,9 @@ void basic_components_support(flecs::world& ecs)
 
     ecs.component<std::vector<std::string> >()
         .opaque(std_vector_support<std::string>);
+
+    ecs.component<std::vector<flecs::entity> >()
+        .opaque(std_vector_support<flecs::entity>);
 
 	ecs.component<ResourceInfo>()
 		.member("quantity", &ResourceInfo::quantity)
