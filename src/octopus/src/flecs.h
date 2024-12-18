@@ -8,7 +8,9 @@
 #ifndef FLECS_H
 #define FLECS_H
 
+#ifndef flecs_STATIC
 #define flecs_STATIC
+#endif
 
 /**
  * @defgroup c C API
