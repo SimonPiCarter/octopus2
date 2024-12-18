@@ -6,18 +6,11 @@
 #include "flecs.h"
 
 #include "octopus/commands/step/StateChangeSteps.hh"
+#include "octopus/utils/log/Logger.hh"
 #include "action/CommandQueueAction.hh"
 
 namespace octopus
 {
-
-/// @brief minimal implementation for a command that can be in the queue
-struct NoOpCommand {
-	int32_t no_op = 0;
-
-	static constexpr char const * const naming()  { return "no_op"; }
-	struct State {};
-};
 
 // System running commands should be part of the Update phase
 // System cleaning up commands should be part of the CleanUp phase
@@ -87,6 +80,7 @@ struct CommandQueue
 	{
 		if(_done && !std::holds_alternative<NoOpCommand>(_current))
 		{
+			Logger::getDebug()<<"clean_up_current : resetting state to nothing"<<std::endl;
 			// reset state
 			stateStep_p.get_last_prelayer()._removePair.push_back({e, state(ecs), _current});
 			// add clean up (do not use step here since at the end of the iteration this will be cleaned up)
@@ -101,6 +95,7 @@ struct CommandQueue
 	template<typename type_t, typename StateStepLayer_t>
 	void update_comp(flecs::entity &e, StateStepLayer_t &state_layer_p, type_t const &new_comp)
 	{
+		Logger::getDebug()<<"update_comp : setting comp "<<e.id()<<" "<<type_t::naming()<<std::endl;
 		variant_t old_comp;
 		type_t const * old_typped_value = e.get<type_t>();
 		if(old_typped_value)
@@ -118,6 +113,7 @@ struct CommandQueue
 		{
 			if(_queued.empty())
 			{
+				Logger::getDebug()<<"update_current : setting comp "<<e.id()<<" "<<NoOpCommand::naming()<<std::endl;
 				// set state
 				stateStep_p.get_last_prelayer()._addPair.push_back({e, state(ecs), NoOpCommand()});
 			}
@@ -126,6 +122,7 @@ struct CommandQueue
 				_current = _queued.front();
 				_queued.pop_front();
 
+				Logger::getDebug()<<"update_current : setting comp "<<e.id()<<" front"<<std::endl;
 				// set state
 				stateStep_p.get_last_prelayer()._addPair.push_back({e, state(ecs), _current});
 

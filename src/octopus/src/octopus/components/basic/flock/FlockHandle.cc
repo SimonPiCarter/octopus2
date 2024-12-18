@@ -6,8 +6,8 @@ namespace octopus
 
 flecs::entity FlockHandle::get() const
 {
-	if(!manager) { return {}; }
-	return manager->get_flock(idx);
+	if(!manager || !manager.get<FlockManager>()) { return {}; }
+	return manager.get<FlockManager>()->get_flock(idx);
 }
 
 }

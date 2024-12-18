@@ -7,9 +7,9 @@
 
 namespace {
 
-struct Foo { struct State {}; };
-struct Bar { struct State {}; };
-struct FooBar { struct State {}; };
+struct Foo { struct State {}; static constexpr char const * const naming()  { return "Foo"; } };
+struct Bar { struct State {}; static constexpr char const * const naming()  { return "Bar"; } };
+struct FooBar { struct State {}; static constexpr char const * const naming()  { return "FooBar"; } };
 
 typedef std::variant<Foo, Bar, FooBar> custom_variant_t;
 

@@ -100,16 +100,19 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<NoOpCommand::State>())
 		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
+			Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
 			flecs::entity new_target;
 
 			if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
 			{
 				START_TIME(attack_command_new_target)
 
+				Logger::getDebug() << "  looking for target" <<std::endl;
 				new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(11), attack_p.range));
 
 				if(new_target)
 				{
+					Logger::getDebug() << "  found" <<std::endl;
 					AttackCommand atk_l {new_target, pos_p, true, true};
 					queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
 				}
@@ -123,6 +126,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
 		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
+			Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
 			START_TIME(attack_command)
 			move_p.target_move = Vector();
 
@@ -142,6 +146,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					START_TIME(attack_command_new_target)
 
 					new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(8), attack_p.range));
+					Logger::getDebug() << "  re-looking for target " << pos_p.pos<<std::endl;
 
 					if(!new_target)
 					{
@@ -162,11 +167,13 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 
 				if(!new_target)
 				{
+					Logger::getDebug() << " moving "<<attackCommand_p.target_pos.pos <<std::endl;
 					flecs::entity flock_entity = attackCommand_p.flock_handle.get();
 					Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
 					// if no move we are done
 					if(!attackCommand_p.move)
 					{
+						Logger::getDebug() << " done" <<std::endl;
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
 					}
 					// else move and if done we are done
@@ -174,7 +181,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					{
 						if(flock_entity.is_valid() && flock)
 						{
-							Logger::getDebug() << "MoveCommand :: arrived = "<<flock->arrived <<std::endl;
+							Logger::getDebug() << " arrived = "<<flock->arrived <<std::endl;
 							manager_p.get_last_layer().back().template get<FlockArrivedStep>().add_step(flock_entity, {flock->arrived + 1});
 						}
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
@@ -182,6 +189,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 				else
 				{
+					Logger::getDebug() << "    found" <<std::endl;
 					// update target
 					manager_p.get_last_layer().back().template get<AttackCommandStep>().add_step(e, {new_target});
 					// reset windup
@@ -215,6 +223,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// if not in range we need to move
 			else if(!in_attack_range(target_pos, pos_p, attack_p))
 			{
+				Logger::getDebug() << " not inrange" <<std::endl;
 				// reset mass if necessary
 				if(pos_p.mass > 1)
 				{
@@ -226,6 +235,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				{
 					START_TIME(attack_command_new_target)
 
+					Logger::getDebug() << " re-target greedy" <<std::endl;
 					new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(8), attack_p.range));
 
 					END_TIME(attack_command_new_target)
@@ -234,6 +244,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				if(new_target
 				&& in_attack_range(new_target.get<Position>(), pos_p, attack_p))
 				{
+					Logger::getDebug() << "   found" <<std::endl;
 					// update target
 					manager_p.get_last_layer().back().template get<AttackCommandStep>().add_step(e, {new_target});
 				}
@@ -243,6 +254,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// if in range and reload ready initiate windup
 			else
 			{
+				Logger::getDebug() << " inrange p="<<pos_p.pos<<" t="<<target_pos->pos <<std::endl;
 				// set mass if necessary
 				if(pos_p.mass < 5)
 				{
@@ -250,6 +262,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 				if(has_reloaded(manager_p.steps_added, attack_p))
 				{
+					Logger::getDebug() << " winding up" <<std::endl;
 					// increment windup
 					manager_p.get_last_layer().back().template get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
 				}

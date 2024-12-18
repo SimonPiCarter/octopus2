@@ -73,25 +73,25 @@ void set_up_command_queue_systems(flecs::world &ecs, CommandQueueMementoManager<
 			// clear once done
 			queue_p._queuedActions.clear();
 
-			Logger::getDebug() << "CommandQueue Run :: done"<< std::endl;
+			Logger::getDebug() << "  done"<< std::endl;
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
 		.immediate()
 		.kind(ecs.entity(PrepingUpdatePhase))
 		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			Logger::getDebug() << "CommandQueue clean up current :: name=" << e.name() << " idx=" << e.id() <<" :: done"<< std::endl;
+			// Logger::getDebug() << "CommandQueue clean up current :: name=" << e.name() << " idx=" << e.id() <<" :: done"<< std::endl;
 			queue_p.clean_up_current(ecs, e, stateStep_p);
-			Logger::getDebug() << "CommandQueue clean up current :: done"<< std::endl;
+			// Logger::getDebug() << "CommandQueue clean up current :: done"<< std::endl;
 		});
 
 	ecs.system<CommandQueue<variant_t>>()
 		.immediate()
 		.kind(ecs.entity(PostCleanUpPhase))
 		.each([&ecs, &stateStep_p](flecs::entity e, CommandQueue<variant_t> &queue_p) {
-			Logger::getDebug() << "CommandQueue update current :: name=" << e.name() << " idx=" << e.id() <<" :: done"<< std::endl;
+			// Logger::getDebug() << "CommandQueue update current :: name=" << e.name() << " idx=" << e.id() <<" :: done"<< std::endl;
 			queue_p.update_current(ecs, e, stateStep_p);
-			Logger::getDebug() << "CommandQueue update current :: done"<< std::endl;
+			// Logger::getDebug() << "CommandQueue update current :: done"<< std::endl;
 		});
 }
 
