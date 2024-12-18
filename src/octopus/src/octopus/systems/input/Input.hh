@@ -91,7 +91,7 @@ struct Input
 	void addFrontCommand(std::vector<flecs::entity> const &entities, command_variant_t command_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
-		Logger::getNormal() << "adding front command" <<std::endl;
+		Logger::getDebug() << "adding front command" <<std::endl;
 		std::visit([this](auto&& arg) { consolidate_command(flock_manager, arg); }, command_p);
 		for(auto entity : entities)
 		{
@@ -102,6 +102,8 @@ struct Input
 	void addBackCommand(std::vector<flecs::entity> const &entities, command_variant_t command_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
+		Logger::getDebug() << "adding front command" <<std::endl;
+		std::visit([this](auto&& arg) { consolidate_command(flock_manager, arg); }, command_p);
 		for(auto entity : entities)
 		{
 			container_command.get_back_layer().push_back({entity, command_p, false});
