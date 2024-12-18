@@ -6,7 +6,9 @@
 #include <vector>
 
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
+#include "octopus/components/basic/flock/FlockManager.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/ResourceStock.hh"
@@ -63,21 +65,49 @@ struct InputCommand
 	bool stop = false;
 };
 
+template<typename T>
+void consolidate_command(flecs::ref<FlockManager> flock_manager, T &cmd)
+{
+	// NA
+}
+
+void consolidate_command(flecs::ref<FlockManager> flock_manager, MoveCommand &cmd);
+
 template<typename command_variant_t, typename StepManager_t>
 struct Input
 {
 	Input() { stack_input(); }
 
-	void addFrontCommand(flecs::entity entity, command_variant_t const &command_p)
+	void addFrontCommand(flecs::entity entity, command_variant_t command_p)
+	{
+		addFrontCommand(std::vector<flecs::entity> {entity}, command_p);
+	}
+
+	void addBackCommand(flecs::entity entity, command_variant_t command_p)
+	{
+		addBackCommand(std::vector<flecs::entity> {entity}, command_p);
+	}
+
+	void addFrontCommand(std::vector<flecs::entity> const &entities, command_variant_t command_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
-		container_command.get_back_layer().push_back({entity, command_p, true});
+		Logger::getNormal() << "adding front command" <<std::endl;
+		std::visit([this](auto&& arg) { consolidate_command(flock_manager, arg); }, command_p);
+		for(auto entity : entities)
+		{
+			container_command.get_back_layer().push_back({entity, command_p, true});
+		}
 	}
-	void addBackCommand(flecs::entity entity, command_variant_t const &command_p)
+
+	void addBackCommand(std::vector<flecs::entity> const &entities, command_variant_t command_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
-		container_command.get_back_layer().push_back({entity, command_p, false});
+		for(auto entity : entities)
+		{
+			container_command.get_back_layer().push_back({entity, command_p, false});
+		}
 	}
+
 	void addStopCommand(flecs::entity entity)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
@@ -101,6 +131,10 @@ struct Input
 	void unstack_input(flecs::world &ecs, StepManager_t &manager_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
+
+		// declare all flocks into the ecs
+		flock_manager->init_flocks(ecs);
+
 		ProductionTemplateLibrary<StepManager_t> const *prod_lib = ecs.get<ProductionTemplateLibrary<StepManager_t>>();
 
     	flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
@@ -217,8 +251,10 @@ struct Input
 		container_cancel_production.push_layer();
 		container_command.push_layer();
 	}
+	flecs::ref<FlockManager> flock_manager;
 private:
 	std::mutex mutex;
+
 
 	InputLayerContainer<InputAddProduction> container_add_production;
 	InputLayerContainer<InputCancelProduction> container_cancel_production;

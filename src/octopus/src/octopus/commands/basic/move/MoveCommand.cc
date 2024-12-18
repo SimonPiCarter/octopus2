@@ -5,13 +5,12 @@
 namespace octopus
 {
 
-bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Position const&target_p, Move &move_p)
+bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Position const&target_p, Move &move_p, Flock const *flock_p)
 {
 	Fixed tol_l = Fixed::One()/10;
-	if(e.get<FlockRef>()
-	&& e.get<FlockRef>()->ref.get<Flock>())
+	if(flock_p)
 	{
-		uint32_t arrived_l = e.get<FlockRef>()->ref.get<Flock>()->arrived;
+		uint32_t arrived_l = flock_p->arrived;
 		tol_l += Fixed::One() + Fixed::One()*2*arrived_l;
 	}
 
