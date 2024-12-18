@@ -43,8 +43,9 @@ void add_second(flecs::entity e, flecs::entity state, type_t const &)
 template<typename type_t>
 void remove_second(flecs::entity e, flecs::entity state, type_t const &)
 {
-	e.remove_second<typename type_t::State>(state);
 	Logger::getDebug()<<"  remove_second "<<type_t::naming()<<std::endl;
+	e.add_second<NoOpCommand::State>(state);
+	// e.remove_second<typename type_t::State>(state);
 }
 
 template<typename variant_t>
