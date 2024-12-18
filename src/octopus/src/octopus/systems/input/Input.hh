@@ -7,6 +7,7 @@
 
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
+#include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/components/basic/flock/FlockManager.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
@@ -72,6 +73,7 @@ void consolidate_command(flecs::ref<FlockManager> flock_manager, T &cmd)
 }
 
 void consolidate_command(flecs::ref<FlockManager> flock_manager, MoveCommand &cmd);
+void consolidate_command(flecs::ref<FlockManager> flock_manager, AttackCommand &cmd);
 
 template<typename command_variant_t, typename StepManager_t>
 struct Input

@@ -27,6 +27,7 @@ struct AttackCommand {
 	Position target_pos;
 	bool move = false;
 	bool init = false;
+	FlockHandle flock_handle;
 
 	static constexpr char const * const naming()  { return "attack"; }
 	struct State {};
@@ -161,20 +162,20 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 
 				if(!new_target)
 				{
+					flecs::entity flock_entity = attackCommand_p.flock_handle.get();
+					Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
 					// if no move we are done
 					if(!attackCommand_p.move)
 					{
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
 					}
 					// else move and if done we are done
-					else if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p))
+					else if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p, flock))
 					{
-						FlockRef const * flock_ref_l = e.get<FlockRef>();
-						if(flock_ref_l)
+						if(flock_entity.is_valid() && flock)
 						{
-							flecs::entity flock_l = flock_ref_l->ref;
-							Flock const *flock_comp_l = flock_l.get<Flock>();
-							manager_p.get_last_layer().back().template get<FlockArrivedStep>().add_step(flock_l, {flock_comp_l->arrived + 1});
+							Logger::getDebug() << "MoveCommand :: arrived = "<<flock->arrived <<std::endl;
+							manager_p.get_last_layer().back().template get<FlockArrivedStep>().add_step(flock_entity, {flock->arrived + 1});
 						}
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
 					}
