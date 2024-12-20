@@ -10,6 +10,7 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <sstream>
 
 struct StreamedEntityRecord
 {
@@ -18,6 +19,11 @@ struct StreamedEntityRecord
 	std::string const &operator[](size_t idx_p) const
 	{
 		return *std::next(records.begin(), idx_p);
+	}
+
+	bool operator==(StreamedEntityRecord const &other) const
+	{
+		return records == other.records;
 	}
 };
 
@@ -90,9 +96,32 @@ struct RevertTester
 		}
 	}
 
+	bool operator==(RevertTester const other) const
+	{
+		return records == other.records;
+	}
+
+	std::vector<StreamedEntityRecord> const &get_records() const { return records; }
 private:
 	std::vector<flecs::entity> tracked_entities;
 	std::vector<flecs::entity> tracked_pairs;
 	std::vector<StreamedEntityRecord> records;
 	size_t recorded_steps = 0;
 };
+
+namespace std
+{
+	std::ostream &operator<<(std::ostream &oss, StreamedEntityRecord const &rec);
+
+	template<typename variant_t, class... Ts>
+	std::ostream &operator<<(std::ostream &oss, RevertTester<variant_t, Ts...> const &tester)
+	{
+		oss << "RevertTester[";
+		std::for_each(tester.get_records().begin(), tester.get_records().end(), [&oss](StreamedEntityRecord const &entry)
+		{
+			oss << entry <<", ";
+		});
+		oss <<"]";
+		return oss;
+	}
+} // namespace std
