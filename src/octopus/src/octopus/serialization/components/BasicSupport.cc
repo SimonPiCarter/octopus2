@@ -36,7 +36,11 @@ void basic_components_support(flecs::world& ecs)
     ecs.component<Destroyable>()
         .member("timestamp", &Destroyable::timestamp);
     ecs.component<Position>()
-        .member("pos", &Position::pos);
+        .member("pos", &Position::pos)
+        .member("velocity", &Position::velocity)
+        .member("mass", &Position::mass)
+        .member("ray", &Position::ray)
+        .member("collision", &Position::collision);
 
     ecs.component<Attack>()
 		.member("windup", &Attack::windup)
