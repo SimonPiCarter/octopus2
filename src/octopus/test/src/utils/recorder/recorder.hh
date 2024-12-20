@@ -78,6 +78,15 @@ struct MultiRecorder
         return recorders == other.recorders;
     }
 
+    void stream(std::ostream &oss) const
+    {
+		oss << "MultiRecorder[\n";
+		std::for_each(recorders.begin(), recorders.end(), [&oss](Recorder const &entry)
+		{
+			oss << entry.records <<"\n";
+		});
+		oss <<"]"<<std::endl;
+    }
 private:
     std::vector<Recorder> recorders;
 };

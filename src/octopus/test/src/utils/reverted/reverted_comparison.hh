@@ -96,8 +96,6 @@ private:
 
 namespace std
 {
-	std::ostream &operator<<(std::ostream &oss, StreamedEntityRecord const &rec);
-
 	template<typename variant_t, class... Ts>
 	std::ostream &operator<<(std::ostream &oss, RevertTester<variant_t, Ts...> const &tester)
 	{

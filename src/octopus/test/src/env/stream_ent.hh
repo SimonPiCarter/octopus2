@@ -65,3 +65,8 @@ void stream_second_components(std::ostream &oss, flecs::entity e, flecs::entity 
 {
 	stream_second_component(oss, e, first, Targs()...);
 }
+
+namespace std
+{
+	std::ostream &operator<<(std::ostream &oss, StreamedEntityRecord const &rec);
+}

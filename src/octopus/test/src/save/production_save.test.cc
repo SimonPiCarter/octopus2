@@ -54,28 +54,8 @@ struct ProdA : ProductionTemplate<DefaultStepManager>
     virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
     virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
     virtual std::string name() const { return "a"; }
-    virtual int64_t duration() const { return 2;}
-};
-
-struct ProdB : ProductionTemplate<DefaultStepManager>
-{
-    virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
-    virtual std::unordered_map<std::string, Fixed> resource_consumption() const
-	{
-		return {
-			{"food", 10 }
-		};
-	}
-    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
-	{
-		manager_p.get_last_layer().back().template get<HitPointStep>().add_step(producer_p, HitPointStep{10});
-	}
-    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual std::string name() const { return "b"; }
     virtual int64_t duration() const { return 3;}
 };
-
 }
 
 TEST(production_save, prod_before_save)
@@ -92,7 +72,6 @@ TEST(production_save, prod_before_save)
 	ecs.component<ProductionTemplateLibrary<DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> lib_l;
 	lib_l.add_template(new ProdA());
-	lib_l.add_template(new ProdB());
 	ecs.set(lib_l);
 
 	set_up_systems(world, step_context);
@@ -147,7 +126,6 @@ TEST(production_save, prod_before_save)
 	loaded_world.ecs.add<Input<custom_variant, DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> new_lib_l;
 	new_lib_l.add_template(new ProdA());
-	new_lib_l.add_template(new ProdB());
 	loaded_world.ecs.set(new_lib_l);
 	set_up_systems(loaded_world, loaded_step_context);
 
@@ -158,7 +136,7 @@ TEST(production_save, prod_before_save)
 	test.add_recorder<CustomCommandQueue, HitPoint, ProductionQueue>(loaded_world.ecs.entity("e1"));
 	test.add_recorder<PlayerInfo, ResourceStock>(loaded_world.ecs.entity("player"));
 
-	for(size_t i = save_point+1; i < 10 ; ++ i)
+	for(size_t i = save_point+1; i < 20 ; ++ i)
 	{
 		// std::cout<<"p"<<i<<std::endl;
 
@@ -171,6 +149,9 @@ TEST(production_save, prod_before_save)
 	}
 
 	EXPECT_EQ(reference, test);
+
+	reference.stream(std::cout);
+	test.stream(std::cout);
 }
 
 /*
