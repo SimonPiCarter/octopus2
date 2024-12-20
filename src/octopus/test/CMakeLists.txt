@@ -27,6 +27,8 @@ target_sources (unit_tests
 	src/input/input_ability.test.cc
 	src/input/input_move.test.cc
 	src/input/input_production.test.cc
+	src/save/move_save.test.cc
+	src/save/production_save.test.cc
 	src/serialization/ser_basic_components.test.cc
 	src/serialization/ser_command_queue.test.cc
 	src/serialization/ser_fast_map.test.cc
