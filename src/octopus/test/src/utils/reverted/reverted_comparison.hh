@@ -12,21 +12,6 @@
 #include <string>
 #include <sstream>
 
-struct StreamedEntityRecord
-{
-	std::list<std::string> records;
-
-	std::string const &operator[](size_t idx_p) const
-	{
-		return *std::next(records.begin(), idx_p);
-	}
-
-	bool operator==(StreamedEntityRecord const &other) const
-	{
-		return records == other.records;
-	}
-};
-
 /// @brief class used to check different components
 /// can register all components for all registered entities
 /// on each progress

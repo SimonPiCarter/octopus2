@@ -121,8 +121,6 @@ TEST(move_save, simple)
 			reference_test.add_record(ecs);
 		}
 
-		revert_test.add_record(ecs);
-
 		// auto json_ecs = ecs.to_json();
 		// std::cout << json_ecs << std::endl << std::endl;
 		// stream_ent<Position, MoveCommand, CustomCommandQueue>(std::cout, ecs, e1);

@@ -1,5 +1,20 @@
 #pragma once
 
+struct StreamedEntityRecord
+{
+	std::list<std::string> records;
+
+	std::string const &operator[](size_t idx_p) const
+	{
+		return *std::next(records.begin(), idx_p);
+	}
+
+	bool operator==(StreamedEntityRecord const &other) const
+	{
+		return records == other.records;
+	}
+};
+
 template<typename type_t>
 void stream_type(std::ostream &oss, flecs::world &ecs, flecs::entity e, type_t arg)
 {
