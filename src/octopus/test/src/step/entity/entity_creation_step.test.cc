@@ -41,14 +41,13 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 
 struct ProdEntity : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 {
-	ProdEntity(flecs::entity &e) : new_ent(e) {}
     virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
     virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
     virtual void produce(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const
 	{
 		EntityCreationStep step_l;
 		step_l.set_up_function = [&](flecs::entity e, flecs::world const &world_p) {
-			new_ent = e;
+			e.set_name("test_entity");
 			CustomCommandQueue queue_l;
 			MoveCommand move_l {{{10,5}}};
 			queue_l._queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {move_l});
@@ -65,8 +64,6 @@ struct ProdEntity : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
     virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
     virtual std::string name() const { return "a"; }
     virtual int64_t duration() const { return 2;}
-
-	flecs::entity &new_ent;
 };
 
 TEST(entity_creation_step, simple)
@@ -80,11 +77,8 @@ TEST(entity_creation_step, simple)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>(ecs);
 
-	flecs::entity new_ent;
-
 	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
-	lib_l.add_template(new ProdEntity(new_ent));
-	ecs.set(lib_l);
+	lib_l.register_self<ProdEntity>(ecs);
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	set_up_systems(world, step_context);
@@ -103,6 +97,7 @@ TEST(entity_creation_step, simple)
 		// std::cout<<std::endl;
 	}
 
+	flecs::entity new_ent = ecs.entity("test_entity");
 	ASSERT_TRUE(new_ent.is_valid());
 	EXPECT_EQ(Fixed(10), new_ent.get<Position>()->pos.x);
 	EXPECT_EQ(Fixed(5), new_ent.get<Position>()->pos.y);

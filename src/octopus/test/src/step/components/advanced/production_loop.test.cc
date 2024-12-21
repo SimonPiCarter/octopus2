@@ -83,9 +83,7 @@ TEST(production_loop, simple)
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ProductionTemplateLibrary<StepManager<DEFAULT_STEPS_T> > lib_l;
-	lib_l.add_template(new ProdA());
-	lib_l.add_template(new ProdB());
-	ecs.set(lib_l);
+	lib_l.register_self<ProdA, ProdB>(ecs);
 
 	set_up_systems(world, step_context);
 

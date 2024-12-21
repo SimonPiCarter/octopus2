@@ -27,6 +27,7 @@
 #include "octopus/world/StepContext.hh"
 
 #include "env/stream_ent.hh"
+#include "env/custom_production_templates.hh"
 #include "utils/reverted/reverted_comparison.hh"
 #include "utils/recorder/recorder.hh"
 
@@ -45,19 +46,6 @@ namespace
 using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
-struct ProdA : ProductionTemplate<DefaultStepManager>
-{
-    virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
-    virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
-    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
-	{
-		manager_p.get_last_layer().back().template get<HitPointStep>().add_step(producer_p, HitPointStep{1});
-	}
-    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual std::string name() const { return "a"; }
-    virtual int64_t duration() const { return 3;}
-};
 }
 
 TEST(production_save, prod_before_save)
@@ -73,8 +61,7 @@ TEST(production_save, prod_before_save)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ecs.component<ProductionTemplateLibrary<DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> lib_l;
-	lib_l.add_template(new ProdA());
-	ecs.set(lib_l);
+	lib_l.register_self<ProdC>(ecs);
 
 	set_up_systems(world, step_context);
 
@@ -103,7 +90,7 @@ TEST(production_save, prod_before_save)
 
 		if(i == 2)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "c"});
 		}
 		if(i == save_point)
 		{
@@ -127,12 +114,10 @@ TEST(production_save, prod_before_save)
 	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(loaded_world.ecs);
 	loaded_world.ecs.add<Input<custom_variant, DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> new_lib_l;
-	new_lib_l.add_template(new ProdA());
-	loaded_world.ecs.set(new_lib_l);
+	new_lib_l.register_self<ProdC>(loaded_world.ecs);
 	set_up_systems(loaded_world, loaded_step_context);
 
 	loaded_world.ecs.from_json(json);
-	// loaded_world.ecs.set(new_lib_l);
 
 	MultiRecorder test;
 	test.add_recorder<CustomCommandQueue, HitPoint, ProductionQueue>(loaded_world.ecs.entity("e1"));
@@ -176,8 +161,7 @@ TEST(production_save, prod_after_save)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ecs.component<ProductionTemplateLibrary<DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> lib_l;
-	lib_l.add_template(new ProdA());
-	ecs.set(lib_l);
+	lib_l.register_self<ProdC>(ecs);
 
 	set_up_systems(world, step_context);
 
@@ -202,7 +186,7 @@ TEST(production_save, prod_after_save)
 
 		if(i == 6)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "c"});
 		}
 		if(i == save_point)
 		{
@@ -227,8 +211,8 @@ TEST(production_save, prod_after_save)
 	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(loaded_world.ecs);
 	loaded_world.ecs.add<Input<custom_variant, DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> new_lib_l;
-	new_lib_l.add_template(new ProdA());
-	loaded_world.ecs.set(new_lib_l);
+	new_lib_l.register_self<ProdC>(loaded_world.ecs);
+
 	set_up_systems(loaded_world, loaded_step_context);
 
 	loaded_world.ecs.from_json(json.c_str());
@@ -245,7 +229,7 @@ TEST(production_save, prod_after_save)
 
 		if(i == 6)
 		{
-			loaded_world.ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
+			loaded_world.ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "c"});
 		}
 
 		test.record(loaded_world.ecs);

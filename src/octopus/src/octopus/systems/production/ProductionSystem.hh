@@ -26,7 +26,7 @@ void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
 
             if(queue_p.queue.empty()) { return; }
 
-            ProductionTemplate<StepManager_t> const & prod_template_l = production_library->get(queue_p.queue[0]);
+            ProductionTemplate<StepManager_t> const & prod_template_l = *production_library->try_get(queue_p.queue[0]);
 
             // start == 0 means we need to start producing
             if(queue_p.start_timestamp  == 0)

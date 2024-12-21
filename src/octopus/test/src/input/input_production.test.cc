@@ -89,10 +89,7 @@ TEST(input_production, simple)
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	ProductionTemplateLibrary<DefaultStepManager> lib_l;
-	lib_l.add_template(new ProdA());
-	lib_l.add_template(new ProdB());
-	ecs.set(lib_l);
-
+	lib_l.register_self<ProdA, ProdB>(ecs);
 	set_up_systems(world, step_context);
 
 	auto e1 = ecs.entity("e1")
@@ -152,11 +149,8 @@ TEST(input_production, simple_not_enough_resource)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	ProductionTemplateLibrary<DefaultStepManager > lib_l;
-	lib_l.add_template(new ProdA());
-	lib_l.add_template(new ProdB());
-	ecs.set(lib_l);
-
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.register_self<ProdA, ProdB>(ecs);
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
@@ -220,10 +214,8 @@ TEST(input_production, simple_cancel)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	ProductionTemplateLibrary<DefaultStepManager > lib_l;
-	lib_l.add_template(new ProdA());
-	lib_l.add_template(new ProdB());
-	ecs.set(lib_l);
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.register_self<ProdA, ProdB>(ecs);
 
 	set_up_systems(world, step_context);
 
@@ -292,10 +284,8 @@ TEST(input_production, simple_not_enough_resource_same_input)
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
-	ProductionTemplateLibrary<DefaultStepManager > lib_l;
-	lib_l.add_template(new ProdA());
-	lib_l.add_template(new ProdB());
-	ecs.set(lib_l);
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.register_self<ProdA, ProdB>(ecs);
 
 	set_up_systems(world, step_context);
 
