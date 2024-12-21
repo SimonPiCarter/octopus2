@@ -154,8 +154,14 @@ TEST(production_save, prod_before_save)
 	// test.stream(std::cout);
 }
 
-/*
+
 TEST(production_save, prod_after_save)
+{
+	std::string json;
+	size_t const save_point = 4;
+	// only record until step save_point (used to compare before and after saves)
+	MultiRecorder reference;
+
 {
 	WorldContext world;
 	flecs::world &ecs = world.ecs;
@@ -169,7 +175,6 @@ TEST(production_save, prod_after_save)
 	ecs.component<ProductionTemplateLibrary<DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> lib_l;
 	lib_l.add_template(new ProdA());
-	lib_l.add_template(new ProdB());
 	ecs.set(lib_l);
 
 	set_up_systems(world, step_context);
@@ -184,12 +189,8 @@ TEST(production_save, prod_after_save)
 		.set<PlayerInfo>({0, 0})
 		.set<ResourceStock>({ {}});
 
-	size_t const save_point = 4;
-	// only record until step save_point (used to compare before and after saves)
-	MultiRecorder reference;
 	reference.add_recorder<CustomCommandQueue, HitPoint, ProductionQueue>(e1);
 	reference.add_recorder<PlayerInfo, ResourceStock>(player);
-	auto json = ecs.to_json(); // for sake of type detection
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
@@ -213,6 +214,7 @@ TEST(production_save, prod_after_save)
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
 	}
+}
 
 	// load
 
@@ -224,12 +226,10 @@ TEST(production_save, prod_after_save)
 	loaded_world.ecs.add<Input<custom_variant, DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> new_lib_l;
 	new_lib_l.add_template(new ProdA());
-	new_lib_l.add_template(new ProdB());
 	loaded_world.ecs.set(new_lib_l);
 	set_up_systems(loaded_world, loaded_step_context);
 
-	loaded_world.ecs.from_json(json);
-	loaded_world.ecs.set(new_lib_l);
+	loaded_world.ecs.from_json(json.c_str());
 
 	MultiRecorder test;
 	test.add_recorder<CustomCommandQueue, HitPoint, ProductionQueue>(loaded_world.ecs.entity("e1"));
@@ -243,7 +243,7 @@ TEST(production_save, prod_after_save)
 
 		if(i == 6)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
+			loaded_world.ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
 		}
 
 		test.record(loaded_world.ecs);
@@ -254,6 +254,6 @@ TEST(production_save, prod_after_save)
 
 	EXPECT_EQ(reference, test);
 
+	// reference.stream(std::cout);
+	// test.stream(std::cout);
 }
-
-*/
