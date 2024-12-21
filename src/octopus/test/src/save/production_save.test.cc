@@ -33,8 +33,10 @@
 using namespace octopus;
 
 /////////////////////////////////////////////////
-/// This test aims at testing that step
-/// updates for production work correctly
+/// This test aims at testing that saving during
+/// production works correctly
+/// and also that template library for prod
+/// works after loading
 /////////////////////////////////////////////////
 
 namespace
