@@ -12,6 +12,7 @@
 #include "octopus/systems/step/StepSystems.hh"
 #include "octopus/systems/production/ProductionSystem.hh"
 #include "octopus/systems/input/Input.hh"
+#include "octopus/systems/timestamp/TimeStampSystems.hh"
 
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/StepContext.hh"
@@ -45,6 +46,9 @@ void set_up_systems(
 
 	// components systems
 	set_up_hitpoint_systems(world.ecs, world.pool, step_context.step_manager, step_kept_p);
+
+	// time stamp systems (increment time stamp)
+	set_up_timestamp_systems(world.ecs, step_context.step_manager);
 
 	// commands systems
 	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.time_stats);

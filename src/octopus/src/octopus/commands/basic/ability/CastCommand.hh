@@ -3,6 +3,7 @@
 #include "flecs.h"
 #include "octopus/utils/Vector.hh"
 #include "octopus/components/basic/ability/Caster.hh"
+#include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/world/stats/TimeStats.hh"
@@ -56,7 +57,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 			// check reload
-			if(!caster_p.check_timestamp_last_cast(ability_l->reload(), ecs.get_info()->frame_count_total, ability_l->name()))
+			if(!caster_p.check_timestamp_last_cast(ability_l->reload(), get_time_stamp(ecs), ability_l->name()))
 			{
 				// done if not enough
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
@@ -81,7 +82,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 					// start windup if not started yet
 					if(caster_p.timestamp_windup_start == 0)
 					{
-						manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {ecs.get_info()->frame_count_total});
+						manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {get_time_stamp(ecs)});
 					}
 				}
 				// no range
@@ -96,13 +97,13 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				// start windup if not started yet
 				if(caster_p.timestamp_windup_start == 0)
 				{
-					manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {ecs.get_info()->frame_count_total});
+					manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {get_time_stamp(ecs)});
 				}
 			}
 
 			// check windup
 			if(caster_p.timestamp_windup_start != 0
-			&& caster_p.timestamp_windup_start + ability_l->windup() <= ecs.get_info()->frame_count_total)
+			&& caster_p.timestamp_windup_start + ability_l->windup() <= get_time_stamp(ecs))
 			{
 				// run spell
 				ability_l->cast(e, castCommand_p.point_target, castCommand_p.entity_target, ecs, manager_p);
@@ -117,7 +118,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				// reset windup
 				manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {0});
 				// reload set up
-				manager_p.get_last_layer().back().template get<CasterLastCastStep>().add_step(e, {ecs.get_info()->frame_count_total, ability_l->name()});
+				manager_p.get_last_layer().back().template get<CasterLastCastStep>().add_step(e, {get_time_stamp(ecs), ability_l->name()});
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 		});

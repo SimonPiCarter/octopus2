@@ -4,6 +4,7 @@
 
 #include "flecs.h"
 
+#include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/utils/log/Logger.hh"
@@ -30,10 +31,10 @@ void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
             // start == 0 means we need to start producing
             if(queue_p.start_timestamp  == 0)
             {
-                manager_p.get_last_layer().back().template get<ProductionQueueTimestampStep>().add_step(e, ProductionQueueTimestampStep{ecs.get_info()->frame_count_total });
+                manager_p.get_last_layer().back().template get<ProductionQueueTimestampStep>().add_step(e, ProductionQueueTimestampStep{get_time_stamp(ecs) });
             }
             // prod is done
-            else if(queue_p.start_timestamp + prod_template_l.duration() <= ecs.get_info()->frame_count_total + 1)
+            else if(queue_p.start_timestamp + prod_template_l.duration() <= get_time_stamp(ecs) + 1)
             {
                 // add production step
                 prod_template_l.produce(e, ecs, manager_p);

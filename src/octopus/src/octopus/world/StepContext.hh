@@ -13,6 +13,7 @@
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
+#include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 
@@ -33,7 +34,9 @@ octopus::ProductionQueueTimestampStep, \
 octopus::ProductionQueueOperationStep, \
 octopus::ResourceStockStep, \
 octopus::CasterLastCastStep, \
-octopus::CasterWindupStep
+octopus::CasterWindupStep, \
+octopus::TimeStampIncrementStep \
+
 
 namespace octopus
 {

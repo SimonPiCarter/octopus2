@@ -8,6 +8,7 @@
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
+#include "octopus/components/basic/timestamp/TimeStamp.hh"
 
 #include "octopus/systems/phases/Phases.hh"
 #include "octopus/utils/FixedPoint.hh"
@@ -62,7 +63,7 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			if(hp_p.qty == Fixed::Zero() && destroyable_p.timestamp == 0)
 			{
 				Logger::getDebug() << "Destroy :: name=" << e.name() << " idx=" << e.id() << std::endl;
-				manager_p.get_last_layer().back().template get<DestroyableStep>().add_step(e, {ecs.get_info()->frame_count_total});
+				manager_p.get_last_layer().back().template get<DestroyableStep>().add_step(e, {get_time_stamp(ecs)});
 				e.disable();
 				ecs.event<Destroyed>()
 					.id<Destroyable>()
@@ -89,7 +90,7 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 		.with(flecs::Disabled)
 		.each([&ecs, step_kept_p](flecs::entity e, Destroyable const &destroyable_p) {
 			if(destroyable_p.timestamp != 0
-			&& destroyable_p.timestamp + step_kept_p > ecs.get_info()->frame_count_total)
+			&& destroyable_p.timestamp + step_kept_p > get_time_stamp(ecs))
 			{
 				Logger::getDebug() << "Destruct :: name=" << e.name() << " idx=" << e.id() << std::endl;
 				e.destruct();

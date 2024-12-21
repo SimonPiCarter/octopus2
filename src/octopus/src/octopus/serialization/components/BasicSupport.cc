@@ -1,17 +1,18 @@
 #include "BasicSupport.hh"
 
 #include "octopus/components/basic/ability/Caster.hh"
+#include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/flock/FlockManager.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
+#include "octopus/components/basic/player/Player.hh"
+#include "octopus/components/basic/player/Team.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
-#include "octopus/components/basic/attack/Attack.hh"
-#include "octopus/components/basic/player/Player.hh"
-#include "octopus/components/basic/player/Team.hh"
+#include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/world/player/PlayerInfo.hh"
@@ -109,6 +110,9 @@ void basic_components_support(flecs::world& ecs)
 	;
 	ecs.component<ResourceStock>()
 		.member("resource", &ResourceStock::resource);
+
+	ecs.component<TimeStamp>()
+		.member("time", &TimeStamp::time);
 }
 
 } // namespace octopus

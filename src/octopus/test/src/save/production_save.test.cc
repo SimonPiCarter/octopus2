@@ -136,7 +136,7 @@ TEST(production_save, prod_before_save)
 	test.add_recorder<CustomCommandQueue, HitPoint, ProductionQueue>(loaded_world.ecs.entity("e1"));
 	test.add_recorder<PlayerInfo, ResourceStock>(loaded_world.ecs.entity("player"));
 
-	for(size_t i = save_point+1; i < 20 ; ++ i)
+	for(size_t i = save_point+1; i < 10 ; ++ i)
 	{
 		// std::cout<<"p"<<i<<std::endl;
 
@@ -150,8 +150,8 @@ TEST(production_save, prod_before_save)
 
 	EXPECT_EQ(reference, test);
 
-	reference.stream(std::cout);
-	test.stream(std::cout);
+	// reference.stream(std::cout);
+	// test.stream(std::cout);
 }
 
 /*

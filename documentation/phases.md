@@ -51,6 +51,10 @@ Apply all steps :
 
 - Update Destroyable from Hitpoints
 
+### TimeStamp
+
+- Update time stamp (using step so update will be shown on next iteration)
+
 ## PostUpdate (PostUpdatePhase)
 
 ### commands

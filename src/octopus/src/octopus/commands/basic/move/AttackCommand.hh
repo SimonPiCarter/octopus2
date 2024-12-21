@@ -7,6 +7,7 @@
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/player/Team.hh"
+#include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/world/position/closest_neighbours.hh"
@@ -103,7 +104,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
 			flecs::entity new_target;
 
-			if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
+			if(!ecs.get_info() || (get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
 			{
 				START_TIME(attack_command_new_target)
 
@@ -141,7 +142,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				bool should_scan_l = !attackCommand_p.init || !hp || hp->qty <= Fixed::Zero();
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0 || should_scan_l)
+				if(!ecs.get_info() || (get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || should_scan_l)
 				{
 					START_TIME(attack_command_new_target)
 
@@ -231,7 +232,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || (ecs.get_info()->frame_count_total + e.id()) % attack_retarget_wait == 0)
+				if(!ecs.get_info() || (get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0)
 				{
 					START_TIME(attack_command_new_target)
 
