@@ -107,7 +107,10 @@ void basic_components_support(flecs::world& ecs)
 	ecs.component<PlayerInfo>()
 		.member("idx", &PlayerInfo::idx)
 		.member("team", &PlayerInfo::team);
-	;
+
+	ecs.component<PlayerAppartenance>()
+		.member("idx", &PlayerAppartenance::idx);
+
 	ecs.component<ResourceStock>()
 		.member("resource", &ResourceStock::resource);
 
