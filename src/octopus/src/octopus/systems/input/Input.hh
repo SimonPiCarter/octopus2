@@ -169,7 +169,7 @@ struct Input
 				flecs::entity player = query_player.find([&input_l](PlayerInfo& p) {
 					return p.idx == input_l.producer.get<PlayerAppartenance>()->idx;
 				});
-				if(!player.is_valid()) { continue; }
+				if(!player.is_valid() || !prod_l) { continue; }
 				PlayerInfo const * player_info_l = player.get<PlayerInfo>();
 				ResourceStock const * resource_stock_l = player.get<ResourceStock>();
 
