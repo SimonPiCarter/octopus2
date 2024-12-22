@@ -99,10 +99,10 @@ namespace std
 	template<typename variant_t, class... Ts>
 	std::ostream &operator<<(std::ostream &oss, RevertTester<variant_t, Ts...> const &tester)
 	{
-		oss << "RevertTester[";
+		oss << "RevertTester[\n";
 		std::for_each(tester.get_records().begin(), tester.get_records().end(), [&oss](StreamedEntityRecord const &entry)
 		{
-			oss << entry <<", ";
+			oss << entry <<"\n";
 		});
 		oss <<"]";
 		return oss;

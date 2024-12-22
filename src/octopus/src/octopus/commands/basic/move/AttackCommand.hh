@@ -202,7 +202,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			}
 
 			// in range and reloaded : we can attack
-			uint32_t time = manager_p.steps_added;
+			uint32_t time = uint32_t(get_time_stamp(ecs));
 			// wind up has started
 			if(attack_p.windup > 0)
 			{
@@ -261,7 +261,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				{
 					manager_p.get_last_layer().back().template get<MassStep>().add_step(e, {1000});
 				}
-				if(has_reloaded(manager_p.steps_added, attack_p))
+				if(has_reloaded(uint32_t(get_time_stamp(ecs)), attack_p))
 				{
 					Logger::getDebug() << " winding up" <<std::endl;
 					// increment windup
