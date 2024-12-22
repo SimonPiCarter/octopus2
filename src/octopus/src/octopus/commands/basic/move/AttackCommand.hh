@@ -25,7 +25,7 @@ namespace octopus
 
 struct AttackCommand {
 	flecs::entity target;
-	Position target_pos;
+	Vector target_pos;
 	bool move = false;
 	bool init = false;
 	FlockHandle flock_handle;
@@ -114,7 +114,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				if(new_target)
 				{
 					Logger::getDebug() << "  found" <<std::endl;
-					AttackCommand atk_l {new_target, pos_p, true, true};
+					AttackCommand atk_l {new_target, pos_p.pos, true, true};
 					queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
 				}
 
@@ -168,7 +168,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 
 				if(!new_target)
 				{
-					Logger::getDebug() << " moving "<<attackCommand_p.target_pos.pos <<std::endl;
+					Logger::getDebug() << " moving "<<attackCommand_p.target_pos <<std::endl;
 					flecs::entity flock_entity = attackCommand_p.flock_handle.get();
 					Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
 					// if no move we are done
@@ -178,7 +178,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
 					}
 					// else move and if done we are done
-					else if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p, flock))
+					else if(move_routine(ecs, e, pos_p, Position {attackCommand_p.target_pos}, move_p, flock))
 					{
 						if(flock_entity.is_valid() && flock)
 						{

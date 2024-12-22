@@ -83,7 +83,7 @@ TEST(attack_move_loop, simple)
 
 		if(i == 2)
 		{
-			AttackCommand atk_l {flecs::entity(), {{10,0}}, true};
+			AttackCommand atk_l {flecs::entity(), {10,0}, true};
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionDone());
 		}

@@ -98,8 +98,7 @@ TEST(attack_retarget_loop, simple)
 
 		if(i == 2)
 		{
-			Position pos_l {{10,5}};
-			AttackCommand atk_l {e2, pos_l};
+			AttackCommand atk_l {e2, {10,5}};
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionDone());
 		}
