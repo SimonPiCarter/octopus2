@@ -13,10 +13,6 @@ namespace octopus
 
 void basic_commands_support(flecs::world& ecs)
 {
-    ecs.component<NoOpCommand::State>();
-    ecs.component<MoveCommand::State>();
-    ecs.component<AttackCommand::State>();
-    ecs.component<CastCommand::State>();
     ecs.component<NoOpCommand>();
     ecs.component<MoveCommand>()
         .member("target", &MoveCommand::target)
@@ -32,6 +28,12 @@ void basic_commands_support(flecs::world& ecs)
         .member("ability", &CastCommand::ability)
         .member("entity_target", &CastCommand::entity_target)
         .member("point_target", &CastCommand::point_target);
+
+    // After command components to avoid memory corruption (? test start failing randomly)
+    ecs.component<NoOpCommand::State>();
+    ecs.component<MoveCommand::State>();
+    ecs.component<AttackCommand::State>();
+    ecs.component<CastCommand::State>();
 }
 
 } // namespace octopus
