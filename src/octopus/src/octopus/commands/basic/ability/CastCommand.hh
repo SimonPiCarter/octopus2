@@ -51,19 +51,19 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 			// get ability
 			AbilityTemplate<StepManager_t> const * ability_l = ability_library->try_get(castCommand_p.ability);
 			// check reources
-			if(!check_resources(res_p.resource, {}, ability_l->resource_consumption()))
+			if(!ability_l || !check_resources(res_p.resource, {}, ability_l->resource_consumption()))
 			{
 				// done if not enough
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 			// check reload
-			if(!caster_p.check_timestamp_last_cast(ability_l->reload(), get_time_stamp(ecs), ability_l->name()))
+			else if(!caster_p.check_timestamp_last_cast(ability_l->reload(), get_time_stamp(ecs), ability_l->name()))
 			{
 				// done if not enough
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 			// check if target is required
-			if(ability_l->need_point_target() || ability_l->need_entity_target())
+			else if(ability_l->need_point_target() || ability_l->need_entity_target())
 			{
 				Vector target_pos;
 				// check range
