@@ -24,7 +24,8 @@ public:
 
     AbilityTemplate<StepManager_t> const *try_get(std::string const &id_p) const
     {
-        return _templates.at(id_p);
+        auto it = _templates.find(id_p);
+        return it != _templates.cend() ? it->second : nullptr;
     }
 
     void clean_up()
