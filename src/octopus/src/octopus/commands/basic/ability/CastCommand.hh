@@ -89,7 +89,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				else
 				{
 					// move routine
-					move_routine(ecs, e, pos_p, Position {target_pos}, move_p);
+					move_routine(ecs, e, pos_p, target_pos, move_p);
 				}
 			}
 			else

@@ -5,7 +5,7 @@
 namespace octopus
 {
 
-bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Position const&target_p, Move &move_p, Flock const *flock_p)
+bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Vector const&target_p, Move &move_p, Flock const *flock_p)
 {
 	Fixed tol_l = Fixed::One()/10;
 	if(flock_p)
@@ -16,9 +16,9 @@ bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Posi
 	}
 	Logger::getDebug() << "move_routine :: tol = "<<tol_l <<std::endl;
 	Logger::getDebug() << "  p = "<<pos_p.pos <<std::endl;
-	Logger::getDebug() << "  t = "<<target_p.pos <<std::endl;
+	Logger::getDebug() << "  t = "<<target_p <<std::endl;
 
-	if(square_length(pos_p.pos - target_p.pos) < tol_l)
+	if(square_length(pos_p.pos - target_p) < tol_l)
 	{
 		Logger::getDebug() << "  done" <<std::endl;
 		return true;

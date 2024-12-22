@@ -178,7 +178,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 						queue_p._queuedActions.push_back(CommandQueueActionDone());
 					}
 					// else move and if done we are done
-					else if(move_routine(ecs, e, pos_p, Position {attackCommand_p.target_pos}, move_p, flock))
+					else if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p, flock))
 					{
 						if(flock_entity.is_valid() && flock)
 						{
@@ -250,7 +250,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					manager_p.get_last_layer().back().template get<AttackCommandStep>().add_step(e, {new_target});
 				}
 
-				move_p.move = get_speed_direction(ecs, pos_p, *target_pos, move_p.speed);
+				move_p.move = get_speed_direction(ecs, pos_p, target_pos->pos, move_p.speed);
 			}
 			// if in range and reload ready initiate windup
 			else

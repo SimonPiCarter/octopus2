@@ -50,11 +50,11 @@ struct ProdEntity : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 		step_l.set_up_function = [&](flecs::entity e, flecs::world const &world_p) {
 			new_ent = e;
 			CustomCommandQueue queue_l;
-			MoveCommand move_l {{{10,5}}};
+			MoveCommand move_l {{10,5}};
 			queue_l._queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {move_l});
 			e.set<CustomCommandQueue>(queue_l)
 				.add<Move>()
-				.set<MoveCommand>({{{10,10}}})
+				.set<MoveCommand>({{10,10}})
 				.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::One(), false});
 
 		};

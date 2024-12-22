@@ -110,7 +110,7 @@ TEST(input_move, simple)
 
 		if(i == 2)
 		{
-			MoveCommand move_l {{{10,5}}};
+			MoveCommand move_l {{10,5}};
 			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand({e0, e1, e2}, move_l);
 		}
 

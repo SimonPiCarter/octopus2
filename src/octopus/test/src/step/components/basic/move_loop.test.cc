@@ -55,7 +55,7 @@ TEST(move_loop, simple)
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<Move>()
-		.set<MoveCommand>({{{10,10}}})
+		.set<MoveCommand>({{10,10}})
 		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::One(), false});
 
 	for(size_t i = 0; i < 10 ; ++ i)
@@ -64,7 +64,7 @@ TEST(move_loop, simple)
 
 		if(i == 2)
 		{
-			MoveCommand move_l {{{10,5}}};
+			MoveCommand move_l {{10,5}};
 			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {move_l});
 		}
 		// stream_ent<Position, MoveCommand, CustomCommandQueue>(std::cout, ecs, e1); std::cout<<std::endl;
