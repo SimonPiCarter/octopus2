@@ -41,7 +41,7 @@ octopus::TimeStampIncrementStep \
 namespace octopus
 {
 
-template<class... Ts>
+template<typename... Ts>
 struct StepManager
 {
 	typedef std::variant<Ts...> Variant;

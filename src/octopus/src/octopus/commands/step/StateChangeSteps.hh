@@ -2,6 +2,7 @@
 
 #include "flecs.h"
 #include <list>
+#include <variant>
 #include <vector>
 #include "octopus/commands/basic/NoOpCommand.hh"
 #include "octopus/utils/log/Logger.hh"
