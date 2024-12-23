@@ -27,6 +27,7 @@ target_sources (unit_tests
 	src/input/input_ability.test.cc
 	src/input/input_move.test.cc
 	src/input/input_production.test.cc
+	src/save/ability_save.cc
 	src/save/attack_move_save.test.cc
 	src/save/move_save.test.cc
 	src/save/production_save.test.cc

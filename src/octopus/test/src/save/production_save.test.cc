@@ -164,7 +164,6 @@ TEST(production_save, prod_after_save)
 	// only record until step save_point (used to compare before and after saves)
 	MultiRecorder reference;
 
-{
 	WorldContext world;
 	flecs::world &ecs = world.ecs;
 
@@ -216,7 +215,6 @@ TEST(production_save, prod_after_save)
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
 	}
-}
 
 	// load
 
@@ -238,6 +236,112 @@ TEST(production_save, prod_after_save)
 	test.add_recorder<PlayerInfo, ResourceStock>(loaded_world.ecs.entity("player"));
 
 	for(size_t i = save_point+1; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		loaded_world.ecs.progress();
+
+		if(i == 6)
+		{
+			loaded_world.ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
+		}
+
+		test.record(loaded_world.ecs);
+
+		// auto json_ecs = loaded_world.ecs.to_json();
+		// std::cout << json_ecs << std::endl << std::endl;
+	}
+
+	EXPECT_EQ(reference, test);
+
+	// reference.stream(std::cout);
+	// test.stream(std::cout);
+}
+
+TEST(production_save, multiple_prod_after_save)
+{
+	std::string json;
+	size_t const save_point = 4;
+	// only record until step save_point (used to compare before and after saves)
+	MultiRecorder reference;
+
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ecs.component<ProductionTemplateLibrary<DefaultStepManager>>();
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new ProdA());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {}});
+
+	reference.add_recorder<CustomCommandQueue, HitPoint, ProductionQueue>(e1);
+	reference.add_recorder<PlayerInfo, ResourceStock>(player);
+
+	for(size_t i = 0; i < 20 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+
+		if(i == 2)
+		{
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+		}
+		if(i == 6)
+		{
+			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+		}
+		if(i == save_point)
+		{
+			json = ecs.to_json();
+		}
+		if(i > save_point)
+		{
+			reference.record(ecs);
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+	}
+
+	// load
+
+	// set up context
+	WorldContext loaded_world;
+	auto loaded_step_context = makeDefaultStepContext<custom_variant>();
+	basic_components_support(loaded_world.ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(loaded_world.ecs);
+	loaded_world.ecs.add<Input<custom_variant, DefaultStepManager>>();
+	ProductionTemplateLibrary<DefaultStepManager> new_lib_l;
+	new_lib_l.add_template(new ProdA());
+	loaded_world.ecs.set(new_lib_l);
+	set_up_systems(loaded_world, loaded_step_context);
+
+	loaded_world.ecs.from_json(json.c_str());
+
+	MultiRecorder test;
+	test.add_recorder<CustomCommandQueue, HitPoint, ProductionQueue>(loaded_world.ecs.entity("e1"));
+	test.add_recorder<PlayerInfo, ResourceStock>(loaded_world.ecs.entity("player"));
+
+	for(size_t i = save_point+1; i < 20 ; ++ i)
 	{
 		// std::cout<<"p"<<i<<std::endl;
 
