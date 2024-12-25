@@ -206,6 +206,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			// wind up has started
 			if(attack_p.windup > 0)
 			{
+				// attacking
 				if(attack_p.windup >= attack_p.windup_time)
 				{
 					// damage
