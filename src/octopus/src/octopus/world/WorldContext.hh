@@ -1,6 +1,7 @@
 #pragma once
 
 #include "octopus/utils/ThreadPool.hh"
+#include "octopus/utils/RandomGenerator.hh"
 #include "octopus/world/position/PositionContext.hh"
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
@@ -16,7 +17,7 @@ namespace octopus
 template<class StepManager_t=DefaultStepManager>
 struct WorldContext
 {
-	WorldContext() : pool(1), position_context(ecs)
+	WorldContext(unsigned long seed=42) : pool(1), position_context(ecs), rng(seed)
 	{
 		ecs.set_threads(12);
 	}
@@ -36,6 +37,7 @@ struct WorldContext
 	ThreadPool pool;
 	PositionContext position_context;
 	TimeStats time_stats;
+	RandomGenerator rng;
 
 	/// @brief tell if the AttackSystems should wait for
 	/// some time before looking for new target
