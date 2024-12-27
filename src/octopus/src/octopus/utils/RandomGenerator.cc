@@ -1,34 +1,56 @@
 #include "RandomGenerator.hh"
 
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/uniform_real_distribution.hpp>
+// #include <boost/random/mersenne_twister.hpp>
+// #include <boost/random/uniform_int_distribution.hpp>
+// #include <boost/random/uniform_real_distribution.hpp>
+
+#include "core/math/random_pcg.h"
 
 namespace octopus
 {
 
 /// @brief This is a basic implementation using boost
-class BoostRandomGenertorStateful : public AbstractRandomGenertorStateful
+// class BoostRandomGenertorStateful : public AbstractRandomGenertorStateful
+// {
+// public:
+// 	BoostRandomGenertorStateful(unsigned long seed_p) : _gen(seed_p) {}
+
+// 	int roll(int min_p, int max_p) override
+// 	{
+// 		boost::random::uniform_int_distribution<> distModel_l(min_p, max_p);
+// 		return distModel_l(_gen);
+// 	}
+// 	double roll_double(double min_p, double max_p) override
+// 	{
+// 		boost::random::uniform_real_distribution<> distModel_l(min_p, max_p);
+// 		return distModel_l(_gen);
+// 	}
+
+// private:
+// 	boost::random::mt19937 _gen;
+// };
+
+
+/// @brief This is a basic implementation using boost
+class PCGRandomGenertorStateful : public AbstractRandomGenertorStateful
 {
 public:
-	BoostRandomGenertorStateful(unsigned long seed_p) : _gen(seed_p) {}
+	PCGRandomGenertorStateful(unsigned long seed_p) : randbase(seed_p) {}
 
 	int roll(int min_p, int max_p) override
 	{
-		boost::random::uniform_int_distribution<> distModel_l(min_p, max_p);
-		return distModel_l(_gen);
+		return randbase.random(min_p, max_p);
 	}
 	double roll_double(double min_p, double max_p) override
 	{
-		boost::random::uniform_real_distribution<> distModel_l(min_p, max_p);
-		return distModel_l(_gen);
+		return randbase.random(min_p, max_p);
 	}
 
 private:
-	boost::random::mt19937 _gen;
+	RandomPCG randbase;
 };
 
-RandomGenerator::RandomGenerator(unsigned long seed_p, bool alwaysMin_p) : _state(new BoostRandomGenertorStateful(seed_p)), _alwaysMin(alwaysMin_p) {}
+RandomGenerator::RandomGenerator(unsigned long seed_p, bool alwaysMin_p) : _state(new PCGRandomGenertorStateful(seed_p)), _alwaysMin(alwaysMin_p) {}
 
 RandomGenerator::~RandomGenerator()
 {
