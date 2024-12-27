@@ -65,6 +65,12 @@ Apply all steps :
 
 - All production
 
+## EndUpdate
+
+### attack resolution
+
+- All attacks that have been triggered
+
 ## Moving (MovingPhase)
 
 ### Moves and position

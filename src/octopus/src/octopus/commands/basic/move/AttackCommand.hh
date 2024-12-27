@@ -80,6 +80,11 @@ struct AttackCommandInitStep {
 
 /// END State
 
+struct AttackTrigger
+{
+	flecs::entity target;
+};
+
 } // octopus
 
 // after AttackCommandStep definition
@@ -125,6 +130,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
+		.write<AttackTrigger>()
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
 		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
 			Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
@@ -210,7 +216,8 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				if(attack_p.windup >= attack_p.windup_time)
 				{
 					// damage
-					manager_p.get_last_layer().back().template get<HitPointStep>().add_step(attackCommand_p.target, {-attack_p.damage});
+					// manager_p.get_last_layer().back().template get<HitPointStep>().add_step(attackCommand_p.target, {-attack_p.damage});
+					e.set<AttackTrigger>({attackCommand_p.target});
 					// reset windup
 					manager_p.get_last_layer().back().template get<AttackWindupStep>().add_step(e, {0});
 					// reset reload
@@ -271,6 +278,14 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			}
 
 			END_TIME(attack_command)
+		});
+
+	ecs.system<AttackTrigger const, Attack const>()
+		.kind(ecs.entity(EndUpdatePhase))
+		.write<AttackTrigger>()
+		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
+			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.damage});
+			e.remove<AttackTrigger>();
 		});
 
 	// clean up
