@@ -47,18 +47,21 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 		.with(CommandQueue_t::state(ecs), ecs.component<CastCommand::State>())
 		.each([&ecs, &manager_p, ability_library](flecs::entity e, Position const&pos_p, CastCommand const &castCommand_p,
 			Move &move_p, Caster const &caster_p, ResourceStock const &res_p, CommandQueue_t &queue_p) {
+			Logger::getDebug() <<"casting"<<std::endl;
 			move_p.target_move = Vector();
 			// get ability
 			AbilityTemplate<StepManager_t> const * ability_l = ability_library->try_get(castCommand_p.ability);
 			// check reources
 			if(!ability_l || !check_resources(res_p.resource, {}, ability_l->resource_consumption()))
 			{
+				Logger::getDebug() <<"  no resource"<<std::endl;
 				// done if not enough
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 			// check reload
 			else if(!caster_p.check_timestamp_last_cast(ability_l->reload(), get_time_stamp(ecs), ability_l->name()))
 			{
+				Logger::getDebug() <<"  no reload"<<std::endl;
 				// done if not enough
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
@@ -90,6 +93,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				{
 					// move routine
 					move_routine(ecs, e, pos_p, target_pos, move_p);
+					Logger::getDebug() <<"  moving"<<std::endl;
 				}
 			}
 			else
@@ -105,6 +109,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 			if(caster_p.timestamp_windup_start != 0
 			&& caster_p.timestamp_windup_start + ability_l->windup() <= get_time_stamp(ecs))
 			{
+				Logger::getDebug() <<"  cast"<<std::endl;
 				// run spell
 				ability_l->cast(e, castCommand_p.point_target, castCommand_p.entity_target, ecs, manager_p);
 				// consume resources
