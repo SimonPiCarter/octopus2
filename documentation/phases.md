@@ -104,3 +104,7 @@ running commands or productions.
 ## EndCleanup (EndCleanUpPhase)
 
 - destroy entities
+
+### attack resolution
+
+- remove AttackTrigger

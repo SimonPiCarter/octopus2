@@ -282,9 +282,14 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 
 	ecs.system<AttackTrigger const, Attack const>()
 		.kind(ecs.entity(EndUpdatePhase))
-		.write<AttackTrigger>()
 		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
 			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.damage});
+		});
+
+	ecs.system<AttackTrigger const>()
+		.kind(ecs.entity(EndCleanUpPhase))
+		.write<AttackTrigger>()
+		.each([](flecs::entity e, AttackTrigger const&) {
 			e.remove<AttackTrigger>();
 		});
 
