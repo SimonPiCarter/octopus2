@@ -130,7 +130,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
-		.write<AttackTrigger>()
+		.template write<AttackTrigger>()
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
 		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
 			Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
