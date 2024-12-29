@@ -97,6 +97,8 @@ running commands or productions.
 
 - Validate components (do various checks and corrections)
 
+- Synchronization of Triangulation should happen here
+
 ## DisplaySync (DisplaySyncPhase)
 
 - sync with display
