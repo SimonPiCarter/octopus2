@@ -346,6 +346,23 @@ std::ostream &operator<<(std::ostream &os, octopus::FixedPoint<e> const &f) {
 	os << f.to_double();
 	return os;
 }
+
+template <int64_t e>
+octopus::FixedPoint<e> abs(octopus::FixedPoint<e> const &f)
+{
+	if(f < 0)
+	{
+		return octopus::FixedPoint<e>(-f._data, true);
+	}
+	return f;
+}
+
+template <int64_t e>
+octopus::FixedPoint<e> sqrt(octopus::FixedPoint<e> const &f)
+{
+	return octopus::numeric::square_root(f);
+}
+
 }
 
 template <int64_t e>
