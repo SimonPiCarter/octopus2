@@ -51,6 +51,7 @@ add_definitions(-DBOOST_ALLOW_DEPRECATED_HEADERS)
 # ============================================================================
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_definitions(-D_NOT_GODOT_BUILD_)
 
 add_subdirectory(src/flecs)
 add_subdirectory(src/octopus)

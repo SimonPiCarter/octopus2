@@ -1,15 +1,8 @@
 #pragma once
 
-#ifdef GD_EXTENSION_GODOCTOPUS
-	#include <godot_cpp/godot.hpp>
-	#include <godot_cpp/classes/node2d.hpp>
-#else
-	#include "scene/2d/node_2d.h"
-#endif
-
-#include "cdt/include/CDT.h"
 #include "octopus/utils/FixedPoint.hh"
-#include "game/grid/GridProxy.h"
+#include "octopus/utils/Vector.hh"
+#include "cdt/include/CDT.h"
 
 namespace octopus {
 

@@ -6,7 +6,7 @@
 
 #include <set>
 #include <vector>
-#include <core/math/vector2.h>
+// #include <core/math/vector2.h>
 
 namespace CDT
 {
