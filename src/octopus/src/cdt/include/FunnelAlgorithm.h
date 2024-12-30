@@ -11,6 +11,16 @@
 namespace CDT
 {
 
+template<typename T>
+struct FunnelDebug
+{
+    int steps = 0;
+    V2d<T> orig;
+    V2d<T> left;
+    V2d<T> right;
+    V2d<T> candidate;
+};
+
 template<typename triangle>
 std::pair<VertInd, VertInd> common_vertices(triangle const &tr, triangle const &other)
 {
@@ -92,12 +102,15 @@ FunnelPartResult funnel_algorithm_part(
     V2d<T> const &target_p,
     std::size_t start_portals_idx,
     Triangulation<T> const &triangulation,
-    std::vector<Edge> const &portals
-    // godot::FunnelDebug &debug_p,
-    // int &steps
+    std::vector<Edge> const &portals,
+    FunnelDebug<T> *debug_p,
+    int &steps
 )
 {
-    // debug_p.orig = Vector2(origin_p.x.to_double(), origin_p.y.to_double());
+    if(debug_p)
+    {
+        debug_p->orig = origin_p;
+    }
     std::size_t cur_portals = start_portals_idx;
     Edge cur_edge = portals[cur_portals];
 
@@ -115,12 +128,15 @@ FunnelPartResult funnel_algorithm_part(
         VertInd candidate_left = get_left(origin_p, triangulation, next_edge.v1(), next_edge.v2());
         VertInd candidate_right = candidate_left == next_edge.v1() ? next_edge.v2() : next_edge.v1();
 
-        // debug_p.left = Vector2(triangulation.vertices[left].x.to_double(), triangulation.vertices[left].y.to_double());
-        // debug_p.right = Vector2(triangulation.vertices[right].x.to_double(), triangulation.vertices[right].y.to_double());
-        // debug_p.candidate = Vector2(triangulation.vertices[candidate_left].x.to_double(), triangulation.vertices[candidate_left].y.to_double());
+        if(debug_p)
+        {
+            debug_p->left = triangulation.vertices[left];
+            debug_p->right = triangulation.vertices[right];
+            debug_p->candidate = triangulation.vertices[candidate_left];
 
-        // ++steps;
-        // if(steps >= debug_p.steps) { return {0,0, true, true}; }
+            ++steps;
+            if(steps >= debug_p->steps) { return {0,0, true, true}; }
+        }
 
         if(locatePointLine(triangulation.vertices[candidate_right], origin_p, triangulation.vertices[left]) == PtLineLocation::OnLine)
         {
@@ -157,12 +173,15 @@ FunnelPartResult funnel_algorithm_part(
             }
         }
 
-        // debug_p.left = Vector2(triangulation.vertices[left].x.to_double(), triangulation.vertices[left].y.to_double());
-        // debug_p.right = Vector2(triangulation.vertices[right].x.to_double(), triangulation.vertices[right].y.to_double());
-        // debug_p.candidate = Vector2(triangulation.vertices[candidate_right].x.to_double(), triangulation.vertices[candidate_right].y.to_double());
+        if(debug_p)
+        {
+            debug_p->left = triangulation.vertices[left];
+            debug_p->right = triangulation.vertices[right];
+            debug_p->candidate = triangulation.vertices[candidate_right];
 
-        // ++steps;
-        // if(steps >= debug_p.steps) { return {0,0, true, true}; }
+            ++steps;
+            if(steps >= debug_p->steps) { return {0,0, true, true}; }
+        }
 
         if(candidate_right != right)
         {
@@ -258,12 +277,12 @@ FunnelPartResult funnel_algorithm_part(
 template<typename T>
 std::vector<V2d<T>> funnel_algorithm(Triangulation<T> const &triangulation, std::vector<std::size_t> const &triangles_path,
     V2d<T> const &origin_p,
-    V2d<T> const &target_p
-    // godot::FunnelDebug &debug_p
+    V2d<T> const &target_p,
+    FunnelDebug<T> *debug_p=nullptr
 )
 {
     std::vector<V2d<T>> path_l = {origin_p};
-    // int steps = 0;
+    int steps = 0;
 
     auto && portals = compute_portals(triangulation, triangles_path);
 
@@ -274,7 +293,7 @@ std::vector<V2d<T>> funnel_algorithm(Triangulation<T> const &triangulation, std:
 
     while(!result_l.over)
     {
-        result_l = funnel_algorithm_part(cur_point, target_p, result_l.cur_portal, triangulation, portals/*, debug_p, steps*/);
+        result_l = funnel_algorithm_part(cur_point, target_p, result_l.cur_portal, triangulation, portals, debug_p, steps);
         if(!result_l.no_point)
         {
             cur_point = triangulation.vertices[result_l.point];

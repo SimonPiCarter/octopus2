@@ -8,7 +8,6 @@
 #include <chrono>
 
 #include "cdt/include/ShortestPath.h"
-#include "cdt/include/FunnelAlgorithm.h"
 
 namespace octopus {
 
@@ -177,6 +176,25 @@ std::vector<Vector> Triangulation::compute_funnel_from_path(Vector const &orig, 
 	}
 
 	return result;
+}
+
+CDT::FunnelDebug<octopus::Fixed> Triangulation::debug_funnel(Vector const &orig, Vector const &dest, int step) const
+{
+	CDT::FunnelDebug<octopus::Fixed> debug {step};
+
+	std::vector<std::size_t> path = compute_path(orig, dest);
+	if(!path.empty())
+	{
+		std::vector<CDT::V2d<octopus::Fixed>> funnel = CDT::funnel_algorithm(
+			cdt,
+			path,
+			CDT::V2d<octopus::Fixed>{orig.x,orig.y},
+			CDT::V2d<octopus::Fixed>{dest.x,dest.y},
+			&debug
+		);
+	}
+
+	return debug;
 }
 
 } // octopus
