@@ -122,7 +122,7 @@ std::vector<std::size_t> Triangulation::compute_path(Vector const &orig, Vector 
 		auto &&trv = tr.vertices;
 
 		bool found_orig = CDT::locatePointTriangle({orig.x,orig.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
-		bool found_dest = CDT::locatePointTriangle({orig.x,orig.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
+		bool found_dest = CDT::locatePointTriangle({dest.x,dest.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
 		if(found_orig)
 		{
 			orig_idx = idx_l;
