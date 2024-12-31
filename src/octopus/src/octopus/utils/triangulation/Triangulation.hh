@@ -25,6 +25,20 @@ public:
 	std::vector<Vector> compute_funnel_from_path(Vector const &orig, Vector const &dest, std::vector<std::size_t> const &path) const;
 	CDT::FunnelDebug<octopus::Fixed> debug_funnel(Vector const &orig, Vector const &dest, int step) const;
 
+	void stream(std::ostream &oss) const
+	{
+		std::size_t idx = 0;
+		for(CDT::Triangle const &tr : cdt.triangles)
+		{
+			auto &&v = cdt.vertices;
+			auto &&trv = tr.vertices;
+			oss<<"tr "<<idx<<"\n";
+			oss<<" "<<v[trv[0]].x.to_double()<<";"<<v[trv[0]].y.to_double()<<"\n";
+			oss<<" "<<v[trv[1]].x.to_double()<<";"<<v[trv[1]].y.to_double()<<"\n";
+			oss<<" "<<v[trv[2]].x.to_double()<<";"<<v[trv[2]].y.to_double()<<"\n";
+			++idx;
+		}
+	}
 // private:
 	CDT::Triangulation<octopus::Fixed> cdt;
 	std::vector<std::pair<CDT::VertInd, CDT::VertInd> > edges;
@@ -41,4 +55,5 @@ struct TriangulationPtr
 	Triangulation * ptr = nullptr;
 };
 
+void insert_box(Triangulation &tr, int x, int y, int size_x, int size_y, bool forbidden);
 }

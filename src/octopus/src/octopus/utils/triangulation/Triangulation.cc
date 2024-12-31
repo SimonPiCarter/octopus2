@@ -201,4 +201,19 @@ CDT::FunnelDebug<octopus::Fixed> Triangulation::debug_funnel(Vector const &orig,
 	return debug;
 }
 
+void insert_box(Triangulation &tr, int x, int y, int size_x, int size_y, bool forbidden)
+{
+	int indexes[4] = {
+		tr.insert_point(x       , y       , forbidden),
+		tr.insert_point(x+size_x, y       , forbidden),
+		tr.insert_point(x+size_x, y+size_y, forbidden),
+		tr.insert_point(x       , y+size_y, forbidden),
+	};
+
+	tr.insert_edge(indexes[0],indexes[3]);
+	tr.insert_edge(indexes[3],indexes[2]);
+	tr.insert_edge(indexes[2],indexes[1]);
+	tr.insert_edge(indexes[1],indexes[0]);
+}
+
 } // octopus
