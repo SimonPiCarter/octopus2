@@ -1,5 +1,7 @@
 #include "PathFindingCache.hh"
 
+#include "octopus/world/stats/TimeStats.hh"
+
 namespace octopus
 {
 
@@ -61,7 +63,9 @@ std::vector<std::size_t> PathFindingCache::build_path(std::size_t orig, std::siz
 
 	std::size_t cur = orig;
 	// while end or no more path
-	while(cur != dest && cur < paths_info[dest].indexes.size())
+	while(cur != dest
+	   && cur < paths_info[dest].indexes.size()
+	   && paths_info[dest].indexes[cur] != cur)
 	{
 		// add current index
 		path.push_back(cur);
@@ -73,8 +77,9 @@ std::vector<std::size_t> PathFindingCache::build_path(std::size_t orig, std::siz
 	return path;
 }
 
-void PathFindingCache::compute_paths(Triangulation const &tr)
+void PathFindingCache::compute_paths(flecs::world &ecs, Triangulation const &tr)
 {
+	START_TIME(path_finding)
 	std::size_t const max_run = 10;
 	std::size_t run = 0;
 	while(!list_requests.empty() && run < max_run)
@@ -96,6 +101,8 @@ void PathFindingCache::compute_paths(Triangulation const &tr)
 		list_requests.pop_front();
 		++run;
 	}
+	// use ecs parameter here
+	END_TIME_ECS(path_finding)
 }
 
 bool PathFindingCache::has_path(std::size_t orig, std::size_t dest) const
@@ -128,9 +135,9 @@ void PathFindingCache::declare_cache_update_system(flecs::world &ecs)
 
 	// compute paths on each loop
 	ecs.system<TriangulationPtr const>()
-		.each([this](flecs::entity e, TriangulationPtr const &ptr) {
+		.each([this, &ecs](flecs::entity e, TriangulationPtr const &ptr) {
 			if(!ptr.ptr) { return; }
-			compute_paths(*ptr.ptr);
+			compute_paths(ecs, *ptr.ptr);
 		});
 }
 
@@ -153,6 +160,7 @@ void PathFindingCache::consolidate_path(std::vector<std::size_t> const &path)
 		}
 		last = cur;
 	}
+	paths_info[dest].indexes[dest] = dest;
 }
 
 bool PathQuery::is_valid() const
@@ -162,6 +170,7 @@ bool PathQuery::is_valid() const
 
 Vector PathQuery::get_direction(flecs::world &ecs) const
 {
+	START_TIME(path_funnelling)
 	std::vector<std::size_t> path = cache->build_path(orig, dest);
 
 	TriangulationPtr const *tr_ptr = ecs.get<TriangulationPtr>();
@@ -176,6 +185,7 @@ Vector PathQuery::get_direction(flecs::world &ecs) const
 		return vert_dest - vert_orig;
 	}
 	return funnel[1] - funnel[0];
+	END_TIME_ECS(path_funnelling)
 }
 
 }

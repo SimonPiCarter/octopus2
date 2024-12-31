@@ -50,7 +50,7 @@ struct PathFindingCache
 
 	std::vector<std::size_t> build_path(std::size_t orig, std::size_t dest) const;
 
-	void compute_paths(Triangulation const &tr);
+	void compute_paths(flecs::world &ecs, Triangulation const &tr);
 
 	bool has_path(std::size_t orig, std::size_t dest) const;
 
