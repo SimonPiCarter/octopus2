@@ -19,10 +19,10 @@ Vector get_speed_direction(flecs::world &ecs, Position const &pos_p, Vector cons
 	// if found -> use 'quick' funnel
 	if(cache)
 	{
-		PathQuery query = cache->queryPath(ecs, pos_p, target_p);
+		PathQuery query = cache->query_path(ecs, pos_p, target_p);
 		if(query.is_valid())
 		{
-			dir_l = query.get_direction();
+			dir_l = query.get_direction(ecs);
 		}
 	}
 	if(square_length(dir_l) > speed_p*speed_p)

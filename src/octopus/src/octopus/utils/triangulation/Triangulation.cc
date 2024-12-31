@@ -118,17 +118,16 @@ std::vector<std::size_t> Triangulation::compute_path(Vector const &orig, Vector 
 
 	for(CDT::Triangle const &tr : cdt.triangles)
 	{
-		if(CDT::locatePointTriangle({orig.x,orig.y},
-			cdt.vertices[tr.vertices[0]],
-			cdt.vertices[tr.vertices[1]],
-			cdt.vertices[tr.vertices[2]]) != CDT::PtTriLocation::Outside )
+		auto &&v = cdt.vertices;
+		auto &&trv = tr.vertices;
+
+		bool found_orig = CDT::locatePointTriangle({orig.x,orig.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
+		bool found_dest = CDT::locatePointTriangle({orig.x,orig.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
+		if(found_orig)
 		{
 			orig_idx = idx_l;
 		}
-		if(CDT::locatePointTriangle({dest.x,dest.y},
-			cdt.vertices[tr.vertices[0]],
-			cdt.vertices[tr.vertices[1]],
-			cdt.vertices[tr.vertices[2]]) != CDT::PtTriLocation::Outside )
+		if(found_dest)
 		{
 			dest_idx = idx_l;
 		}
@@ -146,7 +145,12 @@ std::vector<std::size_t> Triangulation::compute_path(Vector const &orig, Vector 
 		return {};
 	}
 
-	return CDT::shortest_path(cdt, orig_idx, dest_idx, forbidden_triangles);
+	return compute_path_from_idx(orig_idx, dest_idx);
+}
+
+std::vector<std::size_t> Triangulation::compute_path_from_idx(std::size_t orig, std::size_t dest) const
+{
+	return CDT::shortest_path(cdt, orig, dest, forbidden_triangles);
 }
 
 std::vector<Vector> Triangulation::compute_funnel(Vector const &orig, Vector const &dest) const

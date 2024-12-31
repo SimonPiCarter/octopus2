@@ -20,6 +20,7 @@ public:
 	void finalize();
 
 	std::vector<std::size_t> compute_path(Vector const &orig, Vector const &dest) const;
+	std::vector<std::size_t> compute_path_from_idx(std::size_t orig, std::size_t dest) const;
 	std::vector<Vector> compute_funnel(Vector const &orig, Vector const &dest) const;
 	std::vector<Vector> compute_funnel_from_path(Vector const &orig, Vector const &dest, std::vector<std::size_t> const &path) const;
 	CDT::FunnelDebug<octopus::Fixed> debug_funnel(Vector const &orig, Vector const &dest, int step) const;
