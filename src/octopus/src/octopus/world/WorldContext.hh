@@ -2,6 +2,7 @@
 
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/utils/RandomGenerator.hh"
+#include "octopus/utils/triangulation/Triangulation.hh"
 #include "octopus/world/position/PositionContext.hh"
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
@@ -38,6 +39,7 @@ struct WorldContext
 	PositionContext position_context;
 	TimeStats time_stats;
 	RandomGenerator rng;
+	Triangulation triangulation;
 
 	/// @brief tell if the AttackSystems should wait for
 	/// some time before looking for new target
