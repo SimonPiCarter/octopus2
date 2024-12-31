@@ -23,7 +23,7 @@ struct TimeStatsPtr
 				const auto end_##name{std::chrono::high_resolution_clock::now()}; \
 				const std::chrono::duration<double> elapsed_seconds_##name{end_##name - start_##name}; \
 				time_stats_p.name += elapsed_seconds_##name.count() * 1000.;
-#define END_TIME_ECS(name) \
+#define END_TIME_PTR(name, ptr_name) \
 				const auto end_##name{std::chrono::high_resolution_clock::now()}; \
 				const std::chrono::duration<double> elapsed_seconds_##name{end_##name - start_##name}; \
-				if(ecs.get<TimeStatsPtr>()) ecs.get<TimeStatsPtr>()->ptr->name += elapsed_seconds_##name.count() * 1000.;
+				if(ptr_name) ptr_name->name += elapsed_seconds_##name.count() * 1000.;

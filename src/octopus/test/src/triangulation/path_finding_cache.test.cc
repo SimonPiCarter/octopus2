@@ -41,11 +41,11 @@ TEST(path_finding_cache, basic_query_system)
     // Position
     Position pos {{10,30}};
 
-    ecs.get_mut<PathFindingCache>()->declare_cache_update_system(ecs);
+    ecs.get_mut<PathFindingCache>()->declare_cache_update_system(ecs, triangulation, stats);
 
     ecs.progress();
 
-    PathQuery query = ecs.get<PathFindingCache>()->query_path(ecs, pos, {50,30});
+    PathQuery query = ecs.get<PathFindingCache>()->query_path(pos, {50,30});
 
     EXPECT_FALSE(query.is_valid());
 
@@ -53,25 +53,25 @@ TEST(path_finding_cache, basic_query_system)
 
     EXPECT_TRUE(query.is_valid());
 
-    Vector direction_1 = query.get_direction(ecs);
+    Vector direction_1 = query.get_direction();
     EXPECT_EQ(Vector(10, -10), direction_1);
 
     pos.pos += direction_1;
 
-    query = ecs.get<PathFindingCache>()->query_path(ecs, pos, {50,30});
+    query = ecs.get<PathFindingCache>()->query_path(pos, {50,30});
 
     EXPECT_TRUE(query.is_valid());
 
-    Vector direction_2 = query.get_direction(ecs);
+    Vector direction_2 = query.get_direction();
     EXPECT_EQ(Vector(20, 0), direction_2);
 
     pos.pos += direction_2;
 
-    query = ecs.get<PathFindingCache>()->query_path(ecs, pos, {50,30});
+    query = ecs.get<PathFindingCache>()->query_path(pos, {50,30});
 
     EXPECT_TRUE(query.is_valid());
 
-    Vector direction_3 = query.get_direction(ecs);
+    Vector direction_3 = query.get_direction();
     EXPECT_EQ(Vector(10, 10), direction_3);
 
     std::cout<<"path_finding : "<<stats.path_finding<<"ms"<<std::endl;

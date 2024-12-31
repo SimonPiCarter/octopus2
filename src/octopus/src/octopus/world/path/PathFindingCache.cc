@@ -1,19 +1,18 @@
 #include "PathFindingCache.hh"
 
-#include "octopus/world/stats/TimeStats.hh"
-
 namespace octopus
 {
 
 /// @brief Compute a path request based on vector positions
-PathRequest PathFindingCache::get_request(Triangulation const &triangulation, Vector const &orig, Vector const &dest) const
+PathRequest PathFindingCache::get_request(Vector const &orig, Vector const &dest) const
 {
-	PathRequest request {triangulation.cdt.triangles.size(), triangulation.cdt.triangles.size()};
+	assert(triangulation);
+	PathRequest request {triangulation->cdt.triangles.size(), triangulation->cdt.triangles.size()};
 	int idx_l = 0;
 
-	for(CDT::Triangle const &tr : triangulation.cdt.triangles)
+	for(CDT::Triangle const &tr : triangulation->cdt.triangles)
 	{
-		auto &&v = triangulation.cdt.vertices;
+		auto &&v = triangulation->cdt.vertices;
 		auto &&trv = tr.vertices;
 
 		bool found_orig = CDT::locatePointTriangle({orig.x,orig.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
@@ -27,8 +26,8 @@ PathRequest PathFindingCache::get_request(Triangulation const &triangulation, Ve
 			request.dest = idx_l;
 		}
 
-		if(request.orig < triangulation.cdt.triangles.size()
-		&& request.dest < triangulation.cdt.triangles.size())
+		if(request.orig < triangulation->cdt.triangles.size()
+		&& request.dest < triangulation->cdt.triangles.size())
 		{
 			break;
 		}
@@ -38,17 +37,13 @@ PathRequest PathFindingCache::get_request(Triangulation const &triangulation, Ve
 	return request;
 }
 
-PathQuery PathFindingCache::query_path(flecs::world &ecs, Position const &pos, Vector const &target) const
+PathQuery PathFindingCache::query_path(Position const &pos, Vector const &target) const
 {
-	TriangulationPtr const *tr_ptr = ecs.get<TriangulationPtr>();
-	// skip if no triangulation ptr
-	if(!tr_ptr) { return PathQuery(); }
-	Triangulation const *tr = tr_ptr->ptr;
 	// skip if no triangulation
-	if(!tr) { return PathQuery(); }
+	if(!triangulation) { return PathQuery(); }
 
 	// build request
-	PathRequest request = get_request(*tr, pos.pos, target);
+	PathRequest request = get_request(pos.pos, target);
 	// enqueue request
 	list_requests.push_back(request);
 	// return query
@@ -77,8 +72,9 @@ std::vector<std::size_t> PathFindingCache::build_path(std::size_t orig, std::siz
 	return path;
 }
 
-void PathFindingCache::compute_paths(flecs::world &ecs, Triangulation const &tr)
+void PathFindingCache::compute_paths(flecs::world &ecs)
 {
+	if(!triangulation) {return;}
 	START_TIME(path_finding)
 	std::size_t const max_run = 10;
 	std::size_t run = 0;
@@ -94,7 +90,7 @@ void PathFindingCache::compute_paths(flecs::world &ecs, Triangulation const &tr)
 		}
 
 		// compute path
-		std::vector<std::size_t> path = tr.compute_path_from_idx(request.orig, request.dest);
+		std::vector<std::size_t> path = triangulation->compute_path_from_idx(request.orig, request.dest);
 		consolidate_path(path);
 
 		// tidy up computations
@@ -102,7 +98,7 @@ void PathFindingCache::compute_paths(flecs::world &ecs, Triangulation const &tr)
 		++run;
 	}
 	// use ecs parameter here
-	END_TIME_ECS(path_finding)
+	END_TIME_PTR(path_finding, stats)
 }
 
 bool PathFindingCache::has_path(std::size_t orig, std::size_t dest) const
@@ -114,30 +110,32 @@ bool PathFindingCache::has_path(std::size_t orig, std::size_t dest) const
 	return false;
 }
 
-void PathFindingCache::declare_cache_update_system(flecs::world &ecs)
+void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulation &tr, TimeStats &st)
 {
+	triangulation = &tr;
+	stats = &st;
 	// update cache on each loop if necessary
-	ecs.system<TriangulationPtr const>()
-		.each([this](flecs::entity e, TriangulationPtr const &ptr) {
-			if(paths_info.empty() || (ptr.ptr && ptr.ptr->revision != revision))
+	ecs.system<>()
+		.each([this](flecs::entity e) {
+			if(paths_info.empty() || (triangulation && triangulation->revision != revision))
 			{
 				// default values
-				const std::size_t nb_triangles = ptr.ptr->cdt.triangles.size();
+				const std::size_t nb_triangles = triangulation->cdt.triangles.size();
 				const PathsInfo empty_path_info {std::vector<std::size_t>(nb_triangles, nb_triangles)};
 				// reset info to default values
 				std::fill(paths_info.begin(), paths_info.end(), empty_path_info);
 				paths_info.resize(nb_triangles, empty_path_info);
 				list_requests.clear();
 				// update revision
-				revision = ptr.ptr->revision;
+				revision = triangulation->revision;
 			}
 		});
 
 	// compute paths on each loop
-	ecs.system<TriangulationPtr const>()
-		.each([this, &ecs](flecs::entity e, TriangulationPtr const &ptr) {
-			if(!ptr.ptr) { return; }
-			compute_paths(ecs, *ptr.ptr);
+	ecs.system<>()
+		.each([this, &ecs](flecs::entity e) {
+			if(!triangulation) { return; }
+			compute_paths(ecs);
 		});
 }
 
@@ -168,15 +166,12 @@ bool PathQuery::is_valid() const
 	return cache && cache->has_path(orig, dest);
 }
 
-Vector PathQuery::get_direction(flecs::world &ecs) const
+Vector PathQuery::get_direction() const
 {
 	START_TIME(path_funnelling)
 	std::vector<std::size_t> path = cache->build_path(orig, dest);
 
-	TriangulationPtr const *tr_ptr = ecs.get<TriangulationPtr>();
-	// skip if no triangulation ptr
-	if(!tr_ptr) { return vert_dest - vert_orig; }
-	Triangulation const *tr = tr_ptr->ptr;
+	Triangulation const *tr = cache->triangulation;
 	if(!tr) { return vert_dest - vert_orig; }
 
 	std::vector<Vector> funnel = tr->compute_funnel_from_path(vert_orig, vert_dest, path);
@@ -185,7 +180,7 @@ Vector PathQuery::get_direction(flecs::world &ecs) const
 		return vert_dest - vert_orig;
 	}
 	return funnel[1] - funnel[0];
-	END_TIME_ECS(path_funnelling)
+	END_TIME_PTR(path_funnelling, cache->stats)
 }
 
 }
