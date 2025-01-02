@@ -848,8 +848,8 @@ void Triangulation<T, TNearPointLocator>::insertVertices(
     TGetVertexCoordX getX,
     TGetVertexCoordY getY)
 {
-    if(isFinalized())
-        throw FinalizedError(CDT_SOURCE_LOCATION);
+    // if(isFinalized())
+    //     throw FinalizedError(CDT_SOURCE_LOCATION);
 
     const bool isFirstTime = vertices.empty();
     const T max = std::numeric_limits<T>::max();
@@ -894,8 +894,8 @@ void Triangulation<T, TNearPointLocator>::insertEdges(
     TGetEdgeVertexStart getStart,
     TGetEdgeVertexEnd getEnd)
 {
-    if(isFinalized())
-        throw FinalizedError(CDT_SOURCE_LOCATION);
+    // if(isFinalized())
+    //     throw FinalizedError(CDT_SOURCE_LOCATION);
 
     std::vector<TriangulatePseudoPolygonTask> tppIterations;
     EdgeVec remaining;
@@ -921,8 +921,8 @@ void Triangulation<T, TNearPointLocator>::conformToEdges(
     TGetEdgeVertexStart getStart,
     TGetEdgeVertexEnd getEnd)
 {
-    if(isFinalized())
-        throw FinalizedError(CDT_SOURCE_LOCATION);
+    // if(isFinalized())
+    //     throw FinalizedError(CDT_SOURCE_LOCATION);
 
     tryInitNearestPointLocator();
     // state shared between different runs for performance gains

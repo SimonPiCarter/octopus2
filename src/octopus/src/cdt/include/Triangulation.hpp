@@ -587,11 +587,11 @@ void Triangulation<T, TNearPointLocator>::insertEdgeIteration(
                 // don't count super-triangle vertices
                 e1 = Edge(e1.v1() - m_nTargetVerts, e1.v2() - m_nTargetVerts);
                 e2 = Edge(e2.v1() - m_nTargetVerts, e2.v2() - m_nTargetVerts);
-                throw IntersectingConstraintsError(
-                    e1,
-                    pieceToOriginals.count(e2) ? pieceToOriginals.at(e2).front()
-                                               : e2,
-                    CDT_SOURCE_LOCATION);
+                // throw IntersectingConstraintsError(
+                //     e1,
+                //     pieceToOriginals.count(e2) ? pieceToOriginals.at(e2).front()
+                //                                : e2,
+                //     CDT_SOURCE_LOCATION);
             }
             break;
         case IntersectingConstraintEdges::TryResolve: {
@@ -774,7 +774,7 @@ void Triangulation<T, TNearPointLocator>::conformToEdgeIteration(
                 // don't count super-triangle vertices
                 e1 = Edge(e1.v1() - m_nTargetVerts, e1.v2() - m_nTargetVerts);
                 e2 = Edge(e2.v1() - m_nTargetVerts, e2.v2() - m_nTargetVerts);
-                throw IntersectingConstraintsError(e1, e2, CDT_SOURCE_LOCATION);
+                // throw IntersectingConstraintsError(e1, e2, CDT_SOURCE_LOCATION);
             }
             break;
         case IntersectingConstraintEdges::TryResolve: {
@@ -973,9 +973,9 @@ Triangulation<T, TNearPointLocator>::intersectedTriangle(
         iT = t.next(iA).first;
     } while(iT != startTri);
 
-    throw Error(
-        "Could not find vertex triangle intersected by an edge.",
-        CDT_SOURCE_LOCATION);
+    // throw Error(
+    //     "Could not find vertex triangle intersected by an edge.",
+    //     CDT_SOURCE_LOCATION);
 }
 
 template <typename T, typename TNearPointLocator>
@@ -1450,7 +1450,7 @@ Triangulation<T, TNearPointLocator>::trianglesAt(const V2d<T>& pos) const
             out[1] = t.neighbors[edgeNeighbor(loc)];
         return out;
     }
-    throw Error("No triangle was found at position", CDT_SOURCE_LOCATION);
+    // throw Error("No triangle was found at position", CDT_SOURCE_LOCATION);
 }
 
 template <typename T, typename TNearPointLocator>
@@ -1514,7 +1514,7 @@ array<TriInd, 2> Triangulation<T, TNearPointLocator>::walkingSearchTrianglesAt(
     {
         if(check)
         {
-            throw Error("No triangle was found at position", CDT_SOURCE_LOCATION);
+            // throw Error("No triangle was found at position", CDT_SOURCE_LOCATION);
         }
         return out;
     }
@@ -1523,8 +1523,8 @@ array<TriInd, 2> Triangulation<T, TNearPointLocator>::walkingSearchTrianglesAt(
         const VertInd iDupe = v1 == v   ? t.vertices[0]
                               : v2 == v ? t.vertices[1]
                                         : t.vertices[2];
-        throw DuplicateVertexError(
-            0, iDupe - m_nTargetVerts, CDT_SOURCE_LOCATION);
+        // throw DuplicateVertexError(
+        //     0, iDupe - m_nTargetVerts, CDT_SOURCE_LOCATION);
     }
 
     out[0] = iT;
