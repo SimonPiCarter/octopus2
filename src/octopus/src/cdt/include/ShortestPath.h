@@ -138,7 +138,7 @@ inline std::vector<std::size_t> shortest_path(Triangulation<T> const &triangulat
 			T h = heuristic(triangulation, triangulation.triangles[l.node], triangulation.triangles[target]);
 			if(h < closest_l)
 			{
-				std::cout<<"found "<<l.node<<" for h "<<h<<std::endl;
+				// std::cout<<"found "<<l.node<<" for h "<<h<<std::endl;
 				closest_l = h;
 				best = l.node;
 			}
