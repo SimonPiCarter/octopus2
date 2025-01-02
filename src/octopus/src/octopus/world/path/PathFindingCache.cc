@@ -16,6 +16,8 @@ PathRequest PathFindingCache::get_request(Vector const &orig, Vector const &dest
 
 PathQuery PathFindingCache::query_path(Position const &pos, Vector const &target) const
 {
+	START_TIME(query_path)
+
 	// skip if no triangulation
 	if(!triangulation) { return PathQuery(); }
 
@@ -23,6 +25,7 @@ PathQuery PathFindingCache::query_path(Position const &pos, Vector const &target
 	PathRequest request = get_request(pos.pos, target);
 	// enqueue request
 	list_requests.push_back(request);
+	END_TIME_PTR(query_path, stats)
 	// return query
 	return PathQuery { this, request.orig, request.dest, pos.pos, target };
 }
@@ -74,7 +77,6 @@ void PathFindingCache::compute_paths(flecs::world &ecs)
 		list_requests.pop_front();
 		++run;
 	}
-	// use ecs parameter here
 	END_TIME_PTR(path_finding, stats)
 }
 
@@ -87,13 +89,13 @@ bool PathFindingCache::has_path(std::size_t orig, std::size_t dest) const
 	return false;
 }
 
-void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulation &tr, TimeStats &st)
+void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulation const &tr, TimeStats &st)
 {
 	triangulation = &tr;
 	stats = &st;
 	// update cache on each loop if necessary
 	ecs.system<>()
-		.each([this](flecs::entity e) {
+		.run([this](flecs::iter) {
 			if(paths_info.empty() || (triangulation && triangulation->revision != revision))
 			{
 				// default values
@@ -110,7 +112,7 @@ void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulat
 
 	// compute paths on each loop
 	ecs.system<>()
-		.each([this, &ecs](flecs::entity e) {
+		.run([this, &ecs](flecs::iter) {
 			if(!triangulation) { return; }
 			compute_paths(ecs);
 		});

@@ -58,10 +58,10 @@ struct PathFindingCache
 
 	bool has_path(std::size_t orig, std::size_t dest) const;
 
-	void declare_cache_update_system(flecs::world &ecs, Triangulation &tr, TimeStats &st);
+	void declare_cache_update_system(flecs::world &ecs, Triangulation const &tr, TimeStats &st);
 
 private:
-	Triangulation *triangulation = nullptr;
+	Triangulation const *triangulation = nullptr;
 	TimeStats *stats = nullptr;
 	/// @brief fill paths info from a path
 	void consolidate_path(std::vector<std::size_t> const &path);
