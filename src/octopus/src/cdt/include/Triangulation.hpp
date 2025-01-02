@@ -1032,6 +1032,13 @@ void Triangulation<T, TNearPointLocator>::addNewVertex(
 }
 
 template <typename T, typename TNearPointLocator>
+array<TriInd, 2> Triangulation<T, TNearPointLocator>::get_triangle(const V2d<T>& pos) const
+{
+    const VertInd startVertex = m_nearPtLocator.nearPoint(pos, vertices);
+    return walkingSearchTrianglesAt(pos, startVertex);
+}
+
+template <typename T, typename TNearPointLocator>
 std::vector<Edge>
 Triangulation<T, TNearPointLocator>::insertVertex_FlipFixedEdges(
     const VertInd iV1)
@@ -1485,7 +1492,15 @@ array<TriInd, 2> Triangulation<T, TNearPointLocator>::walkingSearchTrianglesAt(
     const VertInd iV,
     const VertInd startVertex) const
 {
-    const V2d<T> v = vertices[iV];
+    return walkingSearchTrianglesAt(vertices[iV], startVertex, true);
+}
+
+template <typename T, typename TNearPointLocator>
+array<TriInd, 2> Triangulation<T, TNearPointLocator>::walkingSearchTrianglesAt(
+    const V2d<T> &v,
+    const VertInd startVertex,
+    bool check) const
+{
     array<TriInd, 2> out = {noNeighbor, noNeighbor};
     const TriInd iT = walkTriangles(startVertex, v);
     // Finished walk, locate point in current triangle
@@ -1496,14 +1511,20 @@ array<TriInd, 2> Triangulation<T, TNearPointLocator>::walkingSearchTrianglesAt(
     const PtTriLocation::Enum loc = locatePointTriangle(v, v1, v2, v3);
 
     if(loc == PtTriLocation::Outside)
-        throw Error("No triangle was found at position", CDT_SOURCE_LOCATION);
-    if(loc == PtTriLocation::OnVertex)
+    {
+        if(check)
+        {
+            throw Error("No triangle was found at position", CDT_SOURCE_LOCATION);
+        }
+        return out;
+    }
+    if(loc == PtTriLocation::OnVertex && check)
     {
         const VertInd iDupe = v1 == v   ? t.vertices[0]
                               : v2 == v ? t.vertices[1]
                                         : t.vertices[2];
         throw DuplicateVertexError(
-            iV - m_nTargetVerts, iDupe - m_nTargetVerts, CDT_SOURCE_LOCATION);
+            0, iDupe - m_nTargetVerts, CDT_SOURCE_LOCATION);
     }
 
     out[0] = iT;

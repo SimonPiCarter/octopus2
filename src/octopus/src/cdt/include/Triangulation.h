@@ -543,7 +543,7 @@ public:
     /// Access internal vertex adjacent triangles
     const TriIndVec& VertTrisInternal() const;
     /// @}
-
+    array<TriInd, 2> get_triangle(const V2d<T>& pos) const;
 private:
     /*____ Detail __*/
     void addSuperTriangle(const Box2d<T>& box);
@@ -644,6 +644,8 @@ private:
     array<TriInd, 2> trianglesAt(const V2d<T>& pos) const;
     array<TriInd, 2>
     walkingSearchTrianglesAt(VertInd iV, VertInd startVertex) const;
+    array<TriInd, 2>
+    walkingSearchTrianglesAt(const V2d<T>& v, VertInd startVertex, bool check=false) const;
     TriInd walkTriangles(VertInd startVertex, const V2d<T>& pos) const;
     /// Given triangle and its vertex find opposite triangle and the other three
     /// vertices and surrounding neighbors

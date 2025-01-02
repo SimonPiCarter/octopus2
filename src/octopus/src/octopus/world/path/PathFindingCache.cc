@@ -9,31 +9,8 @@ PathRequest PathFindingCache::get_request(Vector const &orig, Vector const &dest
 	assert(triangulation);
 	PathRequest request {triangulation->cdt.triangles.size(), triangulation->cdt.triangles.size()};
 	int idx_l = 0;
-
-	for(CDT::Triangle const &tr : triangulation->cdt.triangles)
-	{
-		auto &&v = triangulation->cdt.vertices;
-		auto &&trv = tr.vertices;
-
-		bool found_orig = CDT::locatePointTriangle({orig.x,orig.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
-		bool found_dest = CDT::locatePointTriangle({dest.x,dest.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
-		if(found_orig)
-		{
-			request.orig = idx_l;
-		}
-		if(found_dest)
-		{
-			request.dest = idx_l;
-		}
-
-		if(request.orig < triangulation->cdt.triangles.size()
-		&& request.dest < triangulation->cdt.triangles.size())
-		{
-			break;
-		}
-
-		++idx_l;
-	}
+	request.orig = triangulation->cdt.get_triangle({orig.x,orig.y})[0];
+	request.dest = triangulation->cdt.get_triangle({dest.x,dest.y})[0];
 	return request;
 }
 

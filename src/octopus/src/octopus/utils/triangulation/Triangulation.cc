@@ -112,35 +112,10 @@ void Triangulation::finalize()
 
 std::vector<std::size_t> Triangulation::compute_path(Vector const &orig, Vector const &dest) const
 {
-	int orig_idx = -1;
-	int dest_idx = -1;
-	int idx_l = 0;
+	int orig_idx = cdt.get_triangle({orig.x,orig.y})[0];
+	int dest_idx = cdt.get_triangle({dest.x,dest.y})[0];
 
-	for(CDT::Triangle const &tr : cdt.triangles)
-	{
-		auto &&v = cdt.vertices;
-		auto &&trv = tr.vertices;
-
-		bool found_orig = CDT::locatePointTriangle({orig.x,orig.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
-		bool found_dest = CDT::locatePointTriangle({dest.x,dest.y}, v[trv[0]], v[trv[1]], v[trv[2]]) != CDT::PtTriLocation::Outside;
-		if(found_orig)
-		{
-			orig_idx = idx_l;
-		}
-		if(found_dest)
-		{
-			dest_idx = idx_l;
-		}
-
-		if(orig_idx >= 0 && dest_idx >= 0)
-		{
-			break;
-		}
-
-		++idx_l;
-	}
-
-	if(orig_idx < 0 || dest_idx < 0)
+	if(orig_idx == CDT::noNeighbor || dest_idx == CDT::noNeighbor)
 	{
 		return {};
 	}
