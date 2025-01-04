@@ -38,5 +38,5 @@ struct TimeStatsPtr
 #define END_TIME_PTR_UNAMED(index, ptr_name) \
 				const auto end_##index{std::chrono::high_resolution_clock::now()}; \
 				const std::chrono::duration<double> elapsed_seconds_##index{end_##index - start_##index}; \
-				if(ptr_name->unamed_timers.size() <= index) ptr_name->unamed_timers.resize(index+1, 0.); \
-				ptr_name->unamed_timers.at(index) += elapsed_seconds_##index.count() * 1000.;
+				if(ptr_name && ptr_name->unamed_timers.size() <= index) ptr_name->unamed_timers.resize(index+1, 0.); \
+				if(ptr_name) ptr_name->unamed_timers.at(index) += elapsed_seconds_##index.count() * 1000.;
