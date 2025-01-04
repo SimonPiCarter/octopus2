@@ -109,7 +109,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 			Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
 			flecs::entity new_target;
 
-			if(!ecs.get_info() || (get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
+			if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
 			{
 				START_TIME(attack_command_new_target)
 
@@ -121,6 +121,12 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 					Logger::getDebug() << "  found" <<std::endl;
 					AttackCommand atk_l {new_target, pos_p.pos, true, true};
 					queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
+				}
+
+				if(!attackCommand_p.init)
+				{
+					// set up attack command as initialized
+					manager_p.get_last_layer().back().template get<AttackCommandInitStep>().add_step(e, {true});
 				}
 
 				END_TIME(attack_command_new_target)
@@ -148,7 +154,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				bool should_scan_l = !attackCommand_p.init || !hp || hp->qty <= Fixed::Zero();
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || (get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || should_scan_l)
+				if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || should_scan_l)
 				{
 					START_TIME(attack_command_new_target)
 
@@ -240,7 +246,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionC
 				}
 
 				flecs::entity new_target;
-				if(!ecs.get_info() || (get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0)
+				if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0)
 				{
 					START_TIME(attack_command_new_target)
 
