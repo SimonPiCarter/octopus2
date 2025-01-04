@@ -53,7 +53,7 @@ void set_up_systems(
 	// commands systems
 	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.time_stats);
 	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
-		world.ecs, step_context.step_manager, world.position_context, world.time_stats, world.attack_retarget_wait);
+		world.ecs, step_context.step_manager, world, world.time_stats, world.attack_retarget_wait);
 
 	set_up_cast_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
 		world.ecs, step_context.step_manager

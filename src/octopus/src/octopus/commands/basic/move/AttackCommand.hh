@@ -88,6 +88,7 @@ struct AttackTrigger
 } // octopus
 
 // after AttackCommandStep definition
+#include "octopus/world/WorldContext.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "MoveCommand.hh"
 
@@ -100,38 +101,64 @@ bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack
 bool has_reloaded(uint32_t time_p, Attack const&attack_p);
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, PositionContext const &context_p, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
+void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<typename StepManager_t> &world_context, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
 {
+	PositionContext &pos_context = world_context.position_context;
+	ThreadPool &pool = world_context.pool;
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<NoOpCommand::State>())
-		.each([&, attack_retarget_wait](flecs::entity e, Position const&pos_p, AttackCommand const &attackCommand_p, Attack const&attack_p, Move &move_p, CommandQueue_t &queue_p) {
-			Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
-			flecs::entity new_target;
-
-			if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
+		.run([&, attack_retarget_wait](flecs::iter &it)
+		{
+		    while (it.next())
 			{
-				START_TIME(attack_command_new_target)
+				auto pos = it.field<Position const>(0);
+				auto attackCommand = it.field<AttackCommand const>(1);
+				auto attack = it.field<Attack const>(2);
+				auto move = it.field<Move>(3);
+				auto queue = it.field<CommandQueue_t>(4);
 
-				Logger::getDebug() << "  looking for target" <<std::endl;
-				new_target = get_new_target(e, context_p, pos_p, std::max(Fixed(11), attack_p.range));
-
-				if(new_target)
+				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t e)
 				{
-					Logger::getDebug() << "  found" <<std::endl;
-					AttackCommand atk_l {new_target, pos_p.pos, true, true};
-					queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
-				}
+					for(size_t ent_idx = s; ent_idx < e; ++ ent_idx)
+					{
+						flecs::entity e = it.entity(ent_idx);
+						auto && pos_p = pos[ent_idx];
+						auto && attackCommand_p = attackCommand[ent_idx];
+						auto && attack_p = attack[ent_idx];
+						auto && move_p = move[ent_idx];
+						auto && queue_p = queue[ent_idx];
 
-				if(!attackCommand_p.init)
-				{
-					// set up attack command as initialized
-					manager_p.get_last_layer().back().template get<AttackCommandInitStep>().add_step(e, {true});
-				}
+						Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
+						flecs::entity new_target;
 
-				END_TIME(attack_command_new_target)
+						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
+						{
+							START_TIME(attack_command_new_target)
+
+							Logger::getDebug() << "  looking for target" <<std::endl;
+							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.range));
+
+							if(new_target)
+							{
+								Logger::getDebug() << "  found" <<std::endl;
+								AttackCommand atk_l {new_target, pos_p.pos, true, true};
+								queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
+							}
+
+							if(!attackCommand_p.init)
+							{
+								// set up attack command as initialized
+								manager_p.get_last_layer()[thread_idx].template get<AttackCommandInitStep>().add_step(e, {true});
+							}
+
+							END_TIME(attack_command_new_target)
+						}
+
+					}
+				});
+
 			}
-
 		});
 
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()

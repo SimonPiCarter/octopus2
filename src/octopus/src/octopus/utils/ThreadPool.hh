@@ -33,6 +33,8 @@ private:
 
 void enqueue_and_wait(ThreadPool &pool_p, std::vector<std::function<void()>> const &jobs_p);
 
+std::vector<std::function<void()>> split_job(size_t size, ThreadPool const &pool, std::function<void(size_t, size_t, size_t)> &&func);
+
 void threading(size_t size, ThreadPool &pool, std::function<void(size_t, size_t, size_t)> &&func);
 
 #endif

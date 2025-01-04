@@ -83,7 +83,7 @@ void enqueue_and_wait(ThreadPool &pool_p, std::vector<std::function<void()>> con
 	}
 }
 
-void threading(size_t size, ThreadPool &pool, std::function<void(size_t, size_t, size_t)> &&func)
+std::vector<std::function<void()>> split_job(size_t size, ThreadPool const &pool, std::function<void(size_t, size_t, size_t)> &&func)
 {
 	size_t step_l = size / pool.size();
 	std::vector<std::function<void()>> jobs_l;
@@ -102,5 +102,10 @@ void threading(size_t size, ThreadPool &pool, std::function<void(size_t, size_t,
 		);
 	}
 
-	enqueue_and_wait(pool, jobs_l);
+	return jobs_l;
+}
+
+void threading(size_t size, ThreadPool &pool, std::function<void(size_t, size_t, size_t)> &&func)
+{
+	enqueue_and_wait(pool, split_job(size, pool, std::move(func)));
 }
