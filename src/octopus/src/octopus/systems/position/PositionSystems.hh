@@ -22,48 +22,70 @@ namespace octopus
 
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p);
 
-Vector separation_force(PositionContext const &posContext_p, Position const &pos_ref_p);
-
+Vector separation_force(PositionContext const &pos_context, Position const &pos_ref_p);
 
 template<class StepManager_t>
-void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, PositionContext &posContext_p, TimeStats &time_stats_p)
+void add_to_tree(uint32_t idx_tree, flecs::entity e, Position const &pos, StepManager_t &manager, PositionContext &pos_context)
+{
+	// check if we need to add to trees
+	if(!pos_context.tree_filters[idx_tree](e)) { return; }
+
+	aabb box {pos.pos, pos.pos};
+	box = expand_aabb(box, 2*pos.ray);
+	int32_t idx_l = add_new_leaf(pos_context.trees[idx_tree], box, e);
+	manager.get_last_layer().back().template get<PositionInTreeStep>().add_step(e, PositionInTreeStep{idx_l, idx_tree});
+}
+
+template<class StepManager_t>
+void update_tree(uint32_t idx_tree, flecs::entity e, Position const &pos, PositionInTree const &pos_in_tree, StepManager_t &manager, PositionContext &pos_context)
+{
+	// check if we need to add to trees
+	if(!pos_context.tree_filters[idx_tree](e)) { return; }
+
+	aabb box {pos.pos, pos.pos};
+	box = expand_aabb(box, pos.ray);
+	update_leaf(pos_context.trees[idx_tree], pos_in_tree.idx_leaf[idx_tree], box, pos.ray);
+}
+
+template<class StepManager_t>
+void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager, PositionContext &pos_context, TimeStats &time_stats_p)
 {
 	// Move system
 
-	// update position tree
+	// update position trees
 	ecs.system<PositionInTree const, Position const>()
 		.kind(ecs.entity(UpdatePhase))
 		.each([&](flecs::entity e, PositionInTree const &pos_in_tree, Position const &pos) {
 			Logger::getDebug() << "Positon system :: start name=" << e.name()<<" id="<<e.id()<<std::endl;
 			time_stats_p.moving_entities += 1;
 			START_TIME(tree_update)
-			if(pos_in_tree.idx_leaf < 0)
+			if(pos_in_tree.idx_leaf[0] < 0)
 			{
 				Logger::getDebug() << "\tnew" << std::endl;
-				aabb box {pos.pos, pos.pos};
-				box = expand_aabb(box, 2*pos.ray);
-				int32_t idx_l = add_new_leaf(posContext_p.tree, box, e);
-				manager_p.get_last_layer().back().template get<PositionInTreeStep>().add_step(e, PositionInTreeStep{PositionInTree{idx_l}});
+				for(uint32_t i = 0 ; i < pos_context.trees.size() ; ++i )
+				{
+					add_to_tree(i, e, pos, manager, pos_context);
+				}
 			}
 			else
 			{
 				Logger::getDebug() << "\tupdate" << std::endl;
-				aabb box {pos.pos, pos.pos};
-				box = expand_aabb(box, pos.ray);
-				update_leaf(posContext_p.tree, pos_in_tree.idx_leaf, box, pos.ray);
+				for(uint32_t i = 0 ; i < pos_context.trees.size() ; ++i )
+				{
+					update_tree(i, e, pos, pos_in_tree, manager, pos_context);
+				}
 			}
 			END_TIME(tree_update)
 			Logger::getDebug() << "Positon system :: end" << std::endl;
 		});
 
-	ecs.observer<Destroyable const>()
+	ecs.observer<Destroyable const, PositionInTree const>()
 		.event<Destroyed>()
-		.each([&posContext_p](flecs::entity e, Destroyable const&) {
+		.each([&pos_context](flecs::entity e, Destroyable const&, PositionInTree const &pos_in_tree) {
 			Logger::getDebug() << "Removed from tree name=" << e.name() << " idx=" << e.id() << std::endl;
-			PositionInTree const* pos_in_tree = e.get<PositionInTree>();
-			if(pos_in_tree && pos_in_tree->idx_leaf >= 0)
+			for(size_t i = 0 ; i < pos_context.trees.size() ; ++i )
 			{
-				remove_leaf(posContext_p.tree, pos_in_tree->idx_leaf);
+				remove_leaf(pos_context.trees[i], pos_in_tree.idx_leaf[i]);
 			}
 			Logger::getDebug() << "Removed from tree :: end" << std::endl;
 		});
@@ -94,7 +116,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: seeking force = "<<seek_l<<std::endl;
 			f = seek_l;
 			// separation force
-			Vector sep_l = separation_force(posContext_p, pos_p);
+			Vector sep_l = separation_force(pos_context, pos_p);
 			Logger::getDebug() << "Flocking :: separation force = "<<sep_l<<std::endl;
 			f += sep_l;
 
@@ -122,10 +144,10 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 	ecs.system<Move>()
 		.kind(ecs.entity(MovingPhase))
-		.each([&ecs, &manager_p](flecs::entity e, Move &move_p) {
+		.each([&ecs, &manager](flecs::entity e, Move &move_p) {
 			Logger::getDebug() << "Apply move :: start name=" << e.name() << " idx=" << e.id() << std::endl;
-			manager_p.get_last_layer().back().template get<PositionStep>().add_step(e, PositionStep{move_p.move});
-			manager_p.get_last_layer().back().template get<VelocityStep>().add_step(e, VelocityStep{move_p.move});
+			manager.get_last_layer().back().template get<PositionStep>().add_step(e, PositionStep{move_p.move});
+			manager.get_last_layer().back().template get<VelocityStep>().add_step(e, VelocityStep{move_p.move});
 			move_p.move = Vector();
 			Logger::getDebug() << "Apply move :: end" << std::endl;
 		});

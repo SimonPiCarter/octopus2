@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <array>
+
 #include "octopus/components/step/Step.hh"
 #include "octopus/utils/Vector.hh"
 
@@ -8,7 +10,7 @@ namespace octopus
 {
 
 struct PositionInTree {
-	int32_t idx_leaf = -1;
+	std::array<int32_t, 3> idx_leaf = {-1,-1,-1};
 };
 
 ///////////////////////////
@@ -16,11 +18,12 @@ struct PositionInTree {
 ///////////////////////////
 
 struct PositionInTreeMemento {
-	PositionInTree old_setup;
+	int32_t old_setup = 0;
 };
 
 struct PositionInTreeStep {
-	PositionInTree new_setup;
+	int32_t new_setup = 0;
+	uint32_t const idx_tree = 0;
 
 	typedef PositionInTree Data;
 	typedef PositionInTreeMemento Memento;

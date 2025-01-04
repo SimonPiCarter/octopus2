@@ -57,7 +57,7 @@ Vector separation_force(PositionContext const &posContext_p, Position const &pos
 		return true;
 	};
 
-	tree_circle_query(posContext_p.tree, pos_ref_p.pos, pos_ref_p.ray*2., func_l);
+	tree_circle_query(posContext_p.trees[0], pos_ref_p.pos, pos_ref_p.ray*2., func_l);
 
 	return force;
 }

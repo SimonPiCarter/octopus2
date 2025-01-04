@@ -9,6 +9,7 @@ namespace octopus
 
 std::vector<flecs::entity> get_closest_entities(
 	size_t n,
+	size_t tree_idx,
 	Fixed const &max_range,
 	PositionContext const &context_p,
 	Position const &pos_p,
@@ -51,7 +52,7 @@ std::vector<flecs::entity> get_closest_entities(
 		return true;
 	};
 
-	tree_circle_query(context_p.tree, pos_p.pos, max_range, func_l);
+	tree_circle_query(context_p.trees[tree_idx], pos_p.pos, max_range, func_l);
 
 	std::vector<flecs::entity> result_l;
 	for(auto &&dis_ent : closest_l)
