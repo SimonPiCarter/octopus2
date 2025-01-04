@@ -37,7 +37,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 		.kind(ecs.entity(PostUpdatePhase))
 		.with(CommandQueue_t::state(ecs), ecs.component<MoveCommand::State>())
 		.each([&ecs, &manager_p, &time_stats_p](flecs::entity e, Position const&pos_p, MoveCommand const &moveCommand_p, Move &move_p, CommandQueue_t &queue_p) {
-			START_TIME(attack_command)
+			START_TIME(move_command)
 			move_p.target_move = Vector();
 			flecs::entity flock_entity = moveCommand_p.flock_handle.get();
 			Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
@@ -50,7 +50,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 				}
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
-			END_TIME(attack_command)
+			END_TIME(move_command)
 		});
 
 	// clean up
