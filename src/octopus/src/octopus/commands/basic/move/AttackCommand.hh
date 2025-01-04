@@ -117,6 +117,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto attack = it.field<Attack const>(2);
 				auto move = it.field<Move>(3);
 				auto queue = it.field<CommandQueue_t>(4);
+				START_TIME(attack_command_new_target)
 
 				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t e)
 				{
@@ -134,7 +135,6 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 
 						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
 						{
-							START_TIME(attack_command_new_target)
 
 							Logger::getDebug() << "  looking for target" <<std::endl;
 							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.range));
@@ -152,12 +152,11 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 								manager_p.get_last_layer()[thread_idx].template get<AttackCommandInitStep>().add_step(e, {true});
 							}
 
-							END_TIME(attack_command_new_target)
 						}
 
 					}
 				});
-
+				END_TIME(attack_command_new_target)
 			}
 		});
 
