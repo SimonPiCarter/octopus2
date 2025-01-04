@@ -7,7 +7,7 @@
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
-#include "octopus/world/StepContext.hh"
+// #include "octopus/world/StepContext.hh"
 #include "flecs.h"
 
 namespace octopus
@@ -18,7 +18,7 @@ namespace octopus
 template<class StepManager_t=DefaultStepManager>
 struct WorldContext
 {
-	WorldContext(unsigned long seed=42) : pool(1), position_context(ecs), rng(seed)
+	WorldContext(unsigned long seed=42) : pool(12), position_context(ecs), rng(seed)
 	{
 		ecs.set_threads(12);
 	}
