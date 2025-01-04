@@ -158,8 +158,8 @@ Vector PathQuery::get_direction() const
 	{
 		return vert_dest - vert_orig;
 	}
-	return funnel[1] - funnel[0];
 	END_TIME_PTR(path_funnelling, cache->stats)
+	return funnel[1] - funnel[0];
 }
 
 }

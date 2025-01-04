@@ -556,6 +556,10 @@ int32_t add_new_leaf( aabb_tree<data_t>& tree, aabb const &new_box, data_t const
 template<typename data_t>
 void remove_leaf( aabb_tree<data_t>& tree, int32_t leaf )
 {
+	if(leaf < 0)
+	{
+		return;
+	}
 	if ( leaf == tree.root )
 	{
 		tree.root = -1;

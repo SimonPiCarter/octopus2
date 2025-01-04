@@ -6,6 +6,7 @@ struct TimeStats
 {
 	double position_system = 0.;
 	double tree_update = 0.;
+	double move_command = 0.;
 	double attack_command = 0.;
 	double attack_command_new_target = 0.;
 	uint64_t moving_entities = 0;
@@ -33,4 +34,9 @@ struct TimeStatsPtr
 				const auto end_##index{std::chrono::high_resolution_clock::now()}; \
 				const std::chrono::duration<double> elapsed_seconds_##index{end_##index - start_##index}; \
 				if(time_stats_p.unamed_timers.size() <= index) time_stats_p.unamed_timers.resize(index+1, 0.); \
-				time_stats_p.unamed_timers[index] += elapsed_seconds_##index.count() * 1000.;
+				time_stats_p.unamed_timers.at(index) += elapsed_seconds_##index.count() * 1000.;
+#define END_TIME_PTR_UNAMED(index, ptr_name) \
+				const auto end_##index{std::chrono::high_resolution_clock::now()}; \
+				const std::chrono::duration<double> elapsed_seconds_##index{end_##index - start_##index}; \
+				if(ptr_name->unamed_timers.size() <= index) ptr_name->unamed_timers.resize(index+1, 0.); \
+				ptr_name->unamed_timers.at(index) += elapsed_seconds_##index.count() * 1000.;

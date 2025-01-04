@@ -13,7 +13,7 @@ void set_up_timestamp_systems(flecs::world &ecs, StepManager_t &manager_p)
 	// set up time stamp entity & component
 	set_time_stamp(ecs, 0);
 
-	// update position tree
+	// update timestamp
 	ecs.system<TimeStamp const>()
 		.kind(ecs.entity(UpdatePhase))
 		.each([&](flecs::entity e, TimeStamp const &ts) {
