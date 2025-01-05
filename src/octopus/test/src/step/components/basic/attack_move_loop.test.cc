@@ -62,7 +62,7 @@ TEST(attack_move_loop, simple)
 		.set<Team>({1})
 		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false})
 		.add<PositionInTree>()
-		.set<Attack>({0, 1, 0, 1, 2, 2});
+		.set<Attack>({{1, 1, 2, 2}});
 
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()

@@ -62,7 +62,7 @@ TEST(attack_retarget_loop, simple)
 		.add<PositionInTree>()
 		.set<Team>({1})
 		.set<AttackCommand>({flecs::entity()})
-		.set<Attack>({0, 1, 0, 1, 5, 2});
+		.set<Attack>({{1, 1, 5, 2}});
 
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()

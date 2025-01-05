@@ -2,6 +2,7 @@
 #include "octopus/utils/triangulation/Triangulation.hh"
 #include "octopus/world/path/PathFindingCache.hh"
 #include "octopus/world/stats/TimeStats.hh"
+#include "octopus/systems/Systems.hh"
 
 #include "flecs.h"
 
@@ -33,6 +34,8 @@ TEST(path_finding_cache, basic_query_system)
     ecs.add<PathFindingCache>();
     ecs.set<TriangulationPtr>(TriangulationPtr {&triangulation});
     ecs.set<TimeStatsPtr>(TimeStatsPtr {&stats});
+
+    set_up_phases(ecs);
 
     triangulation.init(500, 500);
     insert_box(triangulation, 20, 20, 20, 20, true);
