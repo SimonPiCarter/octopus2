@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 #include "flecs.h"
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/components/step/StepContainer.hh"
@@ -100,12 +102,9 @@ void revert_n_steps(flecs::world &ecs, ThreadPool &pool_p, size_t steps_p,
 	}
 
 	// sanity check
-	if(steps_reverted != memento_reverted
+	assert(!(steps_reverted != memento_reverted
 	|| presteps_state_reverted != memento_reverted
-	|| (entity_steps_reverted != 0 && entity_steps_reverted != memento_reverted))
-	{
-		throw std::logic_error("Tried to revert in an incoherent state, not the same number of reverted steps for steps and command mementos");
-	}
+	|| (entity_steps_reverted != 0 && entity_steps_reverted != memento_reverted)));
 }
 
 /// @brief Remove the steps_p latest steps from components and commands
