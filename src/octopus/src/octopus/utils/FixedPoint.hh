@@ -231,12 +231,12 @@ namespace octopus
 			return 0;
 		}
 		octopus::FixedPoint<e> res_l(e, true);
-		static octopus::FixedPoint<e> epsilon_l(10, true);
-		static octopus::FixedPoint<e> mepsilon_l(-10, true);
+		static octopus::FixedPoint<e> epsilon_l(100, true);
+		static octopus::FixedPoint<e> mepsilon_l(-100, true);
 
 		int i = 0;
 		octopus::FixedPoint<e> delta_l = res_l * res_l - v;
-		while(i < 200 && (delta_l < mepsilon_l || delta_l > epsilon_l))
+		while(i < 100 && (delta_l < mepsilon_l || delta_l > epsilon_l))
 		{
 			res_l = (res_l + v / res_l) * octopus::FixedPoint<e>(e/2, true);
 			delta_l = res_l * res_l - v;
