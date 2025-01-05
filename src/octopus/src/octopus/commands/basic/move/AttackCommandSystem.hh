@@ -3,6 +3,7 @@
 #include "flecs.h"
 
 #include "MoveCommand.hh"
+#include "AttackCommand.hh"
 
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"

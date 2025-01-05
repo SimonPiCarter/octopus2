@@ -1,4 +1,4 @@
-#include "AttackCommand.hh"
+#include "AttackCommandSystem.hh"
 
 namespace octopus
 {
