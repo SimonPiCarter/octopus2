@@ -5,7 +5,7 @@
 namespace octopus
 {
 
-bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Vector const&target_p, Move &move_p, Flock const *flock_p)
+bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Vector const&target_p, Move &move_p, Flock const *flock_p, TimeStats *stats_p)
 {
 	Fixed tol_l = Fixed::One()/10;
 	if(flock_p)

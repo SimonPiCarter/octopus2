@@ -28,7 +28,7 @@ struct MoveCommand {
 
 /// END State
 
-bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Vector const&target_p, Move &move_p, Flock const *flock_p=nullptr);
+bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Vector const&target_p, Move &move_p, Flock const *flock_p=nullptr, TimeStats *stats_p=nullptr);
 
 template<class StepManager_t, class CommandQueue_t>
 void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &time_stats_p)
