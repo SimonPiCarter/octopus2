@@ -27,6 +27,7 @@ octopus::VelocityStep, \
 octopus::CollisionStep, \
 octopus::AttackWindupStep, \
 octopus::AttackReloadStep, \
+octopus::AttackBuffStep, \
 octopus::AttackCommandStep, \
 octopus::AttackCommandInitStep, \
 octopus::FlockArrivedStep, \

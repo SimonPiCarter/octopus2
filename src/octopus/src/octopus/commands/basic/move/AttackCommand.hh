@@ -137,7 +137,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						{
 
 							Logger::getDebug() << "  looking for target" <<std::endl;
-							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.range));
+							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.cst.range));
 
 							if(new_target)
 							{
@@ -207,7 +207,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 							{
 								START_TIME(attack_command_new_target)
 
-								new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.range));
+								new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
 								Logger::getDebug() << "  re-looking for target " << pos_p.pos<<std::endl;
 
 								if(!new_target)
@@ -268,7 +268,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						if(attack_p.windup > 0)
 						{
 							// attacking
-							if(attack_p.windup >= attack_p.windup_time)
+							if(attack_p.windup >= attack_p.cst.windup_time)
 							{
 								// damage
 								e.set<AttackTrigger>({attackCommand_p.target});
@@ -299,7 +299,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 								START_TIME(attack_command_new_target)
 
 								Logger::getDebug() << " re-target greedy" <<std::endl;
-								new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.range));
+								new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
 
 								END_TIME(attack_command_new_target)
 							}
@@ -340,7 +340,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 	ecs.system<AttackTrigger const, Attack const>()
 		.kind(ecs.entity(EndUpdatePhase))
 		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
-			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.damage});
+			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.cst.damage});
 		});
 
 	ecs.system<AttackTrigger const>()

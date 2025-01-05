@@ -39,7 +39,7 @@ flecs::entity get_new_target(flecs::entity const &e, PositionContext const &cont
 
 bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack const&attack_p)
 {
-	Fixed range_ray = attack_p.range + pos_p.ray;
+	Fixed range_ray = attack_p.cst.range + pos_p.ray;
 	if(target_pos_p)
 	{
 		range_ray += target_pos_p->ray;
@@ -50,7 +50,7 @@ bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack
 
 bool has_reloaded(uint32_t time_p, Attack const&attack_p)
 {
-	return time_p >= attack_p.reload + attack_p.reload_time;
+	return time_p >= attack_p.reload + attack_p.cst.reload_time;
 }
 
 } // octopus

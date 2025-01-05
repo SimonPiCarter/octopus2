@@ -43,13 +43,16 @@ void basic_components_support(flecs::world& ecs)
         .member("ray", &Position::ray)
         .member("collision", &Position::collision);
 
+    ecs.component<AttackConstants>()
+		.member("windup_time", &AttackConstants::windup_time)
+		.member("reload_time", &AttackConstants::reload_time)
+		.member("damage", &AttackConstants::damage)
+		.member("range", &AttackConstants::range);
+
     ecs.component<Attack>()
 		.member("windup", &Attack::windup)
-		.member("windup_time", &Attack::windup_time)
 		.member("reload", &Attack::reload)
-		.member("reload_time", &Attack::reload_time)
-		.member("damage", &Attack::damage)
-		.member("range", &Attack::range);
+		.member("cst", &Attack::cst);
 
     ecs.component<Move>()
 		.member("move", &Move::move)

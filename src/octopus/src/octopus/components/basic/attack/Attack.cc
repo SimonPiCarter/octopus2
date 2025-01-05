@@ -25,4 +25,18 @@ void AttackReloadStep::revert_step(Data &d, Memento const &memento) const
 	d.reload = memento.old_reload;
 }
 
+void AttackBuffStep::apply_step(Data &d, Memento &memento) const
+{
+	memento.cst = d.cst;
+	d.cst.windup_time += delta.windup_time;
+	d.cst.reload_time += delta.reload_time;
+	d.cst.damage += delta.damage;
+	d.cst.range += delta.range;
+}
+
+void AttackBuffStep::revert_step(Data &d, Memento const &memento) const
+{
+	d.cst = memento.cst;
+}
+
 }
