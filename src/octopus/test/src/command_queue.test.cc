@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "octopus/commands/basic/move/AttackCommand.hh"
+#include "octopus/commands/basic/move/AttackCommandSystem.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/systems/Systems.hh"

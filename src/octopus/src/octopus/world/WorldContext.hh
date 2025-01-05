@@ -7,7 +7,7 @@
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
-// #include "octopus/world/StepContext.hh"
+#include "octopus/world/StepContext.hh"
 #include "flecs.h"
 
 namespace octopus

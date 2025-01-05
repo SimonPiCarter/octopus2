@@ -51,7 +51,7 @@ TEST(path_finding_cache, basic_query_system)
 
     ecs.progress();
 
-    EXPECT_TRUE(query.is_valid());
+    ASSERT_TRUE(query.is_valid());
 
     Vector direction_1 = query.get_direction();
     EXPECT_EQ(Vector(10, -10), direction_1);
@@ -60,7 +60,7 @@ TEST(path_finding_cache, basic_query_system)
 
     query = ecs.get<PathFindingCache>()->query_path(pos, {50,30});
 
-    EXPECT_TRUE(query.is_valid());
+    ASSERT_TRUE(query.is_valid());
 
     Vector direction_2 = query.get_direction();
     EXPECT_EQ(Vector(20, 0), direction_2);
@@ -69,7 +69,7 @@ TEST(path_finding_cache, basic_query_system)
 
     query = ecs.get<PathFindingCache>()->query_path(pos, {50,30});
 
-    EXPECT_TRUE(query.is_valid());
+    ASSERT_TRUE(query.is_valid());
 
     Vector direction_3 = query.get_direction();
     EXPECT_EQ(Vector(10, 10), direction_3);

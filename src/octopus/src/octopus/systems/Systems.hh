@@ -6,6 +6,7 @@
 #include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
+#include "octopus/commands/basic/move/AttackCommandSystem.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/systems/hitpoint/HitPointsSystems.hh"
 #include "octopus/systems/position/PositionSystems.hh"

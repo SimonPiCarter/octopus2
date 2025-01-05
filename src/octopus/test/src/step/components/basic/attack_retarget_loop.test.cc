@@ -60,7 +60,7 @@ TEST(attack_retarget_loop, simple)
 		.add<Move>()
 		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false})
 		.add<PositionInTree>()
-		.set<Team>({{1}})
+		.set<Team>({1})
 		.set<AttackCommand>({flecs::entity()})
 		.set<Attack>({0, 1, 0, 1, 5, 2});
 
@@ -68,7 +68,7 @@ TEST(attack_retarget_loop, simple)
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<HitPoint>({10})
-		.set<Team>({{0}})
+		.set<Team>({0})
 		.add<PositionInTree>()
 		.set<Position>({{10,5}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false});
 
@@ -76,7 +76,7 @@ TEST(attack_retarget_loop, simple)
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<HitPoint>({10})
-		.set<Team>({{1}})
+		.set<Team>({1})
 		.add<PositionInTree>()
 		.set<Position>({{10,5}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false});
 
@@ -84,7 +84,7 @@ TEST(attack_retarget_loop, simple)
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<HitPoint>({10})
-		.set<Team>({{0}})
+		.set<Team>({0})
 		.add<PositionInTree>()
 		.set<Position>({{10,3}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false});
 
