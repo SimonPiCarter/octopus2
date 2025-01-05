@@ -1,4 +1,6 @@
 #include "PathFindingCache.hh"
+#include "octopus/utils/log/Logger.hh"
+#include "octopus/systems/phases/Phases.hh"
 
 namespace octopus
 {
@@ -23,6 +25,8 @@ PathQuery PathFindingCache::query_path(Position const &pos, Vector const &target
 
 	// build request
 	PathRequest request = get_request(pos.pos, target);
+	// avoid corrupting the list when pushing back
+	std::lock_guard<std::mutex> lock(mutex);
 	// enqueue request
 	list_requests.push_back(request);
 	END_TIME_PTR(query_path, stats)
@@ -95,6 +99,7 @@ void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulat
 	stats = &st;
 	// update cache on each loop if necessary
 	ecs.system<>()
+		.kind(ecs.entity(PrepingUpdatePhase))
 		.run([this](flecs::iter) {
 			if(paths_info.empty() || (triangulation && triangulation->revision != revision))
 			{
@@ -112,9 +117,12 @@ void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulat
 
 	// compute paths on each loop
 	ecs.system<>()
+		.kind(ecs.entity(PrepingUpdatePhase))
 		.run([this, &ecs](flecs::iter) {
+			// Logger::getNormal() << "compute_paths :: start"<<std::endl;
 			if(!triangulation) { return; }
 			compute_paths(ecs);
+			// Logger::getNormal() << "compute_paths :: done"<<std::endl;
 		});
 }
 

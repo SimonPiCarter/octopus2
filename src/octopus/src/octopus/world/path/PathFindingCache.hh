@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <mutex>
 #include <vector>
 
 #include "flecs.h"
@@ -67,9 +68,13 @@ private:
 	void consolidate_path(std::vector<std::size_t> const &path);
 
 	std::vector<PathsInfo> paths_info;
+	// to allow pusing requests when calling for getter
 	mutable std::list<PathRequest> list_requests;
 	// revision to keep track if we are up to date with triangulation
     uint64_t revision = 0;
+
+	// to protect insertion
+	mutable std::mutex mutex;
 
 	friend struct PathQuery;
 };

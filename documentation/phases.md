@@ -23,6 +23,11 @@ Here are all the default phases in the running order :
 - Take Queue Actions into account
 - Remove current state and add clean up state if done  in entities
 
+### PathfindingCache
+
+- Reset cache if revision of triangulation is different from cache
+- Compute path
+
 ## CleanUp (CleanUpPhase)
 
 ### CommandQueueSystems
