@@ -133,7 +133,7 @@ TEST(buff_component_loop, simple)
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
-		std::cout<<"p"<<i<<std::endl;
+		// std::cout<<"p"<<i<<std::endl;
 
 		ecs.progress();
 
@@ -145,8 +145,8 @@ TEST(buff_component_loop, simple)
 
 		revert_test.add_record(ecs);
 
-		stream_ent<custom_variant, HitPoint, BuffComponent<HpRegenBuff>, HpRegenBuff>(std::cout, ecs, e1);
-		std::cout<<std::endl;
+		// stream_ent<custom_variant, HitPoint, BuffComponent<HpRegenBuff>, HpRegenBuff>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
 		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
 	}
 

@@ -6,6 +6,8 @@
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/components/basic/flock/FlockManager.hh"
+#include "octopus/world/ability/AbilityTemplateLibrary.hh"
+#include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/step/StepEntityManager.hh"
 
 namespace octopus
@@ -24,6 +26,8 @@ void advanced_components_support(flecs::world& ecs)
     ecs.component<FlockManager>()
 		.member("flocks", &FlockManager::flocks)
 		.member("last_init", &FlockManager::last_init);
+    ecs.component<AbilityTemplateLibrary<StepManager_t>>();
+    ecs.component<ProductionTemplateLibrary<StepManager_t>>();
 }
 
 } // namespace octopus
