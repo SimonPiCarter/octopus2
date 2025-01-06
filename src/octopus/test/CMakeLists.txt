@@ -55,6 +55,8 @@ target_sources (unit_tests
 	src/state_extension.test.cc
 	src/step_container_hitpoint.test.cc
 	src/utils/reverted/reverted_comparison.cc
+	src/step/components/advanced/buff_component_loop.test.cc
+	src/step/components/advanced/component_loop.test.cc
 )
 
 target_link_libraries (unit_tests

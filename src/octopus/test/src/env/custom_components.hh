@@ -37,3 +37,7 @@ struct AttackTestComponent {
 	static constexpr char const * const naming()  { return "attack"; }
 	struct State {};
 };
+
+struct HpRegenBuff {
+	int32_t regen = 1;
+};

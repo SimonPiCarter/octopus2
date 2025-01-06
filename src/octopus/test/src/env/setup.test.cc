@@ -36,6 +36,13 @@ class Environment : public ::testing::Environment {
 			.member<uint32_t>("windup");
 		ecs.component<AttackTestComponent>()
 			.member<uint32_t>("windup");
+		ecs.component<HpRegenBuff>()
+			.member<int32_t>("regen");
+		ecs.component<octopus::BuffComponent<HpRegenBuff>>()
+			.member<HpRegenBuff>("comp")
+			.member<int64_t>("start")
+			.member<int64_t>("duration")
+			.member<bool>("init");
 
 		// set up all command queues in test
 		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>(ecs);
