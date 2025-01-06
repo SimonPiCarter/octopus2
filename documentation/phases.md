@@ -70,11 +70,15 @@ Apply all steps :
 
 - All production
 
-## EndUpdate
+## EndUpdate (EndUpdatePhase)
 
 ### attack resolution
 
 - All attacks that have been triggered
+
+### Buff tick
+
+- Add/Remove buff components
 
 ## Moving (MovingPhase)
 
