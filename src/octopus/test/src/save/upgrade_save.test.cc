@@ -47,10 +47,7 @@ struct ProdA : ProductionTemplate<DefaultStepManager>
 {
 	virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const
 	{
-		flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
-		flecs::entity player = query_player.find([&producer_p](PlayerInfo& p) {
-			return p.idx == producer_p.get<PlayerAppartenance>()->idx;
-		});
+		flecs::entity player = get_player_from_appartenance(producer_p, ecs);
 		if(!player.get<PlayerUpgrade>()) { return false; }
 
 		return !check_upgrades(*player.get<PlayerUpgrade>(), "up", 1);
@@ -58,10 +55,7 @@ struct ProdA : ProductionTemplate<DefaultStepManager>
 	virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
 	virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
 	{
-		flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
-		flecs::entity player = query_player.find([&producer_p](PlayerInfo& p) {
-			return p.idx == producer_p.get<PlayerAppartenance>()->idx;
-		});
+		flecs::entity player = get_player_from_appartenance(producer_p, ecs);
 		manager_p.get_last_layer().back().template get<PlayerUpgradeStep>().add_step(player, {"up"});
 	}
 	virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
