@@ -15,6 +15,8 @@
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/step/StepContainer.hh"
+#include "octopus/components/step/BuffComponentStep.hh"
+#include "octopus/components/step/ComponentStep.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 
 #define DEFAULT_STEPS_T octopus::HitPointStep, \
