@@ -13,6 +13,7 @@
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/ResourceStock.hh"
+#include "octopus/world/resources/CostReduction.hh"
 #include "octopus/systems/phases/Phases.hh"
 #include "octopus/utils/log/Logger.hh"
 
@@ -172,11 +173,18 @@ struct Input
 				if(!player.is_valid() || !prod_l) { continue; }
 				PlayerInfo const * player_info_l = player.get<PlayerInfo>();
 				ResourceStock const * resource_stock_l = player.get<ResourceStock>();
+				ReductionLibrary const * reduction_library_l = player.get<ReductionLibrary>();
+
+				auto resource_cost = prod_l->resource_consumption();
+				if(reduction_library_l && reduction_library_l->reductions.has(prod_l->name()))
+				{
+					resource_cost = get_required_resources(reduction_library_l->reductions[prod_l->name()], resource_cost);
+				}
 
 				if(player_info_l
 				&& resource_stock_l
 				&& prod_l->check_requirement(input_l.producer, ecs)
-				&& check_resources(resource_stock_l->resource, map_locked_resources[player_info_l->idx], prod_l->resource_consumption()))
+				&& check_resources(resource_stock_l->resource, map_locked_resources[player_info_l->idx], resource_cost))
 				{
 					manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {input_l.production, -1});
 					prod_l->enqueue(input_l.producer, ecs, manager_p);

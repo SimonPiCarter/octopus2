@@ -16,6 +16,7 @@
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/world/player/PlayerInfo.hh"
+#include "octopus/world/resources/CostReduction.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 
 #include "octopus/serialization/utils/UtilsSupport.hh"
@@ -84,6 +85,18 @@ void basic_components_support(flecs::world& ecs)
 	ecs.component<ResourceInfo>()
 		.member("quantity", &ResourceInfo::quantity)
 		.member("cap", &ResourceInfo::cap);
+
+    ecs.component<fast_map<std::string, Fixed> >()
+        .opaque(fast_map_support<std::string, Fixed>);
+
+	ecs.component<CostReduction>()
+		.member("reduction", &CostReduction::reduction);
+
+    ecs.component<fast_map<std::string, CostReduction> >()
+        .opaque(fast_map_support<std::string, CostReduction>);
+
+	ecs.component<ReductionLibrary>()
+		.member("reductions", &ReductionLibrary::reductions);
 
     ecs.component<Entry<std::string, ResourceInfo>>()
         .member("key", &Entry<std::string, ResourceInfo>::key)

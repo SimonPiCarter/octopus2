@@ -25,6 +25,7 @@ target_sources (unit_tests
 	PRIVATE
 	src/env/setup.test.cc
 	src/input/input_ability.test.cc
+	src/input/input_cost_reduction.test.cc
 	src/input/input_move.test.cc
 	src/input/input_production.test.cc
 	src/save/ability_save.cc

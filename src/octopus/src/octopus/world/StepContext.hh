@@ -19,6 +19,7 @@
 #include "octopus/components/step/ComponentStep.hh"
 #include "octopus/components/step/ComponentStepContainer.hh"
 #include "octopus/world/resources/ResourceStock.hh"
+#include "octopus/world/resources/CostReduction.hh"
 
 #define DEFAULT_STEPS_T octopus::HitPointStep, \
 octopus::HitPointMaxStep, \
@@ -39,6 +40,7 @@ octopus::ProductionQueueOperationStep, \
 octopus::ResourceStockStep, \
 octopus::CasterLastCastStep, \
 octopus::CasterWindupStep, \
+octopus::ReductionLibraryStep, \
 octopus::TimeStampIncrementStep \
 
 
