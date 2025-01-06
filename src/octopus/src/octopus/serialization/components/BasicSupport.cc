@@ -8,6 +8,7 @@
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
 #include "octopus/components/basic/player/Player.hh"
+#include "octopus/components/basic/player/PlayerUpgrade.hh"
 #include "octopus/components/basic/player/Team.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
@@ -111,6 +112,9 @@ void basic_components_support(flecs::world& ecs)
 
     ecs.component<fast_map<std::string, int64_t> >()
         .opaque(fast_map_support<std::string, int64_t>);
+
+	ecs.component<PlayerUpgrade>()
+		.member("upgrades", &PlayerUpgrade::upgrades);
 
 	ecs.component<ProductionQueue>()
 		.member("start_timestamp", &ProductionQueue::start_timestamp)

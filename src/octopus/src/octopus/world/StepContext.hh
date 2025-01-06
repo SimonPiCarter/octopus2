@@ -10,6 +10,7 @@
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
 #include "octopus/components/basic/hitpoint/HitPointMax.hh"
+#include "octopus/components/basic/player/PlayerUpgrade.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
@@ -41,6 +42,7 @@ octopus::ResourceStockStep, \
 octopus::CasterLastCastStep, \
 octopus::CasterWindupStep, \
 octopus::ReductionLibraryStep, \
+octopus::PlayerUpgradeStep, \
 octopus::TimeStampIncrementStep \
 
 

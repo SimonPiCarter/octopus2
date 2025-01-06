@@ -15,6 +15,8 @@ struct ProductionTemplate
     /// @brief This checks if the given player has the
     /// requirements to produce this template
     virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const = 0;
+    /// @brief Return a list of missing requirements
+    virtual std::vector<std::string> get_missing_requirement(flecs::entity caster_p, flecs::world const &ecs) const { return {}; }
     /// @brief This is used to handle resource consumption and restoration
     virtual std::unordered_map<std::string, Fixed> resource_consumption() const = 0;
     /// @brief This is called when the production is done
