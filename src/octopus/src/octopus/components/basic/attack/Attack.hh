@@ -8,24 +8,24 @@ namespace octopus
 {
 
 struct AttackConstants {
-	uint32_t windup_time = 0;
-	uint32_t reload_time = 0;
+	int32_t windup_time = 0;
+	int32_t reload_time = 0;
 	Fixed damage;
 	Fixed range;
 };
 
 struct Attack {
 	AttackConstants cst;
-	uint32_t windup = 0;
-	uint32_t reload = 0;
+	int32_t windup = 0;
+	int32_t reload = 0;
 };
 
 struct AttackWindupMemento {
-	uint32_t old_windup;
+	int32_t old_windup;
 };
 
 struct AttackWindupStep {
-	uint32_t new_windup;
+	int32_t new_windup;
 
 	typedef Attack Data;
 	typedef AttackWindupMemento Memento;
@@ -36,11 +36,11 @@ struct AttackWindupStep {
 };
 
 struct AttackReloadMemento {
-	uint32_t old_reload;
+	int32_t old_reload;
 };
 
 struct AttackReloadStep {
-	uint32_t new_reload;
+	int32_t new_reload;
 
 	typedef Attack Data;
 	typedef AttackReloadMemento Memento;

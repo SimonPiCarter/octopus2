@@ -50,7 +50,7 @@ bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack
 
 bool has_reloaded(uint32_t time_p, Attack const&attack_p)
 {
-	return time_p >= attack_p.reload + attack_p.cst.reload_time;
+	return int32_t(time_p) >= attack_p.reload + attack_p.cst.reload_time;
 }
 
 } // octopus

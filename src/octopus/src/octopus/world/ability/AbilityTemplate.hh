@@ -1,6 +1,8 @@
 #pragma once
 
 #include "flecs.h"
+#include <vector>
+#include <string>
 #include <cstdint>
 #include "octopus/components/basic/player/Player.hh"
 #include "octopus/utils/FixedPoint.hh"
