@@ -48,9 +48,9 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto queue = it.field<CommandQueue_t>(4);
 				START_TIME(attack_command_new_target)
 
-				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t e)
+				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t end)
 				{
-					for(size_t ent_idx = s; ent_idx < e; ++ ent_idx)
+					for(size_t ent_idx = s; ent_idx < end; ++ ent_idx)
 					{
 						flecs::entity e = it.entity(ent_idx);
 						auto && pos_p = pos[ent_idx];
@@ -104,10 +104,9 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto move = it.field<Move>(3);
 				auto queue = it.field<CommandQueue_t>(4);
 
-				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t e)
+				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t end)
 				{
-					// Logger::getDebug() << "Started :: t idx = "<<thread_idx<<" s = "<<s<<", e = "<<e<<std::endl;
-					for(size_t ent_idx = s; ent_idx < e; ++ ent_idx)
+					for(size_t ent_idx = s; ent_idx < end; ++ ent_idx)
 					{
 						flecs::entity e = it.entity(ent_idx);
 						auto && pos_p = pos[ent_idx];
