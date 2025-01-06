@@ -22,6 +22,6 @@ struct TimeStampIncrementStep {
 };
 
 void set_time_stamp(flecs::world &ecs, int64_t time);
-int64_t get_time_stamp(flecs::world &ecs);
+int64_t get_time_stamp(flecs::world const &ecs);
 
 }
