@@ -68,6 +68,15 @@ void revert_n_steps(flecs::world &ecs, ThreadPool &pool_p, size_t steps_p,
 	}
 
 	// revert component addition/deletion
+	size_t component_steps_reverted = 0;
+	for(auto rit_l = step_manager_p.component_steps.rbegin() ; component_steps_reverted < steps_p && rit_l != step_manager_p.component_steps.rend() ; ++ rit_l)
+	{
+		std::vector<ComponentStepContainer> &steps_l = *rit_l;
+		revert_all_containers(steps_l);
+		++component_steps_reverted;
+	}
+
+	// revert component state addition/deletion
 	size_t steps_state_reverted = 0;
 	for(auto rit_l = state_step_container_p.layers.rbegin() ; steps_state_reverted < steps_p && rit_l != state_step_container_p.layers.rend() ; ++ rit_l)
 	{

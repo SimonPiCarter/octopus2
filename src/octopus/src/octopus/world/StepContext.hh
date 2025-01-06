@@ -17,6 +17,7 @@
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/components/step/BuffComponentStep.hh"
 #include "octopus/components/step/ComponentStep.hh"
+#include "octopus/components/step/ComponentStepContainer.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 
 #define DEFAULT_STEPS_T octopus::HitPointStep, \
@@ -52,6 +53,7 @@ struct StepManager
 
 	std::list<std::vector<StepContainer> > steps;
 	std::list<std::vector<StepContainer> > presteps;
+	std::list<std::vector<ComponentStepContainer> > component_steps;
 
 
 	uint32_t steps_added = 0;
@@ -61,12 +63,14 @@ struct StepManager
 		++steps_added;
 		steps.push_back(std::vector<StepContainer>(threads_p, makeStepContainer<Ts...>()));
 		presteps.push_back(std::vector<StepContainer>(threads_p, makeStepContainer<Ts...>()));
+		component_steps.push_back(std::vector<ComponentStepContainer>(threads_p));
 	}
 
 	void pop_layer()
 	{
 		steps.pop_front();
 		presteps.pop_front();
+		component_steps.pop_front();
 	}
 
 	void pop_last_layer()
@@ -76,6 +80,7 @@ struct StepManager
 			--steps_added;
 			steps.pop_back();
 			presteps.pop_back();
+			component_steps.pop_back();
 		}
 	}
 
@@ -87,6 +92,11 @@ struct StepManager
 	std::vector<StepContainer> &get_last_prelayer()
 	{
 		return presteps.back();
+	}
+
+	std::vector<ComponentStepContainer> &get_last_component_layer()
+	{
+		return component_steps.back();
 	}
 };
 

@@ -1,7 +1,37 @@
 #pragma once
 
+#include <memory>
+
 namespace octopus
 {
+
+/// @brief Base component step for type erasure
+struct BaseComponentStep
+{
+	virtual ~BaseComponentStep() {}
+	virtual void apply_step(flecs::entity e) = 0;
+	virtual void revert_step(flecs::entity e) = 0;
+};
+
+struct ComponentStep
+{
+	ComponentStep() = default;
+	ComponentStep(ComponentStep &&other) = default;
+
+	template<typename component_t>
+	explicit ComponentStep(component_t const &cmp)
+	{
+		std::unique_ptr<component_t> new_comp = std::make_unique<component_t>();
+		*new_comp = cmp;
+		base = std::move(new_comp);
+	}
+
+	void apply_step(flecs::entity e) { if(base) base->apply_step(e); }
+	void revert_step(flecs::entity e) { if(base) base->revert_step(e); }
+
+	// type erased
+	std::unique_ptr<BaseComponentStep> base;
+};
 
 // dummy component to allow to match data
 // requires entity reference
@@ -18,59 +48,62 @@ struct ComponentMemento
 };
 
 template<typename component_t>
-struct AddComponentStep
+struct AddComponentStep : BaseComponentStep
 {
 	component_t value;
+	component_t old_value;
+	bool was_present = false;
 
-	typedef ComponentSteps Data;
-	typedef ComponentMemento<component_t> Memento;
+	AddComponentStep() = default;
+	explicit AddComponentStep(component_t &&v) : value(std::move(v)) {}
+	explicit AddComponentStep(component_t const &v) : value(v) {}
 
-	void apply_step(Data &d, Memento &memento) const
+	void apply_step(flecs::entity e) override
 	{
-		component_t const * const ptr = d.self.get<component_t>();
-		memento.present = nullptr != ptr;
-		if(memento.present)
+		component_t const * const ptr = e.get<component_t>();
+		was_present = nullptr != ptr;
+		if(was_present)
 		{
-			memento.value = *ptr;
+			old_value = *ptr;
 		}
-		d.self.set<component_t>(value);
+		e.set<component_t>(value);
 	}
 
-	void revert_step(Data &d, Memento const &memento) const
+	void revert_step(flecs::entity e) override
 	{
-		if(memento.present)
+		if(was_present)
 		{
-			d.self.set<component_t>(memento.value);
+			e.set<component_t>(old_value);
 		}
 		else
 		{
-			d.self.remove<component_t>();
+			e.remove<component_t>();
 		}
 	}
 };
 
 template<typename component_t>
-struct RemoveComponentStep
+struct RemoveComponentStep : BaseComponentStep
 {
-	typedef ComponentSteps Data;
-	typedef ComponentMemento<component_t> Memento;
+	component_t old_value;
+	bool was_present = false;
 
-	void apply_step(Data &d, Memento &memento) const
+	void apply_step(flecs::entity e) override
 	{
-		component_t const * const ptr = d.self.get<component_t>();
-		memento.present = nullptr != ptr;
-		if(memento.present)
+		component_t const * const ptr = e.get<component_t>();
+		was_present = nullptr != ptr;
+		if(was_present)
 		{
-			memento.value = *ptr;
-			d.self.remove<component_t>();
+			old_value = *ptr;
+			e.remove<component_t>();
 		}
 	}
 
-	void revert_step(Data &d, Memento const &memento) const
+	void revert_step(flecs::entity e) override
 	{
-		if(memento.present)
+		if(was_present)
 		{
-			d.self.set<component_t>(memento.value);
+			e.set<component_t>(old_value);
 		}
 	}
 };

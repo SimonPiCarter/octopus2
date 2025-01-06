@@ -45,13 +45,7 @@ namespace
 
 using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
-using CustomStepContext = StepContext<custom_variant, DEFAULT_STEPS_T,
-	RemoveComponentStep<BuffComponent<HpRegenBuff>>,
-	RemoveComponentStep<HpRegenBuff>,
-	AddComponentStep<HpRegenBuff>,
-	BuffComponentInitStep<HpRegenBuff>,
-	AddBuffComponentStep<HpRegenBuff>
->;
+using CustomStepContext = StepContext<custom_variant, DEFAULT_STEPS_T>;
 using CustomStepManager = CustomStepContext::step;
 
 struct AbilityBuffRegen : AbilityTemplate<CustomStepManager>
@@ -61,7 +55,10 @@ struct AbilityBuffRegen : AbilityTemplate<CustomStepManager>
 		return {};
 	}
 	virtual void cast(flecs::entity caster_p, Vector target_point, flecs::entity target_entity, flecs::world const &ecs, CustomStepManager &manager_p) const {
-		manager_p.get_last_layer().back().template get< AddBuffComponentStep<HpRegenBuff> >().add_step(caster_p, {HpRegenBuff(), get_time_stamp(ecs), 2});
+		AddBuffComponentStep<HpRegenBuff> step;
+		step.start = get_time_stamp(ecs);
+		step.duration = 2;
+		manager_p.get_last_component_layer().back().add_step(caster_p, std::move(step));
 	}
 	virtual std::string name() const { return "buff"; }
 	virtual int64_t windup() const { return 2; }
@@ -136,7 +133,7 @@ TEST(buff_component_loop, simple)
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{
-		// std::cout<<"p"<<i<<std::endl;
+		std::cout<<"p"<<i<<std::endl;
 
 		ecs.progress();
 
@@ -148,8 +145,8 @@ TEST(buff_component_loop, simple)
 
 		revert_test.add_record(ecs);
 
-		// stream_ent<custom_variant, HitPoint, BuffComponent<HpRegenBuff>, HpRegenBuff>(std::cout, ecs, e1);
-		// std::cout<<std::endl;
+		stream_ent<custom_variant, HitPoint, BuffComponent<HpRegenBuff>, HpRegenBuff>(std::cout, ecs, e1);
+		std::cout<<std::endl;
 		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
 	}
 

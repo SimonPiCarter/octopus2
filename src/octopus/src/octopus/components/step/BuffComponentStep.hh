@@ -16,60 +16,63 @@ struct BuffComponent
 };
 
 template<typename component_t>
-struct BuffComponentInitMemento
+struct BuffComponentInitStep : BaseComponentStep
 {
 	bool init = false;
+
+	void apply_step(flecs::entity e) override
+	{
+        BuffComponent<component_t> * val = e.get_mut<BuffComponent<component_t>>();
+        if(val)
+        {
+            init = val->init;
+            val->init = true;
+        }
+	}
+
+	void revert_step(flecs::entity e) override
+	{
+        BuffComponent<component_t> * val = e.get_mut<BuffComponent<component_t>>();
+        if(val)
+        {
+            val->init = init;
+        }
+	}
 };
 
 template<typename component_t>
-struct BuffComponentInitStep
-{
-	typedef BuffComponent<component_t> Data;
-	typedef BuffComponentInitMemento<component_t> Memento;
-
-	void apply_step(Data &d, Memento &m) const
-	{
-		m.init = d.init;
-		d.init = true;
-	}
-
-	void revert_step(Data &d, Memento const &m) const
-	{
-		d.init = m.init;
-	}
-};
-
-template<typename component_t>
-struct AddBuffComponentStep
+struct AddBuffComponentStep : BaseComponentStep
 {
 	component_t value;
 	int64_t start = 0;
 	int64_t duration = 0;
+	BuffComponent<component_t> old_value;
+	bool was_present = false;
 
 	typedef ComponentSteps Data;
 	typedef ComponentMemento<BuffComponent<component_t>> Memento;
 
-	void apply_step(Data &d, Memento &memento) const
+	void apply_step(flecs::entity e) override
 	{
-		BuffComponent<component_t> const * const ptr = d.self.get<BuffComponent<component_t>>();
-		memento.present = nullptr != ptr;
-		if(memento.present)
+		BuffComponent<component_t> const * const ptr = e.get<BuffComponent<component_t>>();
+		was_present = nullptr != ptr;
+		if(was_present)
 		{
-			memento.value = *ptr;
+			old_value = *ptr;
 		}
-		BuffComponent<component_t> buff {value, start, duration, memento.present};
-		d.self.set<BuffComponent<component_t>>(buff);
+		BuffComponent<component_t> buff {value, start, duration, was_present};
+		e.set<BuffComponent<component_t>>(buff);
 	}
 
-	void revert_step(Data &d, Memento const &memento) const
+	void revert_step(flecs::entity e) override
 	{
-		if(memento.present)
+		if(was_present)
 		{
-			d.self.set<BuffComponent<component_t>>(memento.value);
+			e.set<BuffComponent<component_t>>(old_value);
 		}
 		else
 		{
-			d.self.remove<BuffComponent<component_t>>();
+			e.remove<BuffComponent<component_t>>();
 		}
 	}
 };
@@ -83,13 +86,13 @@ void declare_buff_system(flecs::world &ecs, StepManager_t &manager_p)
 			using Buff_t = BuffComponent<component_t>;
 			if(!buff.init)
 			{
-				manager_p.get_last_layer().back().template get< AddComponentStep<component_t> >().add_step(e, AddComponentStep<component_t> {buff.comp});
-				manager_p.get_last_layer().back().template get< BuffComponentInitStep<component_t> >().add_step(e, BuffComponentInitStep<component_t>());
+				manager_p.get_last_component_layer().back().add_step(e, AddComponentStep<component_t> {buff.comp});
+				manager_p.get_last_component_layer().back().add_step(e, BuffComponentInitStep<component_t>());
 			}
 			if(get_time_stamp(ecs) == buff.start + buff.duration + 1)
 			{
-				manager_p.get_last_layer().back().template get< RemoveComponentStep<component_t> >().add_step(e, RemoveComponentStep<component_t>());
-				manager_p.get_last_layer().back().template get< RemoveComponentStep<Buff_t> >().add_step(e, RemoveComponentStep<Buff_t>());
+				manager_p.get_last_component_layer().back().add_step(e, RemoveComponentStep<component_t>());
+				manager_p.get_last_component_layer().back().add_step(e, RemoveComponentStep<Buff_t>());
 			}
 		});
 }

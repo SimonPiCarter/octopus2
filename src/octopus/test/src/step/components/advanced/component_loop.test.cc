@@ -44,7 +44,7 @@ namespace
 
 using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
-using CustomStepContext = StepContext<custom_variant, DEFAULT_STEPS_T, AddComponentStep<HpRegenBuff>>;
+using CustomStepContext = StepContext<custom_variant, DEFAULT_STEPS_T>;
 using CustomStepManager = CustomStepContext::step;
 
 struct AbilityRegen : AbilityTemplate<CustomStepManager>
@@ -54,7 +54,8 @@ struct AbilityRegen : AbilityTemplate<CustomStepManager>
 		return {};
 	}
 	virtual void cast(flecs::entity caster_p, Vector target_point, flecs::entity target_entity, flecs::world const &ecs, CustomStepManager &manager_p) const {
-		manager_p.get_last_layer().back().template get< AddComponentStep<HpRegenBuff> >().add_step(caster_p, AddComponentStep<HpRegenBuff> {HpRegenBuff()});
+		AddComponentStep<HpRegenBuff> step;
+		manager_p.get_last_component_layer().back().add_step(caster_p, step);
 	}
 	virtual std::string name() const { return "buff"; }
 	virtual int64_t windup() const { return 2; }

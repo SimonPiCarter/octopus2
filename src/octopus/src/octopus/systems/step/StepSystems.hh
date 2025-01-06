@@ -67,6 +67,18 @@ void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &man
 			Logger::getDebug() << "Apply Steps :: end" << std::endl;
 		});
 
+	// apply component step
+	ecs.system<>()
+        .immediate()
+		.kind(ecs.entity(SteppingPhase))
+		.run([&](flecs::iter&) {
+			Logger::getDebug() << "Apply Component Steps :: start" << std::endl;
+			ecs.defer_suspend();
+			apply_all_containers(manager_p.get_last_component_layer());
+			ecs.defer_resume();
+			Logger::getDebug() << "Apply Component Steps :: end" << std::endl;
+		});
+
 	ecs.system<StepEntityManager>()
 		.immediate()
 		.kind(ecs.entity(SteppingPhase))
