@@ -191,7 +191,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						}
 
 						// in range and reloaded : we can attack
-						uint32_t time = uint32_t(get_time_stamp(ecs));
+						int32_t time = int32_t(get_time_stamp(ecs));
 						// wind up has started
 						if(attack_p.windup > 0)
 						{
