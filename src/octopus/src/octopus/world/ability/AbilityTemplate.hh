@@ -26,9 +26,12 @@ struct AbilityTemplate
     /// The resource consumption will be done and check over the resources of the
     /// caster
     virtual std::unordered_map<std::string, Fixed> resource_consumption() const = 0;
-    /// @brief This is called when the production is done
-    /// this must materialize the production into the world
-    /// @note example : spawn a unit
+    /// @brief This is called when the windup starts
+    /// @note example : start an animation
+    virtual void start_windup(flecs::entity, Vector, flecs::entity, flecs::world const &, StepManager_t &) const {}
+    /// @brief This is called when the windup is done
+    /// this must materialize the cast into the world
+    /// @note example : deal aoe damage
     virtual void cast(flecs::entity caster_p, Vector target_point, flecs::entity target_entity, flecs::world const &ecs, StepManager_t &manager_p) const = 0;
     /// @brief id of the ability
     virtual std::string name() const = 0;

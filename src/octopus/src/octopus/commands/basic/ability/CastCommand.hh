@@ -101,6 +101,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				// start windup if not started yet
 				if(caster_p.timestamp_windup_start == 0)
 				{
+					ability_l->start_windup(e, castCommand_p.point_target, castCommand_p.entity_target, ecs, manager_p);
 					manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {get_time_stamp(ecs)});
 				}
 			}
