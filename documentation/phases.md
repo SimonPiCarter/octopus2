@@ -12,7 +12,7 @@ Here are all the default phases in the running order :
 
 ### Steps
 
-- Push new step layer for commands actions (StepManager.get_last_layer)
+- Push new step layer for commands actions (StepManager.get_last_layer and StepManager.get_last_component_layer)
 - Push new step layer for command clean up actions (StepManager.get_last_prelayer)
 - Push new step layer for state modifiction (StateChangeSteps) : modifying components
 
@@ -100,7 +100,7 @@ running commands or productions.
 ## Stepping (SteppingPhase)
 
 - modifying state (StateChangeSteps.get_last_layer)
-- Step : apply all (StepManager.get_last_layer)
+- Step : apply all (StepManager.get_last_layer and StepManager.get_last_component_layer)
 
 ## Validate (ValidatePhase)
 
