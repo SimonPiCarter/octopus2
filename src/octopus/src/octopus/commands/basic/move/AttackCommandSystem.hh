@@ -44,7 +44,6 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto pos = it.field<Position const>(0);
 				auto attackCommand = it.field<AttackCommand const>(1);
 				auto attack = it.field<Attack const>(2);
-				auto move = it.field<Move>(3);
 				auto queue = it.field<CommandQueue_t>(4);
 				START_TIME(attack_command_new_target)
 
@@ -56,7 +55,6 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						auto && pos_p = pos[ent_idx];
 						auto && attackCommand_p = attackCommand[ent_idx];
 						auto && attack_p = attack[ent_idx];
-						auto && move_p = move[ent_idx];
 						auto && queue_p = queue[ent_idx];
 
 						Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;

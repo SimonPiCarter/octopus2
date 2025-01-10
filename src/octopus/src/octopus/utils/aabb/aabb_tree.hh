@@ -675,7 +675,7 @@ void tree_box_query( const aabb_tree<data_t> &tree, aabb const &box, std::functi
 template<typename data_t>
 void tree_circle_query( const aabb_tree<data_t> &tree, octopus::Vector const &center, octopus::Fixed const &ray, std::function<bool(int32_t, data_t)> callback)
 {
-	constexpr size_t stack_size = 1024;
+	constexpr int32_t stack_size = 1024;
 	int32_t stack[stack_size];
 	int32_t stackCount = 0;
 	stack[stackCount++] = tree.root;

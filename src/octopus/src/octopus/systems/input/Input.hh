@@ -207,7 +207,7 @@ struct Input
 				ProductionQueue const * prod_queue_l = input_l.producer.get<ProductionQueue>();
 				if(!input_l.producer.get<PlayerAppartenance>()
 				|| !prod_queue_l
-				|| input_l.idx >= prod_queue_l->queue.size())
+				|| long(input_l.idx) >= long(prod_queue_l->queue.size()))
 				{
 					continue;
 				}

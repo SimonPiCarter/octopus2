@@ -12,6 +12,8 @@ namespace octopus
 template<class StepManager_t>
 struct ProductionTemplate
 {
+    virtual ~ProductionTemplate() = default;
+
     /// @brief This checks if the given player has the
     /// requirements to produce this template
     virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const = 0;
