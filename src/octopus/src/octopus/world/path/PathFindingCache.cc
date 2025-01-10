@@ -10,7 +10,6 @@ PathRequest PathFindingCache::get_request(Vector const &orig, Vector const &dest
 {
 	assert(triangulation);
 	PathRequest request {triangulation->cdt.triangles.size(), triangulation->cdt.triangles.size()};
-	int idx_l = 0;
 	request.orig = triangulation->cdt.get_triangle({orig.x,orig.y})[0];
 	request.dest = triangulation->cdt.get_triangle({dest.x,dest.y})[0];
 	return request;
@@ -72,9 +71,12 @@ void PathFindingCache::compute_paths(flecs::world &ecs)
 			list_requests.pop_front();
 			continue;
 		}
-
 		// compute path
 		std::vector<std::size_t> path = triangulation->compute_path_from_idx(request.orig, request.dest);
+		if(path.empty() || path[path.size()-1] != request.dest)
+		{
+			path.push_back(request.dest);
+		}
 		consolidate_path(path);
 
 		// tidy up computations
