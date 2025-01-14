@@ -102,6 +102,10 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto move = it.field<Move>(3);
 				auto queue = it.field<CommandQueue_t>(4);
 
+				using trigger_pair = std::pair<flecs::entity, flecs::entity>;
+				using vec_trigger_pair = std::vector<std::pair<flecs::entity, flecs::entity>>;
+				std::vector<vec_trigger_pair> vec_attack_trigger_setter(pool.size(), vec_trigger_pair());
+
 				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t end)
 				{
 					for(size_t ent_idx = s; ent_idx < end; ++ ent_idx)
@@ -197,7 +201,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 							if(attack_p.windup >= attack_p.cst.windup_time)
 							{
 								// damage
-								e.set<AttackTrigger>({attackCommand_p.target});
+								vec_attack_trigger_setter[thread_idx].push_back({e, attackCommand_p.target});
 								// reset windup
 								manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {0});
 								// reset reload
@@ -259,6 +263,15 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 
 					}
 				});
+				// Apply all setter for AttackTrigger (cause concurrency errors if done while multi threading)
+				for(vec_trigger_pair &vec : vec_attack_trigger_setter)
+				{
+					for(trigger_pair &pair : vec)
+					{
+						pair.first.set<AttackTrigger>({pair.second});
+					}
+				}
+
 			}
 			END_TIME(attack_command)
 		});
