@@ -12,6 +12,7 @@
 #include "octopus/systems/position/PositionSystems.hh"
 #include "octopus/systems/step/StepSystems.hh"
 #include "octopus/systems/production/ProductionSystem.hh"
+#include "octopus/systems/projectile/ProjectileSystem.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/systems/timestamp/TimeStampSystems.hh"
 
@@ -47,6 +48,9 @@ void set_up_systems(
 
 	// components systems
 	set_up_hitpoint_systems(world.ecs, world.pool, step_context.step_manager, step_kept_p);
+
+	// projectile system
+	set_up_projectile_systems(world.ecs, world.pool, step_context.step_manager, world.time_stats);
 
 	// time stamp systems (increment time stamp)
 	set_up_timestamp_systems(world.ecs, step_context.step_manager);

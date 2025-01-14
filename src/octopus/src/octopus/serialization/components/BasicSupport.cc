@@ -14,6 +14,7 @@
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
+#include "octopus/components/basic/projectile/Projectile.hh"
 #include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/systems/input/Input.hh"
@@ -58,6 +59,14 @@ void basic_components_support(flecs::world& ecs)
 		.member("windup", &Attack::windup)
 		.member("reload", &Attack::reload)
 		.member("cst", &Attack::cst);
+
+	ecs.component<Projectile>()
+		.member("target", &Projectile::target)
+		.member("pos_target", &Projectile::pos_target)
+		.member("damage", &Projectile::damage);
+
+	ecs.component<ProjectileConstants>()
+		.member("speed", &ProjectileConstants::speed);;
 
     ecs.component<Move>()
 		.member("move", &Move::move)
