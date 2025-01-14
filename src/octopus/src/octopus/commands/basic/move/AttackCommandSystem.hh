@@ -265,6 +265,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 
 	ecs.system<AttackTrigger const, Attack const>()
 		.kind(ecs.entity(EndUpdatePhase))
+		.without<NoInstantDamage>()
 		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
 			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.cst.damage});
 		});

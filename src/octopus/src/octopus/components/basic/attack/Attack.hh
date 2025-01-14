@@ -14,6 +14,8 @@ struct AttackConstants {
 	Fixed range;
 };
 
+struct NoInstantDamage {};
+
 struct Attack {
 	AttackConstants cst;
 	int32_t windup = 0;

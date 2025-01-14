@@ -46,6 +46,8 @@ void basic_components_support(flecs::world& ecs)
         .member("ray", &Position::ray)
         .member("collision", &Position::collision);
 
+	ecs.component<NoInstantDamage>();
+
     ecs.component<AttackConstants>()
 		.member("windup_time", &AttackConstants::windup_time)
 		.member("reload_time", &AttackConstants::reload_time)
