@@ -60,6 +60,7 @@ target_sources (unit_tests
 	src/state_extension.test.cc
 	src/step_container_hitpoint.test.cc
 	src/utils/reverted/reverted_comparison.cc
+	src/utils/wave_function_collapse/wfc.simple.test.cc
 )
 
 target_link_libraries (unit_tests
