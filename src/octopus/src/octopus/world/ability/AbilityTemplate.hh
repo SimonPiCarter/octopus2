@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 #include "octopus/components/basic/player/Player.hh"
+#include "octopus/components/basic/player/UpgradeRequirement.hh"
 #include "octopus/utils/FixedPoint.hh"
 #include "octopus/utils/Vector.hh"
 
@@ -21,7 +22,7 @@ struct AbilityTemplate
     /// requirements to cast this template
     virtual bool check_requirement(flecs::entity caster_p, flecs::world const &ecs) const = 0;
     /// @brief Return a list of missing requirements
-    virtual std::vector<std::string> get_missing_requirement(flecs::entity caster_p, flecs::world const &ecs) const { return {}; }
+    virtual UpgradeRequirement get_requirements() const { return {}; }
     /// @brief This is used to handle resource consumption and restoration
     /// The resource consumption will be done and check over the resources of the
     /// caster
