@@ -14,5 +14,6 @@ struct UpgradeRequirement
 };
 
 bool check_requirements(UpgradeRequirement const &req, PlayerUpgrade const &up);
+bool check_requirements(flecs::entity entity, flecs::world const &ecs, UpgradeRequirement const &requirements);
 
 }

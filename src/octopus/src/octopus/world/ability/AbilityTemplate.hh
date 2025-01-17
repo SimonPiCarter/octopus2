@@ -20,7 +20,10 @@ struct AbilityTemplate
 
     /// @brief This checks if the given player has the
     /// requirements to cast this template
-    virtual bool check_requirement(flecs::entity caster_p, flecs::world const &ecs) const = 0;
+    bool check_requirement(flecs::entity caster_p, flecs::world const &ecs) const
+    {
+        return check_requirements(caster_p, ecs, get_requirements());
+    }
     /// @brief Return a list of missing requirements
     virtual UpgradeRequirement get_requirements() const { return {}; }
     /// @brief This is used to handle resource consumption and restoration

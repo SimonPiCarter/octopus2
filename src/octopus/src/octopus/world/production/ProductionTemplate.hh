@@ -3,8 +3,10 @@
 #include "flecs.h"
 #include <cstdint>
 #include "octopus/components/basic/player/Player.hh"
+#include "octopus/components/basic/player/PlayerUpgrade.hh"
 #include "octopus/components/basic/player/UpgradeRequirement.hh"
 #include "octopus/utils/FixedPoint.hh"
+#include "octopus/world/player/PlayerInfo.hh"
 
 namespace octopus
 {
@@ -17,8 +19,10 @@ struct ProductionTemplate
 
     /// @brief This checks if the given player has the
     /// requirements to produce this template
-    /// @todo implem using check_requirements
-    virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const = 0;
+    bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const
+    {
+        return check_requirements(producer_p, ecs, get_requirements());
+    }
     /// @brief Return a list of missing requirements
     virtual UpgradeRequirement get_requirements() const { return {}; }
     /// @brief This is used to handle resource consumption and restoration
