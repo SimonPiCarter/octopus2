@@ -536,7 +536,7 @@ public:
      * Adjust internal triangulation state accordingly.
      * @param removedTriangles indices of triangles to remove
      */
-    void removeTriangles(const TriIndUSet& removedTriangles);
+    TriIndUMap removeTriangles(const TriIndUSet& removedTriangles);
 
     /// Access internal vertex adjacent triangles
     TriIndVec& VertTrisInternal();
@@ -544,6 +544,9 @@ public:
     const TriIndVec& VertTrisInternal() const;
     /// @}
     array<TriInd, 2> get_triangle(const V2d<T>& pos) const;
+
+    TriInd addTriangle(const Triangle& t); // note: invalidates iterators!
+    TriInd addTriangle(); // note: invalidates triangle iterators!
 private:
     /*____ Detail __*/
     void addSuperTriangle(const Box2d<T>& box);
@@ -681,8 +684,6 @@ private:
         const std::vector<VertInd>& poly,
         IndexSizeType iA,
         IndexSizeType iB) const;
-    TriInd addTriangle(const Triangle& t); // note: invalidates iterators!
-    TriInd addTriangle(); // note: invalidates triangle iterators!
     /**
      * Remove super-triangle (if used) and triangles with specified indices.
      * Adjust internal triangulation state accordingly.

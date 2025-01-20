@@ -173,11 +173,11 @@ inline Edge RemapNoSuperTriangle(const Edge& e)
 }
 
 template <typename T, typename TNearPointLocator>
-void Triangulation<T, TNearPointLocator>::removeTriangles(
+TriIndUMap Triangulation<T, TNearPointLocator>::removeTriangles(
     const TriIndUSet& removedTriangles)
 {
     if(removedTriangles.empty())
-        return;
+        return {};
     // remove triangles and calculate triangle index mapping
     TriIndUMap triIndMap;
     for(TriInd iT(0), iTnew(0); iT < TriInd(triangles.size()); ++iT)
@@ -207,6 +207,7 @@ void Triangulation<T, TNearPointLocator>::removeTriangles(
             }
         }
     }
+    return triIndMap;
 }
 
 template <typename T, typename TNearPointLocator>
