@@ -56,4 +56,7 @@ struct TriangulationPtr
 };
 
 void insert_box(Triangulation &tr, int x, int y, int size_x, int size_y, bool forbidden);
+
+void remove_point(Triangulation &tr, int x, int y);
+
 }
