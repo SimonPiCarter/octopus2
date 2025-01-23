@@ -45,13 +45,6 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 
 struct ProdA : ProductionTemplate<DefaultStepManager>
 {
-	virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const
-	{
-		flecs::entity player = get_player_from_appartenance(producer_p, ecs);
-		if(!player.get<PlayerUpgrade>()) { return false; }
-
-		return !check_upgrades(*player.get<PlayerUpgrade>(), "up", 1);
-	}
 	virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
 	virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
 	{
@@ -66,16 +59,7 @@ struct ProdA : ProductionTemplate<DefaultStepManager>
 
 struct ProdB : ProductionTemplate<DefaultStepManager>
 {
-	virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const
-	{
-		flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
-		flecs::entity player = query_player.find([&producer_p](PlayerInfo& p) {
-			return p.idx == producer_p.get<PlayerAppartenance>()->idx;
-		});
-		if(!player.get<PlayerUpgrade>()) { return false; }
-
-		return check_upgrades(*player.get<PlayerUpgrade>(), "up", 1);
-	}
+    virtual UpgradeRequirement get_requirements() const { return {{{{"up", 1}}}}; }
 	virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
 	virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
 	{
