@@ -73,7 +73,7 @@ private:
 template<typename option_t, typename content_t>
 struct AtLeast
 {
-	size_t number;
+	int number;
 	option_t option;
 
 	void init(VecTileRef<option_t, content_t> const &tiles)
@@ -112,7 +112,7 @@ struct AtLeast
 template<typename option_t, typename content_t>
 struct AtMost
 {
-	size_t number = 1;
+	int number = 1;
 	option_t option;
 
 	void init(VecTileRef<option_t, content_t> const &tiles) {}
