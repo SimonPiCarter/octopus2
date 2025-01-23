@@ -11,6 +11,9 @@
 namespace octopus
 {
 
+template<typename option_t, typename content_t>
+struct ConstraintBase;
+
 template<typename option_t>
 struct OptionBundle
 {
@@ -24,6 +27,9 @@ struct Tile
 	content_t content;
 	std::vector<OptionBundle<option_t> > options;
 	std::vector<std::reference_wrapper<Tile> > neighbors;
+	std::vector<ConstraintBase<option_t, content_t>*> constraints;
+
+	bool allocated = false;
 };
 
 template<typename option_t, typename content_t>
@@ -34,7 +40,7 @@ std::optional<std::reference_wrapper<Tile<option_t, content_t>>> get_least_entro
 
 	for(auto &&tile : tiles)
 	{
-		if(tile.options.size() == 1)
+		if(tile.allocated)
 		{
 			continue;
 		}
@@ -81,12 +87,6 @@ std::optional<std::reference_wrapper<option_t>> get_option(Tile<option_t, conten
 }
 
 template<typename option_t, typename content_t>
-void allocate(Tile<option_t, content_t> &tile, option_t const &option)
-{
-	tile.options = {{option, 1}};
-}
-
-template<typename option_t, typename content_t>
 void remove_option(Tile<option_t, content_t> &tile, option_t const &option)
 {
 	for(auto it = tile.options.begin() ; it != tile.options.end() ; )
@@ -127,6 +127,28 @@ bool has(Tile<option_t, content_t> const &tile, option_t const &option)
 	return false;
 }
 
+template<typename option_t, typename content_t>
+void pre_allocate(Tile<option_t, content_t> &tile, option_t const &option)
+{
+	tile.options = {{option, 1}};
+}
+
 } // octopus
 
 #include "WaveFunctionConstraints.hh"
+
+namespace octopus
+{
+
+template<typename option_t, typename content_t>
+void allocate(Tile<option_t, content_t> &tile, option_t const &option)
+{
+	tile.options = {{option, 1}};
+	tile.allocated = true;
+	for(auto && cstr : tile.constraints)
+	{
+		cstr->propagate(tile, option);
+	}
+}
+
+} // octopus

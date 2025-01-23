@@ -45,22 +45,23 @@ struct DecayZone
 	int decay = 1;
 	OptionWFC option;
 	int dist = 10;
-	std::vector<Tile<OptionWFC, CoordWFC>> &tiles;
 
-	bool propagate(Tile<OptionWFC, CoordWFC> const &tile_p, OptionWFC const &option_p) const
+	void init(VecTileRef<OptionWFC, CoordWFC> const &tiles) {}
+
+	bool propagate(VecTileRef<OptionWFC, CoordWFC> const &tiles, Tile<OptionWFC, CoordWFC> const &tile_p, OptionWFC const &option_p) const
 	{
 		if(option != option_p) { return true; }
 
 		for(auto &&tile : tiles)
 		{
-			int delta = std::abs(tile_p.content.x - tile.content.x) + std::abs(tile_p.content.y - tile.content.y);
+			int delta = std::abs(tile_p.content.x - tile.get().content.x) + std::abs(tile_p.content.y - tile.get().content.y);
 
 			if(delta > dist)
 			{
 				continue;
 			}
 
-			for(auto &&bundle : tile.options)
+			for(auto &&bundle : tile.get().options)
 			{
 				if(bundle.option == option)
 				{
@@ -135,76 +136,66 @@ TEST(wave_function_collapse_simple, trees)
 	RandomGenerator rng(11, false);
 
 	std::vector<Constraint<OptionWFC, CoordWFC>> constraints;
-	constraints.emplace_back(AtMost<OptionWFC, CoordWFC> {
+	constraints.emplace_back(get_tiles(vec, 20, 30, 20, 30), AtMost<OptionWFC, CoordWFC> {
 		3,
-		{'g'},
-		get_tiles(vec, 20, 30, 20, 30)
+		{'g'}
 	});
-	constraints.emplace_back(AtLeast<OptionWFC, CoordWFC> {
+	constraints.emplace_back(get_tiles(vec, 20, 30, 20, 30), AtLeast<OptionWFC, CoordWFC> {
 		3,
-		{'g'},
-		get_tiles(vec, 20, 30, 20, 30)
+		{'g'}
 	});
 
-	constraints.emplace_back(AtLeast<OptionWFC, CoordWFC> {
+	constraints.emplace_back(vec_ref, AtLeast<OptionWFC, CoordWFC> {
 		30,
-		{'g'},
-		vec_ref
+		{'g'}
 	});
-	constraints.emplace_back(AtLeast<OptionWFC, CoordWFC> {
+	constraints.emplace_back(vec_ref, AtLeast<OptionWFC, CoordWFC> {
 		10,
-		{'d'},
-		vec_ref
+		{'d'}
 	});
-	constraints.emplace_back(AtLeast<OptionWFC, CoordWFC> {
+	constraints.emplace_back(vec_ref, AtLeast<OptionWFC, CoordWFC> {
 		20,
-		{'i'},
-		vec_ref
+		{'i'}
 	});
-	constraints.emplace_back(AtMost<OptionWFC, CoordWFC> {
+	constraints.emplace_back(vec_ref, AtMost<OptionWFC, CoordWFC> {
 		30,
-		{'g'},
-		vec_ref
+		{'g'}
 	});
-	constraints.emplace_back(AtMost<OptionWFC, CoordWFC> {
+	constraints.emplace_back(vec_ref, AtMost<OptionWFC, CoordWFC> {
 		10,
-		{'d'},
-		vec_ref
+		{'d'}
 	});
-	constraints.emplace_back(AtMost<OptionWFC, CoordWFC> {
+	constraints.emplace_back(vec_ref, AtMost<OptionWFC, CoordWFC> {
 		20,
-		{'i'},
-		vec_ref
+		{'i'}
 	});
 
-	constraints.emplace_back(DecayZone {
+	constraints.emplace_back(vec_ref, DecayZone {
 		10,
 		{'g'},
-		10,
-		vec
+		10
 	});
-	constraints.emplace_back(DecayZone {
+	constraints.emplace_back(vec_ref, DecayZone {
 		10,
 		{'i'},
-		10,
-		vec
+		10
 	});
-	constraints.emplace_back(DecayZone {
+	constraints.emplace_back(vec_ref, DecayZone {
 		10,
 		{'d'},
-		10,
-		vec
+		10
 	});
+
+	for(auto &&cstr : constraints)
+	{
+		cstr.init();
+	}
 
 	auto least = get_least_entropy_tile(vec, rng);
 	while(least)
 	{
 		auto option = get_option(least->get(), rng);
 		allocate(least->get(), option->get());
-		for(auto &&cstr : constraints)
-		{
-			cstr.propagate(least->get(), option->get());
-		}
 		least = get_least_entropy_tile(vec, rng);
 	}
 
