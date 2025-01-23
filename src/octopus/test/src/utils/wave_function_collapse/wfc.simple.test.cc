@@ -88,6 +88,24 @@ std::vector<std::reference_wrapper<Tile<OptionWFC, CoordWFC>>> get_tiles(
 	return tiles;
 }
 
+Tile<OptionWFC, CoordWFC> const &get_tile(Tile<OptionWFC, CoordWFC> const & tile) { return tile; }
+Tile<OptionWFC, CoordWFC> const &get_tile(std::reference_wrapper<Tile<OptionWFC, CoordWFC>> const & tile) { return tile.get(); }
+
+template<typename tile_container_t>
+int count(tile_container_t const &tiles, char val)
+{
+	int c = 0;
+	for(auto && tile_ref : tiles)
+	{
+		auto && tile = get_tile(tile_ref);
+		if(is_locked(tile) && get_option(tile).val == val)
+		{
+			++c;
+		}
+	}
+	return c;
+}
+
 TEST(wave_function_collapse_simple, trees)
 {
 	int x = 50;
@@ -189,6 +207,11 @@ TEST(wave_function_collapse_simple, trees)
 		}
 		least = get_least_entropy_tile(vec, rng);
 	}
+
+	EXPECT_EQ(3, count(get_tiles(vec, 20, 30, 20, 30), 'g'));
+	EXPECT_EQ(30, count(vec_ref, 'g'));
+	EXPECT_EQ(20, count(vec_ref, 'i'));
+	EXPECT_EQ(10, count(vec_ref, 'd'));
 
 	// int c = 0;
 	// for(auto &&tile : vec)
