@@ -103,7 +103,7 @@ void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
                 return p.idx == player_app.idx;
             });
 
-            for(int idx = 0 ; idx < queue.queue.size() ; ++idx)
+            for(int idx = 0 ; (size_t)idx < queue.queue.size() ; ++idx)
             {
                 cancel_production(production_library, e, queue, player, idx, ecs, manager_p);
             }

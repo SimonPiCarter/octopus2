@@ -10,7 +10,7 @@ namespace octopus
 struct PlayerInfo
 {
 	uint32_t idx = 0;
-	uint32_t team = 0;
+	uint16_t team = 0;
 };
 
 struct PlayerAppartenance

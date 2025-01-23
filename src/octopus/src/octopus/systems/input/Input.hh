@@ -213,9 +213,6 @@ struct Input
 					continue;
 				}
 
-				// get production information
-				ProductionTemplate<StepManager_t> const * prod_l = prod_lib->try_get(prod_queue_l->queue[input_l.idx]);
-
 				// get player info
 				flecs::entity player = query_player.find([&input_l](PlayerInfo& p) {
 					return p.idx == input_l.producer.get<PlayerAppartenance>()->idx;
