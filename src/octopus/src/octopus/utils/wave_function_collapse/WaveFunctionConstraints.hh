@@ -88,7 +88,7 @@ struct AtLeast
 	}
 	bool propagate(VecTileRef<option_t, content_t> const &tiles, Tile<option_t, content_t> const &tile_p, option_t const &option_p) const
 	{
-		if(option_p != option)
+		if(option_p != option && has(tile_p, option))
 		{
 			--count;
 		}

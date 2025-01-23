@@ -143,12 +143,12 @@ namespace octopus
 template<typename option_t, typename content_t>
 void allocate(Tile<option_t, content_t> &tile, option_t const &option)
 {
-	tile.options = {{option, 1}};
-	tile.allocated = true;
 	for(auto && cstr : tile.constraints)
 	{
 		cstr->propagate(tile, option);
 	}
+	tile.options = {{option, 1}};
+	tile.allocated = true;
 }
 
 } // octopus
