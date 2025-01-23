@@ -15,6 +15,7 @@
 #include "octopus/world/resources/ResourceStock.hh"
 #include "octopus/world/resources/CostReduction.hh"
 #include "octopus/systems/phases/Phases.hh"
+#include "octopus/systems/production/ProductionSystem.hh"
 #include "octopus/utils/log/Logger.hh"
 
 namespace octopus
@@ -221,19 +222,7 @@ struct Input
 				});
 				if(!player.is_valid()) { continue; }
 
-				manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {"", input_l.idx});
-				prod_l->dequeue(input_l.producer, ecs, manager_p);
-				if(input_l.idx == 0)
-				{
-					manager_p.get_last_layer().back().template get<ProductionQueueTimestampStep>().add_step(input_l.producer, {0});
-				}
-				for(auto &&pair_l : prod_l->resource_consumption())
-				{
-					std::string const &resource_l = pair_l.first;
-					Fixed resource_consumed_l = pair_l.second;
-					// add step for consumption
-					manager_p.get_last_layer().back().template get<ResourceStockStep>().add_step(player, {resource_consumed_l, resource_l});
-				}
+				cancel_production(prod_lib, input_l.producer, *prod_queue_l, player, input_l.idx, ecs, manager_p);
 			}
 		}
 
