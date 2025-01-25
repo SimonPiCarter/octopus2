@@ -66,6 +66,16 @@ inline T heuristic(Triangulation<T> const &triangulation, Triangle const &from_p
 }
 
 template<typename T>
+void set(std::vector<bool> &go_through, Triangulation<T> const &triangulation, size_t idx, size_t n)
+{
+	go_through[idx] = true;
+	if(n==0) { return; }
+	set(go_through, triangulation, triangulation.triangles[idx].neighbors[0], n-1);
+	set(go_through, triangulation, triangulation.triangles[idx].neighbors[1], n-1);
+	set(go_through, triangulation, triangulation.triangles[idx].neighbors[2], n-1);
+}
+
+template<typename T>
 inline std::vector<std::size_t> shortest_path(Triangulation<T> const &triangulation, std::size_t source, std::size_t target,
     std::vector<bool> const &forbidden_triangles)
 {
@@ -73,6 +83,13 @@ inline std::vector<std::size_t> shortest_path(Triangulation<T> const &triangulat
 	std::set<Label<T> const *, comparator_ptr<Label<T>> > open_list_l;
 	// one label per node at most
 	std::vector<Label<T>> labels;
+
+	// init go through forbidden
+	std::vector<bool> go_through(triangulation.triangles.size(), false);
+	if(forbidden_triangles[target])
+	{
+		set(go_through, triangulation, target, 2);
+	}
 
 	// init labels
 	labels.resize(triangulation.triangles.size(), Label<T>());
@@ -101,7 +118,7 @@ inline std::vector<std::size_t> shortest_path(Triangulation<T> const &triangulat
 		for(TriInd const &n : triangle_l.neighbors)
 		{
 			if(n == CDT::noNeighbor
-			|| forbidden_triangles[n])
+			|| (forbidden_triangles[n] && !go_through[n]))
 			{
 				continue;
 			}
