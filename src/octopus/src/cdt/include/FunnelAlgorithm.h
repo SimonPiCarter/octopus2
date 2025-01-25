@@ -118,7 +118,7 @@ FunnelPartResult funnel_algorithm_part(
     VertInd right = left == cur_edge.v1() ? cur_edge.v2() : cur_edge.v1();
     bool left_stuck = false;
     bool right_stuck = false;
-    std::size_t stuck_portal = cur_portals;
+    // std::size_t stuck_portal = cur_portals;
     std::size_t left_portal = cur_portals;
     std::size_t right_portal = cur_portals;
 
@@ -168,7 +168,7 @@ FunnelPartResult funnel_algorithm_part(
             // Harden left and remember portal
             else
             {
-                stuck_portal = cur_portals;
+                // stuck_portal = cur_portals;
                 left_stuck = true;
             }
         }
@@ -203,7 +203,7 @@ FunnelPartResult funnel_algorithm_part(
             // Harden right and remember portal
             else
             {
-                stuck_portal = cur_portals;
+                // stuck_portal = cur_portals;
                 right_stuck = true;
             }
         }
