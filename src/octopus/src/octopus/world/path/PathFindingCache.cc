@@ -169,7 +169,12 @@ Vector PathQuery::get_direction() const
 		return vert_dest - vert_orig;
 	}
 	END_TIME_PTR(path_funnelling, cache->stats)
-	return funnel[1] - funnel[0];
+	Vector dir = funnel[1] - funnel[0];
+	if(dir.x < Fixed(100, true) && dir.x < Fixed(100, true))
+	{
+		dir *= 100;
+	}
+	return dir;
 }
 
 }
