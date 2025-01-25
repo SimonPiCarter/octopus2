@@ -112,8 +112,8 @@ void Triangulation::finalize()
 
 std::vector<std::size_t> Triangulation::compute_path(Vector const &orig, Vector const &dest) const
 {
-	int orig_idx = cdt.get_triangle({orig.x,orig.y})[0];
-	int dest_idx = cdt.get_triangle({dest.x,dest.y})[0];
+	CDT::TriInd orig_idx = cdt.get_triangle({orig.x,orig.y})[0];
+	CDT::TriInd dest_idx = cdt.get_triangle({dest.x,dest.y})[0];
 
 	if(orig_idx == CDT::noNeighbor || dest_idx == CDT::noNeighbor)
 	{

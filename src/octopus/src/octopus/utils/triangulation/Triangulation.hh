@@ -23,7 +23,7 @@ public:
 	std::vector<std::size_t> compute_path_from_idx(std::size_t orig, std::size_t dest) const;
 	std::vector<Vector> compute_funnel(Vector const &orig, Vector const &dest) const;
 	std::vector<Vector> compute_funnel_from_path(Vector const &orig, Vector const &dest, std::vector<std::size_t> const &path) const;
-	CDT::FunnelDebug<octopus::Fixed> debug_funnel(Vector const &orig, Vector const &dest, int step) const;
+	CDT::FunnelDebug<Fixed> debug_funnel(Vector const &orig, Vector const &dest, int step) const;
 
 	void stream(std::ostream &oss) const
 	{
@@ -40,7 +40,7 @@ public:
 		}
 	}
 // private:
-	CDT::Triangulation<octopus::Fixed> cdt;
+	CDT::Triangulation<Fixed> cdt;
 	std::vector<std::pair<CDT::VertInd, CDT::VertInd> > edges;
 	std::vector<bool> forbidden_triangles;
 

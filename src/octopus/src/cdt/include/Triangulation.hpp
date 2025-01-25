@@ -1521,9 +1521,9 @@ array<TriInd, 2> Triangulation<T, TNearPointLocator>::walkingSearchTrianglesAt(
     }
     if(loc == PtTriLocation::OnVertex && check)
     {
-        const VertInd iDupe = v1 == v   ? t.vertices[0]
-                              : v2 == v ? t.vertices[1]
-                                        : t.vertices[2];
+        // const VertInd iDupe = v1 == v   ? t.vertices[0]
+        //                       : v2 == v ? t.vertices[1]
+        //                                 : t.vertices[2];
         // throw DuplicateVertexError(
         //     0, iDupe - m_nTargetVerts, CDT_SOURCE_LOCATION);
     }
