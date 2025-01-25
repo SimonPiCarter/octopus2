@@ -31,12 +31,12 @@ std::vector<flecs::entity> get_closest_entities(
 
 	std::set<DistanceEntity> closest_l;
 
-	Fixed max_range_sq = max_range*max_range;
 
 	std::function<bool(int32_t, flecs::entity)> func_l = [&](int32_t idx_l, flecs::entity e) -> bool {
 		Position const *other_p = e.get<Position>();
 		assert(other_p);
 		Fixed distance_sq = square_length(pos_p.pos - other_p->pos);
+		Fixed max_range_sq = (max_range+other_p->ray)*(max_range+other_p->ray);
 
 		if(filter_p(e)
 		&& (closest_l.empty() || distance_sq < closest_l.rbegin()->distance_sq)
