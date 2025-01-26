@@ -141,7 +141,7 @@ namespace octopus
 {
 
 template<typename option_t, typename content_t>
-void allocate(Tile<option_t, content_t> &tile, option_t const &option)
+void allocate(Tile<option_t, content_t> &tile, option_t option)
 {
 	for(auto && cstr : tile.constraints)
 	{
