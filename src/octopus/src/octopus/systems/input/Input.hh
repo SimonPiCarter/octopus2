@@ -226,6 +226,7 @@ struct Input
 		// Handling command inputs
 		for(InputCommand<command_variant_t> const & input : container_command.get_front_layer())
 		{
+			if(!input.entity.is_valid()) { continue; }
 			auto &&command_queue = input.entity.template get_mut<CommandQueue<command_variant_t>>();
 			if(!command_queue) { continue; }
 			auto &&queue_l = command_queue->_queuedActions;
