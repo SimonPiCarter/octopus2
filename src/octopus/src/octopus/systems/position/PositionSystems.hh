@@ -101,15 +101,17 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 			START_TIME(position_system)
 
+			if(!pos_p.collision || pos_p.mass == Fixed::Zero() || pos_p.mass > 999)
+			{
+				END_TIME(position_system)
+				return;
+			}
+
 			Vector f;  // forces
 			Vector a;  // acceleration
 			Vector v = pos_p.velocity * max_speed / move_p.speed;  // velocity
 			// Vector const &p = pos_p.pos;  // position
 
-			if(!pos_p.collision || pos_p.mass == Fixed::Zero())
-			{
-				return;
-			}
 
 			// steering to target
 			Vector seek_l = seek_force(move_p.move, v, max_speed);
