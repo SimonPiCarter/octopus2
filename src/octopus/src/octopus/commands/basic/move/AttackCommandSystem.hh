@@ -36,6 +36,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 	ThreadPool &pool = world_context.pool;
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
+		.multi_threaded()
 		.with(CommandQueue_t::state(ecs), ecs.component<NoOpCommand::State>())
 		.run([&, attack_retarget_wait](flecs::iter &it)
 		{
@@ -47,48 +48,47 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto queue = it.field<CommandQueue_t>(4);
 				START_TIME(attack_command_new_target)
 
-				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t end)
+				size_t thread_idx = it.world().get_stage_id();
+				for(size_t ent_idx = 0; ent_idx < it.count(); ++ ent_idx)
 				{
-					for(size_t ent_idx = s; ent_idx < end; ++ ent_idx)
+					flecs::entity e = it.entity(ent_idx);
+					auto && pos_p = pos[ent_idx];
+					auto && attackCommand_p = attackCommand[ent_idx];
+					auto && attack_p = attack[ent_idx];
+					auto && queue_p = queue[ent_idx];
+
+					Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
+					flecs::entity new_target;
+
+					if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
 					{
-						flecs::entity e = it.entity(ent_idx);
-						auto && pos_p = pos[ent_idx];
-						auto && attackCommand_p = attackCommand[ent_idx];
-						auto && attack_p = attack[ent_idx];
-						auto && queue_p = queue[ent_idx];
 
-						Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
-						flecs::entity new_target;
+						Logger::getDebug() << "  looking for target" <<std::endl;
+						new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.cst.range));
 
-						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || !attackCommand_p.init)
+						if(new_target)
 						{
+							Logger::getDebug() << "  found" <<std::endl;
+							AttackCommand atk_l {new_target, pos_p.pos, true, true};
+							queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
+						}
 
-							Logger::getDebug() << "  looking for target" <<std::endl;
-							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.cst.range));
-
-							if(new_target)
-							{
-								Logger::getDebug() << "  found" <<std::endl;
-								AttackCommand atk_l {new_target, pos_p.pos, true, true};
-								queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
-							}
-
-							if(!attackCommand_p.init)
-							{
-								// set up attack command as initialized
-								manager_p.get_last_layer()[thread_idx].template get<AttackCommandInitStep>().add_step(e, {true});
-							}
-
+						if(!attackCommand_p.init)
+						{
+							// set up attack command as initialized
+							manager_p.get_last_layer()[thread_idx].template get<AttackCommandInitStep>().add_step(e, {true});
 						}
 
 					}
-				});
-				END_TIME(attack_command_new_target)
+
+				}
+				// END_TIME(attack_command_new_target)
 			}
 		});
 
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
+		.multi_threaded()
 		.template write<AttackTrigger>()
 		.with(CommandQueue_t::state(ecs), ecs.component<AttackCommand::State>())
 		.run([&, attack_retarget_wait](flecs::iter &it)
@@ -102,178 +102,164 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto move = it.field<Move>(3);
 				auto queue = it.field<CommandQueue_t>(4);
 
-				using trigger_pair = std::pair<flecs::entity, flecs::entity>;
-				using vec_trigger_pair = std::vector<std::pair<flecs::entity, flecs::entity>>;
-				std::vector<vec_trigger_pair> vec_attack_trigger_setter(pool.size(), vec_trigger_pair());
-
-				threading(it.count(), pool, [&, attack_retarget_wait](size_t thread_idx, size_t s, size_t end)
+				size_t thread_idx = it.world().get_stage_id();
+				for(size_t ent_idx = 0; ent_idx < it.count(); ++ ent_idx)
 				{
-					for(size_t ent_idx = s; ent_idx < end; ++ ent_idx)
+					flecs::entity e = it.entity(ent_idx);
+					auto && pos_p = pos[ent_idx];
+					auto && attackCommand_p = attackCommand[ent_idx];
+					auto && attack_p = attack[ent_idx];
+					auto && move_p = move[ent_idx];
+					auto && queue_p = queue[ent_idx];
+
+					Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
+
+
+					move_p.target_move = Vector();
+
+					// check if target is valid
+					HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.get<HitPoint>() : nullptr;
+					Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
+					if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 					{
-						flecs::entity e = it.entity(ent_idx);
-						auto && pos_p = pos[ent_idx];
-						auto && attackCommand_p = attackCommand[ent_idx];
-						auto && attack_p = attack[ent_idx];
-						auto && move_p = move[ent_idx];
-						auto && queue_p = queue[ent_idx];
+						// override retaget wait in certain case
+						// - not initialized yet
+						// - target died
+						bool should_scan_l = !attackCommand_p.init || !hp || hp->qty <= Fixed::Zero();
 
-						Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
-
-
-						move_p.target_move = Vector();
-
-						// check if target is valid
-						HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.get<HitPoint>() : nullptr;
-						Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
-						if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
+						flecs::entity new_target;
+						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || should_scan_l)
 						{
-							// override retaget wait in certain case
-							// - not initialized yet
-							// - target died
-							bool should_scan_l = !attackCommand_p.init || !hp || hp->qty <= Fixed::Zero();
+							START_TIME(attack_command_new_target)
 
-							flecs::entity new_target;
-							if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || should_scan_l)
-							{
-								START_TIME(attack_command_new_target)
-
-								new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
-								Logger::getDebug() << "  re-looking for target " << pos_p.pos<<std::endl;
-
-								if(!new_target)
-								{
-									if(pos_p.mass > 1)
-									{
-										manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1});
-									}
-								}
-
-								if(!attackCommand_p.init)
-								{
-									// set up attack command as initialized
-									manager_p.get_last_layer()[thread_idx].template get<AttackCommandInitStep>().add_step(e, {true});
-								}
-
-								END_TIME(attack_command_new_target)
-							}
+							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
+							Logger::getDebug() << "  re-looking for target " << pos_p.pos<<std::endl;
 
 							if(!new_target)
 							{
-								Logger::getDebug() << " moving "<<attackCommand_p.target_pos <<std::endl;
-								flecs::entity flock_entity = attackCommand_p.flock_handle.get();
-								Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
-								// if no move we are done
-								if(!attackCommand_p.move)
+								if(pos_p.mass > 1)
 								{
-									Logger::getDebug() << " done" <<std::endl;
-									queue_p._queuedActions.push_back(CommandQueueActionDone());
-								}
-								// else move and if done we are done
-								else if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p, flock, &time_stats_p))
-								{
-									if(flock_entity.is_valid() && flock)
-									{
-										Logger::getDebug() << " arrived = "<<flock->arrived <<std::endl;
-										manager_p.get_last_layer()[thread_idx].template get<FlockArrivedStep>().add_step(flock_entity, {flock->arrived + 1});
-									}
-									queue_p._queuedActions.push_back(CommandQueueActionDone());
+									manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1});
 								}
 							}
-							else
+
+							if(!attackCommand_p.init)
 							{
-								Logger::getDebug() << "    found" <<std::endl;
-								// update target
-								manager_p.get_last_layer()[thread_idx].template get<AttackCommandStep>().add_step(e, {new_target});
-								// reset windup
-								manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {0});
+								// set up attack command as initialized
+								manager_p.get_last_layer()[thread_idx].template get<AttackCommandInitStep>().add_step(e, {true});
 							}
 
-							// Logger::getDebug() << "Done :: "<<thread_idx<<std::endl;
-							continue;
+							// END_TIME(attack_command_new_target)
 						}
 
-						// in range and reloaded : we can attack
-						int32_t time = int32_t(get_time_stamp(ecs));
-						// wind up has started
-						if(attack_p.windup > 0)
+						if(!new_target)
 						{
-							// attacking
-							if(attack_p.windup >= attack_p.cst.windup_time)
+							Logger::getDebug() << " moving "<<attackCommand_p.target_pos <<std::endl;
+							flecs::entity flock_entity = attackCommand_p.flock_handle.get();
+							Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
+							// if no move we are done
+							if(!attackCommand_p.move)
 							{
-								// damage
-								vec_attack_trigger_setter[thread_idx].push_back({e, attackCommand_p.target});
-								// reset windup
-								manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {0});
-								// reset reload
-								manager_p.get_last_layer()[thread_idx].template get<AttackReloadStep>().add_step(e, {time});
+								Logger::getDebug() << " done" <<std::endl;
+								queue_p._queuedActions.push_back(CommandQueueActionDone());
 							}
-							else
+							// else move and if done we are done
+							else if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p, flock, &time_stats_p))
 							{
-								// increment windup
-								manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
+								if(flock_entity.is_valid() && flock)
+								{
+									Logger::getDebug() << " arrived = "<<flock->arrived <<std::endl;
+									manager_p.get_last_layer()[thread_idx].template get<FlockArrivedStep>().add_step(flock_entity, {flock->arrived + 1});
+								}
+								queue_p._queuedActions.push_back(CommandQueueActionDone());
 							}
 						}
-						// if not in range we need to move
-						else if(!in_attack_range(target_pos, pos_p, attack_p))
-						{
-							Logger::getDebug() << " not inrange" <<std::endl;
-							// reset mass if necessary
-							if(pos_p.mass > 1)
-							{
-								manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1});
-							}
-
-							flecs::entity new_target;
-							if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0)
-							{
-								START_TIME(attack_command_new_target)
-
-								Logger::getDebug() << " re-target greedy" <<std::endl;
-								new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
-
-								END_TIME(attack_command_new_target)
-							}
-
-							if(new_target
-							&& in_attack_range(new_target.get<Position>(), pos_p, attack_p))
-							{
-								Logger::getDebug() << "   found" <<std::endl;
-								// update target
-								manager_p.get_last_layer()[thread_idx].template get<AttackCommandStep>().add_step(e, {new_target});
-							}
-
-							move_p.move = get_speed_direction(ecs, pos_p, target_pos->pos, move_p.speed);
-						}
-						// if in range and reload ready initiate windup
 						else
 						{
-							Logger::getDebug() << " inrange p="<<pos_p.pos<<" t="<<target_pos->pos <<std::endl;
-							// set mass if necessary
-							if(pos_p.mass < 5)
-							{
-								manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1000});
-							}
-							if(has_reloaded(uint32_t(get_time_stamp(ecs)), attack_p))
-							{
-								Logger::getDebug() << " winding up" <<std::endl;
-								// increment windup
-								manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
-							}
+							Logger::getDebug() << "    found" <<std::endl;
+							// update target
+							manager_p.get_last_layer()[thread_idx].template get<AttackCommandStep>().add_step(e, {new_target});
+							// reset windup
+							manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {0});
 						}
 
+						// Logger::getDebug() << "Done :: "<<thread_idx<<std::endl;
+						continue;
 					}
-				});
-				// Apply all setter for AttackTrigger (cause concurrency errors if done while multi threading)
-				for(vec_trigger_pair &vec : vec_attack_trigger_setter)
-				{
-					for(trigger_pair &pair : vec)
+
+					// in range and reloaded : we can attack
+					int32_t time = int32_t(get_time_stamp(ecs));
+					// wind up has started
+					if(attack_p.windup > 0)
 					{
-						pair.first.set<AttackTrigger>({pair.second});
+						// attacking
+						if(attack_p.windup >= attack_p.cst.windup_time)
+						{
+							// damage
+							e.set<AttackTrigger>({attackCommand_p.target});
+							// reset windup
+							manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {0});
+							// reset reload
+							manager_p.get_last_layer()[thread_idx].template get<AttackReloadStep>().add_step(e, {time});
+						}
+						else
+						{
+							// increment windup
+							manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
+						}
 					}
+					// if not in range we need to move
+					else if(!in_attack_range(target_pos, pos_p, attack_p))
+					{
+						Logger::getDebug() << " not inrange" <<std::endl;
+						// reset mass if necessary
+						if(pos_p.mass > 1)
+						{
+							manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1});
+						}
+
+						flecs::entity new_target;
+						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0)
+						{
+							START_TIME(attack_command_new_target)
+
+							Logger::getDebug() << " re-target greedy" <<std::endl;
+							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
+
+							// END_TIME(attack_command_new_target)
+						}
+
+						if(new_target
+						&& in_attack_range(new_target.get<Position>(), pos_p, attack_p))
+						{
+							Logger::getDebug() << "   found" <<std::endl;
+							// update target
+							manager_p.get_last_layer()[thread_idx].template get<AttackCommandStep>().add_step(e, {new_target});
+						}
+
+						move_p.move = get_speed_direction(ecs, pos_p, target_pos->pos, move_p.speed);
+					}
+					// if in range and reload ready initiate windup
+					else
+					{
+						Logger::getDebug() << " inrange p="<<pos_p.pos<<" t="<<target_pos->pos <<std::endl;
+						// set mass if necessary
+						if(pos_p.mass < 5)
+						{
+							manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1000});
+						}
+						if(has_reloaded(uint32_t(get_time_stamp(ecs)), attack_p))
+						{
+							Logger::getDebug() << " winding up" <<std::endl;
+							// increment windup
+							manager_p.get_last_layer()[thread_idx].template get<AttackWindupStep>().add_step(e, {attack_p.windup+1});
+						}
+					}
+
 				}
 
 			}
-			END_TIME(attack_command)
+			// END_TIME(attack_command)
 		});
 
 	ecs.system<AttackTrigger const, Attack const>()
