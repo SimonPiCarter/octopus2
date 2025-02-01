@@ -33,7 +33,6 @@ template<class StepManager_t, class CommandQueue_t>
 void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<StepManager_t> &world_context, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
 {
 	PositionContext &pos_context = world_context.position_context;
-	ThreadPool &pool = world_context.pool;
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.multi_threaded()
@@ -82,7 +81,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					}
 
 				}
-				// END_TIME(attack_command_new_target)
+				END_TIME(attack_command_new_target)
 			}
 		});
 
@@ -149,7 +148,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 								manager_p.get_last_layer()[thread_idx].template get<AttackCommandInitStep>().add_step(e, {true});
 							}
 
-							// END_TIME(attack_command_new_target)
+							END_TIME(attack_command_new_target)
 						}
 
 						if(!new_target)
@@ -226,7 +225,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 							Logger::getDebug() << " re-target greedy" <<std::endl;
 							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
 
-							// END_TIME(attack_command_new_target)
+							END_TIME(attack_command_new_target)
 						}
 
 						if(new_target
@@ -259,7 +258,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				}
 
 			}
-			// END_TIME(attack_command)
+			END_TIME(attack_command)
 		});
 
 	ecs.system<AttackTrigger const, Attack const>()
