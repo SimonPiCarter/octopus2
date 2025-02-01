@@ -20,7 +20,7 @@ Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed con
 	return force;
 }
 
-Vector separation_force(PositionContext const &posContext_p, Position const &pos_ref_p)
+Vector separation_force(flecs::entity const &ref_ent, PositionContext const &posContext_p, Position const &pos_ref_p)
 {
 	Vector force;
 	Fixed force_factor = 500;
@@ -29,7 +29,7 @@ Vector separation_force(PositionContext const &posContext_p, Position const &pos
 		Position const *pos_l = e.get<Position>();
 		Logger::getDebug() << "separation_force :: with name=" << e.name()<<" id="<<e.id()<<std::endl;
 		assert(pos_l);
-		if(!pos_l->collision || pos_l->mass == Fixed::Zero())
+		if(!pos_l->collision || pos_l->mass == Fixed::Zero() || e.id() == ref_ent.id())
 		{
 			Logger::getDebug() << "separation_force :: skipped"<<std::endl;
 			return true;
@@ -53,6 +53,10 @@ Vector separation_force(PositionContext const &posContext_p, Position const &pos
 			// account for mass
 			local_force *= 2 * pos_l->mass / (pos_ref_p.mass + pos_l->mass);
 			force += local_force;
+		}
+		if(length_squared <= 0.001)
+		{
+			force += e.id() < ref_ent.id() ? Vector(Fixed::One(), 0) : Vector(0, Fixed::One());
 		}
 		return true;
 	};

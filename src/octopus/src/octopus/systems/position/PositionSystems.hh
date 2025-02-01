@@ -22,7 +22,7 @@ namespace octopus
 
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p);
 
-Vector separation_force(PositionContext const &pos_context, Position const &pos_ref_p);
+Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos_context, Position const &pos_ref_p);
 
 template<class StepManager_t>
 void add_to_tree(uint32_t idx_tree, flecs::entity e, Position const &pos, StepManager_t &manager, PositionContext &pos_context)
@@ -118,7 +118,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: seeking force = "<<seek_l<<std::endl;
 			f = seek_l;
 			// separation force
-			Vector sep_l = separation_force(pos_context, pos_p);
+			Vector sep_l = separation_force(e, pos_context, pos_p);
 			Logger::getDebug() << "Flocking :: separation force = "<<sep_l<<std::endl;
 			f += sep_l;
 
