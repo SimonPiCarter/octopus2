@@ -545,6 +545,8 @@ public:
     /// @}
     array<TriInd, 2> get_triangle(const V2d<T>& pos) const;
 
+    TriInd get_closest_non_tagged_triangle(const V2d<T>& pos, std::vector<bool> const &tags) const;
+
     TriInd addTriangle(const Triangle& t); // note: invalidates iterators!
     TriInd addTriangle(); // note: invalidates triangle iterators!
 private:

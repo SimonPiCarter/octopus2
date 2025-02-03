@@ -321,6 +321,46 @@ T distanceSquared(const V2d<T>& a, const V2d<T>& b)
     return distanceSquared(a.x, a.y, b.x, b.y);
 }
 
+template <typename T>
+V2d<T> project_on_edge(const V2d<T>& p, const V2d<T>& a, const V2d<T>& b, T const &epsilon)
+{
+    T dx = b.x-a.x;
+    T dy = b.y-a.y;
+    // horizontal line
+    if(dx <= epsilon && dx >= -epsilon)
+    {
+        return {a.x, p.y};
+    }
+    // vertical line
+    if(dy <= epsilon && dy >= -epsilon)
+    {
+        return {p.x, a.y};
+    }
+    T tx = (p.y - a.y) / dy;
+    T u = a.x + tx * dx - p.x;
+
+    T ty = (p.x - a.x) / dx;
+    T v = a.y + ty * dy - p.y;
+
+    return {p.x + u/2, p.y + v/2};
+}
+
+template <typename T>
+bool is_projection_on_edge(const V2d<T>& p, const V2d<T>& a, const V2d<T>& b)
+{
+    T minx = std::min(a.x, b.x);
+    T miny = std::min(a.y, b.y);
+    T maxx = std::max(a.x, b.x);
+    T maxy = std::max(a.y, b.y);
+    return p.x >= minx && p.x <= maxx && p.y >= miny && p.y <= maxy;
+}
+
+template <typename T>
+bool is_on_edge(const V2d<T>& v, const V2d<T>& a, const V2d<T>& b, T const &epsilon)
+{
+    return is_projection_on_edge(project_on_edge(v,a,b,epsilon), a, b);
+}
+
 bool touchesSuperTriangle(const Triangle& t)
 {
     return t.vertices[0] < 3 || t.vertices[1] < 3 || t.vertices[2] < 3;

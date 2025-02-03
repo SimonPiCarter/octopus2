@@ -441,6 +441,17 @@ CDT_EXPORT T distanceSquared(const V2d<T>& a, const V2d<T>& b);
 /// Check if any of triangle's vertices belongs to a super-triangle
 CDT_INLINE_IF_HEADER_ONLY bool touchesSuperTriangle(const Triangle& t);
 
+/// get point project of v on the edge a, b
+template <typename T>
+CDT_EXPORT V2d<T> project_on_edge(const V2d<T>& v, const V2d<T>& a, const V2d<T>& b, T const &epsilon=0);
+
+template <typename T>
+bool is_projection_on_edge(const V2d<T>& p, const V2d<T>& a, const V2d<T>& b);
+
+template <typename T>
+bool is_on_edge(const V2d<T>& v, const V2d<T>& a, const V2d<T>& b, T const &epsilon=0);
+
+
 } // namespace CDT
 
 #ifndef CDT_USE_AS_COMPILED_LIBRARY

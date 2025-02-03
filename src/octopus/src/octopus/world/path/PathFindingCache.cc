@@ -10,7 +10,7 @@ PathRequest PathFindingCache::get_request(Vector const &orig, Vector const &dest
 {
 	assert(triangulation);
 	PathRequest request {triangulation->cdt.triangles.size(), triangulation->cdt.triangles.size()};
-	request.orig = triangulation->cdt.get_triangle({orig.x,orig.y})[0];
+	request.orig = triangulation->cdt.get_closest_non_tagged_triangle({orig.x,orig.y}, triangulation->forbidden_triangles);
 	request.dest = triangulation->cdt.get_triangle({dest.x,dest.y})[0];
 	return request;
 }
@@ -121,10 +121,10 @@ void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulat
 	ecs.system<>()
 		.kind(ecs.entity(PrepingUpdatePhase))
 		.run([this, &ecs](flecs::iter) {
-			// Logger::getNormal() << "compute_paths :: start"<<std::endl;
+			// Logger::getDebug() << "compute_paths :: start"<<std::endl;
 			if(!triangulation) { return; }
 			compute_paths(ecs);
-			// Logger::getNormal() << "compute_paths :: done"<<std::endl;
+			// Logger::getDebug() << "compute_paths :: done"<<std::endl;
 		});
 }
 

@@ -1040,6 +1040,70 @@ array<TriInd, 2> Triangulation<T, TNearPointLocator>::get_triangle(const V2d<T>&
 }
 
 template <typename T, typename TNearPointLocator>
+void add_neighbors(size_t depth, std::vector<TriInd> &neighbors, std::vector<bool> &added,
+    TriInd const &start, Triangulation<T, TNearPointLocator> const &triangulation)
+{
+    if(depth == 0) { return; }
+
+    Triangle const &tr = triangulation.triangles[start];
+    if(noNeighbor != tr.neighbors[0] && !added[tr.neighbors[0]])
+    {
+        neighbors.push_back(tr.neighbors[0]);
+        added[tr.neighbors[0]] = true;
+        add_neighbors(depth-1, neighbors, added, tr.neighbors[0], triangulation);
+    }
+    if(noNeighbor != tr.neighbors[1] && !added[tr.neighbors[1]])
+    {
+        neighbors.push_back(tr.neighbors[1]);
+        added[tr.neighbors[1]] = true;
+        add_neighbors(depth-1, neighbors, added, tr.neighbors[1], triangulation);
+    }
+    if(noNeighbor != tr.neighbors[2] && !added[tr.neighbors[2]])
+    {
+        neighbors.push_back(tr.neighbors[2]);
+        added[tr.neighbors[2]] = true;
+        add_neighbors(depth-1, neighbors, added, tr.neighbors[2], triangulation);
+    }
+}
+
+template <typename T, typename TNearPointLocator>
+TriInd Triangulation<T, TNearPointLocator>::get_closest_non_tagged_triangle(const V2d<T>& pos, std::vector<bool> const &tags) const
+{
+    TriInd start = get_triangle(pos)[0];
+    if(start == noNeighbor || !tags[start]) { return start; }
+
+    std::vector<bool> added = tags;
+    added.resize(triangles.size(), false);
+    std::vector<TriInd> neighbors;
+
+    add_neighbors(2, neighbors, added, start, *this);
+
+    TriInd best_triangle = start;
+    T best_man_dist = 0;
+    for(TriInd ind : neighbors)
+    {
+        Triangle const &tr = triangles[ind];
+        for(size_t i = 0 ; i < 3 ; ++ i)
+        {
+            TriInd const a = tr.vertices[i];
+            TriInd const b = tr.vertices[(i+1)%3];
+            V2d<T> projection = project_on_edge(pos, vertices[a], vertices[b]);
+            if(is_projection_on_edge(projection, vertices[a], vertices[b]))
+            {
+                T man_dist = std::abs(pos.x - projection.x) + std::abs(pos.y - projection.y);
+                if(best_triangle == start || best_man_dist > man_dist)
+                {
+                    best_triangle = ind;
+                    best_man_dist = man_dist;
+                }
+            }
+        }
+    }
+    return best_triangle;
+}
+
+
+template <typename T, typename TNearPointLocator>
 std::vector<Edge>
 Triangulation<T, TNearPointLocator>::insertVertex_FlipFixedEdges(
     const VertInd iV1)
