@@ -50,6 +50,10 @@ Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos
 		else if(length_squared <= max_range_squared && length_squared > 0.001)
 		{
 			Vector local_force = diff/length(diff) * force_factor / length_squared;
+			if(pos_l->mass > 999)
+			{
+				local_force /= 10;
+			}
 			// account for mass
 			local_force *= 2 * pos_l->mass / (pos_ref_p.mass + pos_l->mass);
 			force += local_force;
