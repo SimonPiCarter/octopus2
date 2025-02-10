@@ -21,6 +21,7 @@ namespace octopus
 struct MoveCommand {
 	Vector target;
 	FlockHandle flock_handle;
+	Fixed extra_tolerance = 0;
 
 	static constexpr char const * const naming()  { return "move"; }
 	struct State {};
@@ -28,7 +29,8 @@ struct MoveCommand {
 
 /// END State
 
-bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Vector const&target_p, Move &move_p, Flock const *flock_p=nullptr, TimeStats *stats_p=nullptr);
+bool move_routine(flecs::world &ecs, flecs::entity e, Position const&pos_p, Vector const&target_p,
+	Move &move_p, Flock const *flock_p=nullptr, TimeStats *stats_p=nullptr, Fixed const &extra_tolerance=Fixed::Zero());
 
 template<class StepManager_t, class CommandQueue_t>
 void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &time_stats_p)
@@ -41,7 +43,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 			move_p.target_move = Vector();
 			flecs::entity flock_entity = moveCommand_p.flock_handle.get();
 			Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
-			if(move_routine(ecs, e, pos_p, moveCommand_p.target, move_p, flock))
+			if(move_routine(ecs, e, pos_p, moveCommand_p.target, move_p, flock, nullptr, moveCommand_p.extra_tolerance))
 			{
 				if(flock_entity.is_valid() && flock)
 				{

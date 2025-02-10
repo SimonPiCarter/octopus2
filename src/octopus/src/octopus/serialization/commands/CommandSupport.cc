@@ -16,7 +16,8 @@ void basic_commands_support(flecs::world& ecs)
     ecs.component<NoOpCommand>();
     ecs.component<MoveCommand>()
         .member("target", &MoveCommand::target)
-        .member("flock_handle", &MoveCommand::flock_handle);
+        .member("flock_handle", &MoveCommand::flock_handle)
+        .member("extra_tolerance", &MoveCommand::extra_tolerance);
     ecs.component<AttackCommand>()
         .member("target", &AttackCommand::target)
         .member("target_pos", &AttackCommand::target_pos)
