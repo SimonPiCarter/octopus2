@@ -61,7 +61,7 @@ Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos
 		return true;
 	};
 
-	tree_circle_query(posContext_p.trees[0], pos_ref_p.pos, pos_ref_p.ray*2., func_l);
+	tree_circle_query(posContext_p.trees[0], pos_ref_p.pos, pos_ref_p.ray*4., func_l);
 
 	return force;
 }

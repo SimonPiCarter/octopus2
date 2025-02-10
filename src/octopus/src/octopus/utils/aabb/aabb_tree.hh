@@ -698,7 +698,7 @@ void tree_circle_query( const aabb_tree<data_t> &tree, octopus::Vector const &ce
 		{
 			if ( node.is_leaf() )
 			{
-				octopus::Fixed const ray_ray = largest_side_aabb(node.box)/2 + ray;
+				octopus::Fixed const ray_ray = largest_side_aabb(node.box)/4 + ray;
 				octopus::Fixed const squared_ray_ray = ray_ray*ray_ray;
 				if( square_length(center - center_aabb(node.box)) <= squared_ray_ray )
 				{
