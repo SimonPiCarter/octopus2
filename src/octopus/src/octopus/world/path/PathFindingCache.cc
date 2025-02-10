@@ -10,8 +10,12 @@ PathRequest PathFindingCache::get_request(Vector const &orig, Vector const &dest
 {
 	assert(triangulation);
 	PathRequest request {triangulation->cdt.triangles.size(), triangulation->cdt.triangles.size()};
-	request.orig = triangulation->cdt.get_closest_non_tagged_triangle({orig.x,orig.y}, triangulation->forbidden_triangles);
+	request.orig = triangulation->cdt.get_triangle({orig.x,orig.y})[0];
 	request.dest = triangulation->cdt.get_triangle({dest.x,dest.y})[0];
+	if(request.orig != request.dest)
+	{
+		request.orig = triangulation->cdt.get_closest_non_tagged_triangle(request.orig, {orig.x,orig.y}, triangulation->forbidden_triangles);
+	}
 	return request;
 }
 

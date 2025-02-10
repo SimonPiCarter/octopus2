@@ -1067,9 +1067,8 @@ void add_neighbors(size_t depth, std::vector<TriInd> &neighbors, std::vector<boo
 }
 
 template <typename T, typename TNearPointLocator>
-TriInd Triangulation<T, TNearPointLocator>::get_closest_non_tagged_triangle(const V2d<T>& pos, std::vector<bool> const &tags) const
+TriInd Triangulation<T, TNearPointLocator>::get_closest_non_tagged_triangle(TriInd const &start, const V2d<T>& pos, std::vector<bool> const &tags) const
 {
-    TriInd start = get_triangle(pos)[0];
     if(start == noNeighbor || !tags[start]) { return start; }
 
     std::vector<bool> added = tags;
