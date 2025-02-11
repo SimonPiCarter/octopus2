@@ -149,6 +149,10 @@ public:
 		for(InputCommandFunctor<command_variant_t, StepManager_t> const & input : container_command_functor.get_front_layer())
 		{
 			InputCommandPackage<command_variant_t> package = input.func(world);
+			if(package.entities.size() > 1)
+			{
+				std::visit([this](auto&& arg) { add_flock_information(flock_manager, arg); }, package.command);
+			}
 			for(flecs::entity const &entity : package.entities)
 			{
 				// append to front layer for them to be handled just after this loop
