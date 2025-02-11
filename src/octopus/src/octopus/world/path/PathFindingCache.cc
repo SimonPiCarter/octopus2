@@ -79,9 +79,12 @@ void PathFindingCache::compute_paths(flecs::world &ecs)
 		std::vector<std::size_t> path = triangulation->compute_path_from_idx(request.orig, request.dest);
 		if(path.empty() || path[path.size()-1] != request.dest)
 		{
-			path.push_back(request.dest);
+			paths_info[request.dest].indexes[request.orig] = request.orig;
 		}
-		consolidate_path(path);
+		else
+		{
+			consolidate_path(path);
+		}
 
 		// tidy up computations
 		list_requests.pop_front();
@@ -165,19 +168,28 @@ Vector PathQuery::get_direction() const
 	std::vector<std::size_t> path = cache->build_path(orig, dest);
 
 	Triangulation const *tr = cache->triangulation;
-	if(!tr) { return vert_dest - vert_orig; }
+	if(!tr || path.size() == 1) { return vert_dest - vert_orig; }
 
 	std::vector<Vector> funnel = tr->compute_funnel_from_path(vert_orig, vert_dest, path);
 	if(funnel.size() < 2)
 	{
 		return vert_dest - vert_orig;
 	}
-	END_TIME_PTR(path_funnelling, cache->stats)
+	size_t idx = 1;
 	Vector dir = funnel[1] - funnel[0];
-	if(dir.x < Fixed(100, true) && dir.x < Fixed(100, true))
+	while( dir.x < Fixed::One()/10 && dir.x > -Fixed::One()/10
+		&& dir.y < Fixed::One()/10 && dir.y > -Fixed::One()/10
+		&& idx < funnel.size()-1)
+	{
+		++idx;
+		dir = funnel[idx] - funnel[idx-1];
+	}
+	if(dir.x < Fixed(100, true) && dir.x > Fixed(-100, true)
+	&& dir.y < Fixed(100, true) && dir.y > Fixed(-100, true))
 	{
 		dir *= 100;
 	}
+	END_TIME_PTR(path_funnelling, cache->stats)
 	return dir;
 }
 
