@@ -19,45 +19,12 @@
 #include "octopus/systems/production/ProductionSystem.hh"
 #include "octopus/utils/log/Logger.hh"
 
+#include "InputCommand.hh"
+#include "InputLayerContainer.hh"
 #include "InputProduction.hh"
 
 namespace octopus
 {
-
-template<typename content_t>
-struct InputLayerContainer
-{
-	std::list<std::vector<content_t> > layers;
-
-	std::vector<content_t> &get_front_layer()
-	{
-		return layers.front();
-	}
-
-	std::vector<content_t> &get_back_layer()
-	{
-		return layers.back();
-	}
-
-	void push_layer()
-	{
-		layers.push_back(std::vector<content_t>());
-	}
-
-	void pop_layer()
-	{
-		layers.pop_front();
-	}
-};
-
-template<typename command_variant_t>
-struct InputCommand
-{
-	flecs::entity entity;
-	command_variant_t command;
-	bool front = false;
-	bool stop = false;
-};
 
 template<typename T>
 void add_flock_information(flecs::entity flock_manager, T &cmd)
