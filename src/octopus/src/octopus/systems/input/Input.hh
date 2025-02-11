@@ -20,6 +20,7 @@
 #include "octopus/utils/log/Logger.hh"
 
 #include "InputCommand.hh"
+#include "InputCommandFunctor.hh"
 #include "InputLayerContainer.hh"
 #include "InputProduction.hh"
 
@@ -38,6 +39,17 @@ void add_flock_information(flecs::entity flock_manager, AttackCommand &cmd);
 template<typename command_variant_t, typename StepManager_t>
 struct Input
 {
+private:
+	std::mutex mutex;
+
+	InputLayerContainer<InputAddProduction> container_add_production;
+	InputLayerContainer<InputCancelProduction> container_cancel_production;
+	InputLayerContainer<InputCommand<command_variant_t> > container_command;
+	InputLayerContainer<InputCommandFunctor<command_variant_t, StepManager_t> > container_command_functor;
+public:
+	flecs::entity flock_manager;
+
+
 	Input() { stack_input(); }
 
 	void addFrontCommand(flecs::entity entity, command_variant_t command_p)
@@ -98,6 +110,12 @@ struct Input
 		container_cancel_production.get_back_layer().push_back(input_p);
 	}
 
+	void addFunctorCommand(InputCommandFunctor<command_variant_t, StepManager_t> const &input_p)
+	{
+		std::lock_guard<std::mutex> lock_l(mutex);
+		container_command_functor.get_back_layer().push_back(input_p);
+	}
+
 	void unstack_input(WorldContext<StepManager_t> &world, StepManager_t &manager_p)
 	{
 		flecs::world &ecs = world.ecs;
@@ -124,6 +142,17 @@ struct Input
 			for(InputCancelProduction const &input_l : container_cancel_production.get_front_layer())
 			{
 				handle_cancel_production(input_l, *prod_lib, query_player, ecs, manager_p);
+			}
+		}
+
+		// Filling command inputs from functors
+		for(InputCommandFunctor<command_variant_t, StepManager_t> const & input : container_command_functor.get_front_layer())
+		{
+			InputCommandPackage<command_variant_t> package = input.func(world);
+			for(flecs::entity const &entity : package.entities)
+			{
+				// append to front layer for them to be handled just after this loop
+				container_command.get_front_layer().push_back({entity, package.command, package.front, package.stop});
 			}
 		}
 
@@ -155,6 +184,7 @@ struct Input
 		container_add_production.pop_layer();
 		container_cancel_production.pop_layer();
 		container_command.pop_layer();
+		container_command_functor.pop_layer();
 	}
 
 	void stack_input()
@@ -162,15 +192,8 @@ struct Input
 		container_add_production.push_layer();
 		container_cancel_production.push_layer();
 		container_command.push_layer();
+		container_command_functor.push_layer();
 	}
-	flecs::entity flock_manager;
-private:
-	std::mutex mutex;
-
-
-	InputLayerContainer<InputAddProduction> container_add_production;
-	InputLayerContainer<InputCancelProduction> container_cancel_production;
-	InputLayerContainer<InputCommand<command_variant_t> > container_command;
 };
 
 template<typename command_variant_t, typename StepManager_t>
