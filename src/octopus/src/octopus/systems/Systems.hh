@@ -68,7 +68,7 @@ void set_up_systems(
 	set_up_production_systems(world.ecs, world.pool, step_context.step_manager, world.time_stats);
 
 	// input systems
-	set_up_input_system<typename StepContext_t::variant, typename StepContext_t::step>(world.ecs, step_context.step_manager);
+	set_up_input_system<typename StepContext_t::variant, typename StepContext_t::step>(world, step_context.step_manager);
 }
 
 }

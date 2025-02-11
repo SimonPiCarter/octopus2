@@ -14,9 +14,12 @@
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 #include "octopus/world/resources/CostReduction.hh"
+#include "octopus/world/WorldContext.hh"
 #include "octopus/systems/phases/Phases.hh"
 #include "octopus/systems/production/ProductionSystem.hh"
 #include "octopus/utils/log/Logger.hh"
+
+#include "InputProduction.hh"
 
 namespace octopus
 {
@@ -45,18 +48,6 @@ struct InputLayerContainer
 	{
 		layers.pop_front();
 	}
-};
-
-struct InputAddProduction
-{
-	flecs::entity producer;
-	std::string production;
-};
-
-struct InputCancelProduction
-{
-	flecs::entity producer;
-	int idx = 0;
 };
 
 template<typename command_variant_t>
@@ -140,8 +131,9 @@ struct Input
 		container_cancel_production.get_back_layer().push_back(input_p);
 	}
 
-	void unstack_input(flecs::world &ecs, StepManager_t &manager_p)
+	void unstack_input(WorldContext<StepManager_t> &world, StepManager_t &manager_p)
 	{
+		flecs::world &ecs = world.ecs;
 		std::lock_guard<std::mutex> lock_l(mutex);
 
 		// declare all flocks into the ecs
@@ -159,67 +151,12 @@ struct Input
 			// Input add production
 			for(InputAddProduction const &input_l : container_add_production.get_front_layer())
 			{
-				if(!input_l.producer.get<PlayerAppartenance>()
-				|| !input_l.producer.get<ProductionQueue>())
-				{
-					continue;
-				}
-				// get production information
-				ProductionTemplate<StepManager_t> const * prod_l = prod_lib->try_get(input_l.production);
-
-				// get player info
-				flecs::entity player = query_player.find([&input_l](PlayerInfo& p) {
-					return p.idx == input_l.producer.get<PlayerAppartenance>()->idx;
-				});
-				if(!player.is_valid() || !prod_l) { continue; }
-				PlayerInfo const * player_info_l = player.get<PlayerInfo>();
-				ResourceStock const * resource_stock_l = player.get<ResourceStock>();
-				ReductionLibrary const * reduction_library_l = player.get<ReductionLibrary>();
-
-				auto resource_cost = prod_l->resource_consumption();
-				if(reduction_library_l && reduction_library_l->reductions.has(prod_l->name()))
-				{
-					resource_cost = get_required_resources(reduction_library_l->reductions[prod_l->name()], resource_cost);
-				}
-
-				if(player_info_l
-				&& resource_stock_l
-				&& prod_l->check_requirement(input_l.producer, ecs)
-				&& check_resources(resource_stock_l->resource, map_locked_resources[player_info_l->idx], resource_cost))
-				{
-					manager_p.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input_l.producer, {input_l.production, -1});
-					prod_l->enqueue(input_l.producer, ecs, manager_p);
-					for(auto &&pair_l : prod_l->resource_consumption())
-					{
-						std::string const &resource_l = pair_l.first;
-						Fixed resource_consumed_l = pair_l.second;
-
-						// lock resource for future checks
-						map_locked_resources[player_info_l->idx][resource_l] += resource_consumed_l;
-						// add step for consumption
-						manager_p.get_last_layer().back().template get<ResourceStockStep>().add_step(player, {-resource_consumed_l, resource_l});
-					}
-
-				}
+				handle_add_production(input_l, *prod_lib, query_player, map_locked_resources, ecs, manager_p);
 			}
 
 			for(InputCancelProduction const &input_l : container_cancel_production.get_front_layer())
 			{
-				ProductionQueue const * prod_queue_l = input_l.producer.get<ProductionQueue>();
-				if(!input_l.producer.get<PlayerAppartenance>()
-				|| !prod_queue_l
-				|| long(input_l.idx) >= long(prod_queue_l->queue.size()))
-				{
-					continue;
-				}
-
-				// get player info
-				flecs::entity player = query_player.find([&input_l](PlayerInfo& p) {
-					return p.idx == input_l.producer.get<PlayerAppartenance>()->idx;
-				});
-				if(!player.is_valid()) { continue; }
-
-				cancel_production(prod_lib, input_l.producer, *prod_queue_l, player, input_l.idx, ecs, manager_p);
+				handle_cancel_production(input_l, *prod_lib, query_player, ecs, manager_p);
 			}
 		}
 
@@ -269,16 +206,16 @@ private:
 	InputLayerContainer<InputCommand<command_variant_t> > container_command;
 };
 
-template<typename command_variant_t,  typename StepManager_t>
-void set_up_input_system(flecs::world &ecs, StepManager_t &manager_p)
+template<typename command_variant_t, typename StepManager_t>
+void set_up_input_system(WorldContext<StepManager_t> &world, StepManager_t &manager)
 {
 	// Hangle input
-	ecs.system<Input<command_variant_t, StepManager_t>>()
-		.kind(ecs.entity(InputPhase))
+	world.ecs.template system<Input<command_variant_t, StepManager_t>>()
+		.kind(world.ecs.entity(InputPhase))
 		.each([&](flecs::entity e, Input<command_variant_t, StepManager_t> &input_p) {
 			Logger::getDebug() << "Input :: start" << std::endl;
 			input_p.stack_input();
-			input_p.unstack_input(ecs, manager_p);
+			input_p.unstack_input(world, manager);
 			Logger::getDebug() << "Input :: end" << std::endl;
 		});
 }
