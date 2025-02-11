@@ -218,7 +218,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						}
 
 						flecs::entity new_target;
-						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0)
+						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 && !attackCommand_p.forced_target)
 						{
 							START_TIME(attack_command_new_target)
 

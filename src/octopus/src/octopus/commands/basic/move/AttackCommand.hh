@@ -28,6 +28,7 @@ struct AttackCommand {
 	Vector target_pos;
 	bool move = false;
 	bool init = false;
+	bool forced_target = false;
 	FlockHandle flock_handle;
 
 	static constexpr char const * const naming()  { return "attack"; }
@@ -36,6 +37,7 @@ struct AttackCommand {
 
 struct AttackCommandMemento {
 	flecs::entity old_target;
+	bool old_forced_target;
 };
 
 struct AttackCommandStep {
@@ -47,12 +49,15 @@ struct AttackCommandStep {
 	void apply_step(Data &d, Memento &memento) const
 	{
 		memento.old_target = d.target;
+		memento.old_forced_target = d.forced_target;
 		d.target = new_target;
+		d.forced_target = false;
 	}
 
 	void revert_step(Data &d, Memento const &memento) const
 	{
 		d.target = memento.old_target;
+		d.forced_target = memento.old_forced_target;
 	}
 };
 
