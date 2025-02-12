@@ -36,6 +36,7 @@ public:
         }
         _templates.clear();
     }
+
 private:
     std::unordered_map<std::string, ProductionTemplate<StepManager_t>*> _templates;
 };
