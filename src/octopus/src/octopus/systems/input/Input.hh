@@ -37,13 +37,20 @@ void add_flock_information(flecs::entity flock_manager, MoveCommand &cmd);
 void add_flock_information(flecs::entity flock_manager, AttackCommand &cmd);
 
 template<typename command_variant_t, typename StepManager_t>
+struct InputContainer
+{
+	InputLayerContainer<InputAddProduction> container_add_production;
+	InputLayerContainer<InputCancelProduction> container_cancel_production;
+};
+
+template<typename command_variant_t, typename StepManager_t>
 struct Input
 {
 private:
 	std::mutex mutex;
 
-	InputLayerContainer<InputAddProduction> container_add_production;
-	InputLayerContainer<InputCancelProduction> container_cancel_production;
+	InputContainer<command_variant_t, StepManager_t> container;
+
 	InputLayerContainer<InputCommand<command_variant_t> > container_command;
 	InputLayerContainer<InputCommandFunctor<command_variant_t, StepManager_t> > container_command_functor;
 public:
@@ -102,12 +109,12 @@ public:
 	void addProduction(InputAddProduction const &input_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
-		container_add_production.get_back_layer().push_back(input_p);
+		container.container_add_production.get_back_layer().push_back(input_p);
 	}
 	void cancelProduction(InputCancelProduction const &input_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
-		container_cancel_production.get_back_layer().push_back(input_p);
+		container.container_cancel_production.get_back_layer().push_back(input_p);
 	}
 
 	void addFunctorCommand(InputCommandFunctor<command_variant_t, StepManager_t> const &input_p)
@@ -129,26 +136,10 @@ public:
 
 		ProductionTemplateLibrary<StepManager_t> const *prod_lib = ecs.get<ProductionTemplateLibrary<StepManager_t>>();
 
-    	flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
-		if(prod_lib)
-		{
-			std::unordered_map<uint32_t, std::unordered_map<std::string, Fixed> > map_locked_resources;
-			// Input add production
-			for(InputAddProduction const &input_l : container_add_production.get_front_layer())
-			{
-				handle_add_production(input_l, *prod_lib, query_player, map_locked_resources, ecs, manager_p);
-			}
-
-			for(InputCancelProduction const &input_l : container_cancel_production.get_front_layer())
-			{
-				handle_cancel_production(input_l, *prod_lib, query_player, ecs, manager_p);
-			}
-		}
-
 		// Filling command inputs from functors
 		for(InputCommandFunctor<command_variant_t, StepManager_t> const & input : container_command_functor.get_front_layer())
 		{
-			InputCommandPackage<command_variant_t> package = input.func(world);
+			InputCommandPackage<command_variant_t> package = input.func(world, container);
 			if(package.entities.size() > 1)
 			{
 				std::visit([this](auto&& arg) { add_flock_information(flock_manager, arg); }, package.command);
@@ -157,6 +148,22 @@ public:
 			{
 				// append to front layer for them to be handled just after this loop
 				container_command.get_front_layer().push_back({entity, package.command, package.front, package.stop});
+			}
+		}
+
+    	flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
+		if(prod_lib)
+		{
+			std::unordered_map<uint32_t, std::unordered_map<std::string, Fixed> > map_locked_resources;
+			// Input add production
+			for(InputAddProduction const &input_l : container.container_add_production.get_front_layer())
+			{
+				handle_add_production(input_l, *prod_lib, query_player, map_locked_resources, ecs, manager_p);
+			}
+
+			for(InputCancelProduction const &input_l : container.container_cancel_production.get_front_layer())
+			{
+				handle_cancel_production(input_l, *prod_lib, query_player, ecs, manager_p);
 			}
 		}
 
@@ -185,16 +192,16 @@ public:
 			}
 		}
 
-		container_add_production.pop_layer();
-		container_cancel_production.pop_layer();
+		container.container_add_production.pop_layer();
+		container.container_cancel_production.pop_layer();
 		container_command.pop_layer();
 		container_command_functor.pop_layer();
 	}
 
 	void stack_input()
 	{
-		container_add_production.push_layer();
-		container_cancel_production.push_layer();
+		container.container_add_production.push_layer();
+		container.container_cancel_production.push_layer();
 		container_command.push_layer();
 		container_command_functor.push_layer();
 	}
