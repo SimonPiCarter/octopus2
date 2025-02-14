@@ -41,4 +41,19 @@ private:
     std::unordered_map<std::string, ProductionTemplate<StepManager_t>*> _templates;
 };
 
+template<class StepManager_t>
+int64_t get_queue_duration(ProductionTemplateLibrary<StepManager_t> const &library, std::vector<std::string> const &queue)
+{
+    int64_t duration = 0;
+    for(std::string const &prod : queue)
+    {
+        ProductionTemplate<StepManager_t> const * prod_template = library.try_get(prod);
+        if(prod_template)
+        {
+            duration += prod_template->duration();
+        }
+    }
+    return duration;
+}
+
 } // namespace octopus
