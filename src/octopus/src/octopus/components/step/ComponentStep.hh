@@ -65,19 +65,19 @@ struct AddComponentStep : BaseComponentStep
 		if(was_present)
 		{
 			old_value = *ptr;
+			/// @warning This is done to trigger remove event (used by player buff for example)
+			e.remove<component_t>();
 		}
 		e.set<component_t>(value);
 	}
 
 	void revert_step(flecs::entity e) override
 	{
+		/// @warning This is done to trigger remove event (used by player buff for example)
+		e.remove<component_t>();
 		if(was_present)
 		{
 			e.set<component_t>(old_value);
-		}
-		else
-		{
-			e.remove<component_t>();
 		}
 	}
 };
