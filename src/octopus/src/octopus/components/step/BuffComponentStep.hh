@@ -49,9 +49,6 @@ struct AddBuffComponentStep : BaseComponentStep
 	BuffComponent<component_t> old_value;
 	bool was_present = false;
 
-	typedef ComponentSteps Data;
-	typedef ComponentMemento<BuffComponent<component_t>> Memento;
-
 	void apply_step(flecs::entity e) override
 	{
 		BuffComponent<component_t> const * const ptr = e.get<BuffComponent<component_t>>();

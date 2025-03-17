@@ -104,8 +104,6 @@ TEST(component_loop, simple)
 		.add<CastCommand>()
 		.set<HitPoint>({10});
 
-	e1.set<ComponentSteps>({e1});
-
 	std::vector<octopus::Fixed> const expected_hp_l = {
 		octopus::Fixed(10),
 		octopus::Fixed(10),

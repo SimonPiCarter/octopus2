@@ -33,13 +33,6 @@ struct ComponentStep
 	std::unique_ptr<BaseComponentStep> base;
 };
 
-// dummy component to allow to match data
-// requires entity reference
-struct ComponentSteps
-{
-	flecs::entity self;
-};
-
 template<typename component_t>
 struct ComponentMemento
 {
