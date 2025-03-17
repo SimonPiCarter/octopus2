@@ -15,7 +15,8 @@ bool flecs_path_append(
     ecs_entity_t child, 
     const char *sep,
     const char *prefix,
-    ecs_strbuf_t *buf)
+    ecs_strbuf_t *buf,
+    bool escape)
 {
     flecs_poly_assert(world, ecs_world_t);
     ecs_assert(sep[0] != 0, ECS_INVALID_PARAMETER, NULL);
@@ -36,7 +37,7 @@ bool flecs_path_append(
             if (cur) {
                 ecs_assert(cur != child, ECS_CYCLE_DETECTED, NULL);
                 if (cur != parent && (cur != EcsFlecsCore || prefix != NULL)) {
-                    flecs_path_append(world, parent, cur, sep, prefix, buf);
+                    flecs_path_append(world, parent, cur, sep, prefix, buf, escape);
                     if (!sep[1]) {
                         ecs_strbuf_appendch(buf, sep[0]);
                     } else {
@@ -67,19 +68,35 @@ bool flecs_path_append(
             sep_in_name = strchr(name, sep[0]);
         }
 
-        if (sep_in_name) {
-            const char *name_ptr = name;
-            while (sep_in_name) {
-                ecs_size_t len = flecs_ito(int32_t, sep_in_name - name_ptr);
-                ecs_strbuf_appendstrn(buf, name_ptr, len);
-                ecs_strbuf_appendch(buf, '\\');
-                ecs_strbuf_appendch(buf, sep[0]);
-                
-                name_ptr = sep_in_name + 1;
-                sep_in_name = strchr(name_ptr, sep[0]);
+        if (sep_in_name || escape) {
+            const char *name_ptr;
+            char ch;
+            for (name_ptr = name; (ch = name_ptr[0]); name_ptr ++) {
+                char esc[3];
+                if (ch != sep[0]) {
+                    if (escape) {
+                        flecs_chresc(esc, ch, '\"');
+                        ecs_strbuf_appendch(buf, esc[0]);
+                        if (esc[1]) {
+                            ecs_strbuf_appendch(buf, esc[1]);
+                        }
+                    } else {
+                        ecs_strbuf_appendch(buf, ch);
+                    }
+                } else {
+                    if (!escape) {
+                        ecs_strbuf_appendch(buf, '\\');
+                        ecs_strbuf_appendch(buf, sep[0]);
+                    } else {
+                        ecs_strbuf_appendlit(buf, "\\\\");
+                        flecs_chresc(esc, ch, '\"');
+                        ecs_strbuf_appendch(buf, esc[0]);
+                        if (esc[1]) {
+                            ecs_strbuf_appendch(buf, esc[1]);
+                        }
+                    }
+                }
             }
-
-            ecs_strbuf_appendstr(buf, name_ptr);
         } else {
             ecs_strbuf_appendstrn(buf, name, name_len);
         }
@@ -114,7 +131,11 @@ ecs_entity_t flecs_name_to_id(
 {
     ecs_assert(name != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_assert(name[0] == '#', ECS_INVALID_PARAMETER, NULL);
-    return flecs_ito(uint64_t, atoll(name + 1));
+    ecs_entity_t res = flecs_ito(uint64_t, atoll(name + 1));
+    if (res >= UINT32_MAX) {
+        return 0; /* Invalid id */
+    }
+    return res;
 }
 
 static
@@ -188,7 +209,7 @@ const char* flecs_path_elem(
         }
 
         if (buffer) {
-            if (pos == (size - 1)) {
+            if (pos >= (size - 1)) {
                 if (size == ECS_NAME_BUFFER_LENGTH) { /* stack buffer */
                     char *new_buffer = ecs_os_malloc(size * 2 + 1);
                     ecs_os_memcpy(new_buffer, buffer, size);
@@ -211,7 +232,7 @@ const char* flecs_path_elem(
         *size_out = size;
     }
 
-    if (pos) {
+    if (pos || ptr[0]) {
         return ptr;
     } else {
         return NULL;
@@ -239,8 +260,11 @@ ecs_entity_t flecs_get_parent_from_path(
     const char **path_ptr,
     const char *sep,
     const char *prefix,
-    bool new_entity)
+    bool new_entity,
+    bool *error)
 {
+    ecs_assert(error != NULL, ECS_INTERNAL_ERROR, NULL);
+
     bool start_from_root = false;
     const char *path = *path_ptr;
 
@@ -252,6 +276,10 @@ ecs_entity_t flecs_get_parent_from_path(
 
     if (path[0] == '#') {
         parent = flecs_name_to_id(path);
+        if (!parent && ecs_os_strncmp(path, "#0", 2)) {
+            *error = true;
+            return 0;
+        }
 
         path ++;
         while (path[0] && isdigit(path[0])) {
@@ -311,7 +339,8 @@ void ecs_get_path_w_sep_buf(
     ecs_entity_t child,
     const char *sep,
     const char *prefix,
-    ecs_strbuf_t *buf)
+    ecs_strbuf_t *buf,
+    bool escape)
 {
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(buf != NULL, ECS_INVALID_PARAMETER, NULL);
@@ -332,7 +361,7 @@ void ecs_get_path_w_sep_buf(
     }
 
     if (!child || parent != child) {
-        flecs_path_append(world, parent, child, sep, prefix, buf);
+        flecs_path_append(world, parent, child, sep, prefix, buf, escape);
     } else {
         ecs_strbuf_appendstrn(buf, "", 0);
     }
@@ -349,7 +378,7 @@ char* ecs_get_path_w_sep(
     const char *prefix)
 {
     ecs_strbuf_t buf = ECS_STRBUF_INIT;
-    ecs_get_path_w_sep_buf(world, parent, child, sep, prefix, &buf);
+    ecs_get_path_w_sep_buf(world, parent, child, sep, prefix, &buf, false);
     return ecs_strbuf_get(&buf);
 }
 
@@ -429,6 +458,8 @@ ecs_entity_t ecs_lookup_path_w_sep(
     }
 
     ecs_check(world != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_check(!parent || ecs_is_valid(world, parent), 
+        ECS_INVALID_PARAMETER, NULL);
     const ecs_world_t *stage = world;
     world = ecs_get_world(world);
 
@@ -458,8 +489,12 @@ ecs_entity_t ecs_lookup_path_w_sep(
         sep = ".";
     }
 
+    bool error = false;
     parent = flecs_get_parent_from_path(
-        stage, parent, &path, sep, prefix, true);
+        stage, parent, &path, sep, prefix, true, &error);
+    if (error) {
+        return 0;
+    }
 
     if (parent && !(parent = ecs_get_alive(world, parent))) {
         return 0;
@@ -615,6 +650,10 @@ ecs_entity_t ecs_add_path_w_sep(
     const char *prefix)
 {
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    const ecs_world_t *real_world = world;
+    if (flecs_poly_is(world, ecs_stage_t)) {
+        real_world = ecs_get_world(world);
+    }
 
     if (!sep) {
         sep = ".";
@@ -633,8 +672,14 @@ ecs_entity_t ecs_add_path_w_sep(
     }
 
     bool root_path = flecs_is_root_path(path, prefix);
+    bool error = false;
     parent = flecs_get_parent_from_path(
-        world, parent, &path, sep, prefix, !entity);
+        world, parent, &path, sep, prefix, !entity, &error);
+    if (error) {
+        /* Invalid id */
+        ecs_err("invalid identifier: '%s'", path);
+        return 0;
+    }
 
     char buff[ECS_NAME_BUFFER_LENGTH];
     const char *ptr = path;
@@ -645,7 +690,7 @@ ecs_entity_t ecs_add_path_w_sep(
      * immediately updated. Without this, we could create multiple entities for
      * the same name in a single command queue. */
     bool suspend_defer = ecs_is_deferred(world) &&
-        !(world->flags & EcsWorldMultiThreaded);
+        !(real_world->flags & EcsWorldMultiThreaded);
         
     ecs_entity_t cur = parent;
     char *name = NULL;

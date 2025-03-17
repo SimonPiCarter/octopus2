@@ -177,6 +177,10 @@ struct query_base {
 
     operator query<>() const;
 
+#   ifdef FLECS_JSON
+#   include "../json/query.inl"
+#   endif
+
 protected:
     query_t *query_ = nullptr;
 };
@@ -294,7 +298,7 @@ inline void world::each(Func&& func) const {
 
 template <typename T, typename Func>
 inline void world::each(Func&& func) const {
-    ecs_iter_t it = ecs_each_id(world_, _::type<T>::id());
+    ecs_iter_t it = ecs_each_id(world_, _::type<T>::id(world_));
 
     while (ecs_each_next(&it)) {
         _::each_delegate<Func, T>(func).invoke(&it);

@@ -94,12 +94,6 @@ void flecs_enqueue(
     ecs_stage_t *stage,
     ecs_event_desc_t *desc);
 
-void flecs_commands_push(
-    ecs_stage_t *stage);
-
-void flecs_commands_pop(
-    ecs_stage_t *stage);
-
 ecs_entity_t flecs_stage_set_system(
     ecs_stage_t *stage,
     ecs_entity_t system);
@@ -109,5 +103,13 @@ ecs_allocator_t* flecs_stage_get_allocator(
 
 ecs_stack_t* flecs_stage_get_stack_allocator(
     ecs_world_t *world);
+
+void flecs_commands_init(    
+    ecs_stage_t *stage,
+    ecs_commands_t *cmd);
+
+void flecs_commands_fini(
+    ecs_stage_t *stage,
+    ecs_commands_t *cmd);
 
 #endif

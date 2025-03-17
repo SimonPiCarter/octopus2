@@ -212,6 +212,27 @@ int flecs_query_create_cache(
 
             ecs_os_memcpy_n(impl->cache->field_map, field_map, int8_t, dst_count);
         }
+    } else {
+        /* Check if query has features that are unsupported for uncached */
+        ecs_assert(q->cache_kind == EcsQueryCacheNone, ECS_INTERNAL_ERROR, NULL);
+
+        if (!(q->flags & EcsQueryNested)) {
+            /* If uncached query is not create to populate a cached query, it 
+             * should not have cascade modifiers */
+            int32_t i, count = q->term_count;
+            ecs_term_t *terms = q->terms;
+            for (i = 0; i < count; i ++) {
+                ecs_term_t *term = &terms[i];
+                if (term->src.id & EcsCascade) {
+                    char *query_str = ecs_query_str(q);
+                    ecs_err(
+                        "cascade is unsupported for uncached query\n  %s",
+                        query_str);
+                    ecs_os_free(query_str);
+                    goto error;
+                }
+            }
+        }
     }
 
     return 0;
@@ -256,7 +277,7 @@ void flecs_query_fini(
 
         ecs_id_record_t *idr = flecs_id_record_get(q->real_world, term->id);
         if (idr) {
-            if (!(q->world->flags & EcsWorldQuit)) {
+            if (!(ecs_world_get_flags(q->world) & EcsWorldQuit)) {
                 if (ecs_os_has_threading()) {
                     int32_t idr_keep_alive = ecs_os_adec(&idr->keep_alive);
                     ecs_assert(idr_keep_alive >= 0, ECS_INTERNAL_ERROR, NULL);
@@ -459,23 +480,13 @@ ecs_query_count_t ecs_query_count(
         return result;
     }
 
-    ecs_run_aperiodic(q->world, EcsAperiodicEmptyTables);
+    ecs_iter_t it = flecs_query_iter(q->world, q);
+    it.flags |= EcsIterNoData;
 
-    ecs_query_impl_t *impl = flecs_query_impl(q);
-    if (impl->cache && q->flags & EcsQueryIsCacheable) {
-        result.results = flecs_query_cache_table_count(impl->cache);
-        result.entities = flecs_query_cache_entity_count(impl->cache);
-        result.tables = flecs_query_cache_table_count(impl->cache);
-        result.empty_tables = flecs_query_cache_empty_table_count(impl->cache);
-    } else {
-        ecs_iter_t it = flecs_query_iter(q->world, q);
-        it.flags |= EcsIterNoData;
-
-        while (ecs_query_next(&it)) {
-            result.results ++;
-            result.entities += it.count;
-            ecs_iter_skip(&it);
-        }
+    while (ecs_query_next(&it)) {
+        result.results ++;
+        result.entities += it.count;
+        ecs_iter_skip(&it);
     }
 
     return result;
@@ -486,15 +497,8 @@ bool ecs_query_is_true(
 {
     flecs_poly_assert(q, ecs_query_t);
 
-    ecs_run_aperiodic(q->world, EcsAperiodicEmptyTables);
-
-    ecs_query_impl_t *impl = flecs_query_impl(q);
-    if (impl->cache && q->flags & EcsQueryIsCacheable) {
-        return flecs_query_cache_table_count(impl->cache) != 0;
-    } else {
-        ecs_iter_t it = flecs_query_iter(q->world, q);
-        return ecs_iter_is_true(&it);
-    }
+    ecs_iter_t it = flecs_query_iter(q->world, q);
+    return ecs_iter_is_true(&it);
 }
 
 int32_t ecs_query_match_count(
@@ -518,5 +522,18 @@ const ecs_query_t* ecs_query_get_cache_query(
         return NULL;
     } else {
         return impl->cache->query;
+    }
+}
+
+const ecs_query_t* ecs_query_get(
+    const ecs_world_t *world,
+    ecs_entity_t query)
+{
+    const EcsPoly *poly_comp = ecs_get_pair(world, query, EcsPoly, EcsQuery);
+    if (!poly_comp) {
+        return NULL;
+    } else {
+        flecs_poly_assert(poly_comp->poly, ecs_query_t);
+        return poly_comp->poly;
     }
 }

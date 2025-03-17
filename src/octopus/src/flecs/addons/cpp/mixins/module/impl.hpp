@@ -48,10 +48,9 @@ flecs::entity import(world& world) {
     ecs_entity_t m = ecs_lookup_symbol(world, symbol, true, false);
 
     if (!_::type<T>::registered(world)) {
-
         /* Module is registered with world, initialize static data */
         if (m) {
-            _::type<T>::init(m, false);
+            _::type<T>::init_builtin(world, m, false);
 
         /* Module is not yet registered, register it now */
         } else {
@@ -79,7 +78,7 @@ flecs::entity import(world& world) {
 
 template <typename Module>
 inline flecs::entity world::module(const char *name) const {
-    flecs::entity result = this->entity(_::type<Module>::id(
+    flecs::entity result = this->entity(_::type<Module>::register_id(
         world_, nullptr, false));
 
     if (name) {
@@ -89,16 +88,21 @@ inline flecs::entity world::module(const char *name) const {
         if (prev_parent != parent) {
             // Module was reparented, cleanup old parent(s)
             flecs::entity cur = prev_parent, next;
-            do {
+            while (cur) {
                 next = cur.parent();
 
                 ecs_iter_t it = ecs_each_id(world_, ecs_pair(EcsChildOf, cur));
                 if (!ecs_iter_is_true(&it)) {
                     cur.destruct();
+
+                    // Prevent increasing the generation count of the temporary
+                    // parent. This allows entities created during 
+                    // initialization to keep non-recycled ids.
+                    this->set_version(cur);
                 }
 
                 cur = next;
-            } while (cur);
+            }
         }
     }
 

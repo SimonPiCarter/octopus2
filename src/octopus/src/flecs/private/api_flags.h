@@ -159,7 +159,7 @@ extern "C" {
 #define EcsQueryIsCacheable           (1u << 25u) /* All terms of query are cacheable */
 #define EcsQueryHasTableThisVar       (1u << 26u) /* Does query have $this table var */
 #define EcsQueryCacheYieldEmptyTables (1u << 27u) /* Does query cache empty tables */
-
+#define EcsQueryNested                (1u << 28u) /* Query created by a query (for observer, cache) */
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Term flags (used by ecs_term_t::flags_)
@@ -240,7 +240,6 @@ extern "C" {
 //// Aperiodic action flags (used by ecs_run_aperiodic)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define EcsAperiodicEmptyTables        (1u << 1u)  /* Process pending empty table events */
 #define EcsAperiodicComponentMonitors  (1u << 2u)  /* Process component monitors */
 #define EcsAperiodicEmptyQueries       (1u << 4u)  /* Process empty queries */
 

@@ -37,7 +37,7 @@
 /* Flecs version macros */
 #define FLECS_VERSION_MAJOR 4  /**< Flecs major version. */
 #define FLECS_VERSION_MINOR 0  /**< Flecs minor version. */
-#define FLECS_VERSION_PATCH 2  /**< Flecs patch version. */
+#define FLECS_VERSION_PATCH 4  /**< Flecs patch version. */
 
 /** Flecs version. */
 #define FLECS_VERSION FLECS_VERSION_IMPL(\
@@ -138,7 +138,7 @@
  */
 // #define FLECS_KEEP_ASSERT
 
-/** \def FLECS_CPP_NO_AUTO_REGISTRATION
+/** @def FLECS_CPP_NO_AUTO_REGISTRATION
  * When set, the C++ API will require that components are registered before they
  * are used. This is useful in multithreaded applications, where components need
  * to be registered beforehand, and to catch issues in projects where component
@@ -148,7 +148,7 @@
  */
 // #define FLECS_CPP_NO_AUTO_REGISTRATION
 
-/** \def FLECS_CUSTOM_BUILD
+/** @def FLECS_CUSTOM_BUILD
  * This macro lets you customize which addons to build flecs with.
  * Without any addons Flecs is just a minimal ECS storage, but addons add
  * features such as systems, scheduling and reflection. If an addon is disabled,
@@ -177,38 +177,29 @@
  */
 // #define FLECS_CUSTOM_BUILD
 
-/** @def FLECS_CPP_NO_AUTO_REGISTRATION
- * When set, the C++ API will require that components are registered before they
- * are used. This is useful in multithreaded applications, where components need
- * to be registered beforehand, and to catch issues in projects where component
- * registration is mandatory. Disabling automatic component registration also
- * slightly improves performance.
- * The C API is not affected by this feature.
- */
-// #define FLECS_CPP_NO_AUTO_REGISTRATION
-
 #ifndef FLECS_CUSTOM_BUILD
-// #define FLECS_C          /**< C API convenience macros, always enabled */
-#define FLECS_CPP           /**< C++ API */
-#define FLECS_MODULE        /**< Module support */
-#define FLECS_SCRIPT        /**< ECS data definition format */
-#define FLECS_STATS         /**< Track runtime statistics */
-#define FLECS_METRICS       /**< Expose component data as statistics */
-#define FLECS_ALERTS        /**< Monitor conditions for errors */
-#define FLECS_SYSTEM        /**< System support */
-#define FLECS_PIPELINE      /**< Pipeline support */
-#define FLECS_TIMER         /**< Timer support */
-#define FLECS_META          /**< Reflection support */
-#define FLECS_UNITS         /**< Builtin standard units */
-#define FLECS_JSON          /**< Parsing JSON to/from component values */
-#define FLECS_DOC           /**< Document entities & components */
-#define FLECS_LOG           /**< When enabled ECS provides more detailed logs */
-#define FLECS_APP           /**< Application addon */
-#define FLECS_OS_API_IMPL   /**< Default implementation for OS API */
-#define FLECS_HTTP          /**< Tiny HTTP server for connecting to remote UI */
-#define FLECS_REST          /**< REST API for querying application data */
-// #define FLECS_JOURNAL    /**< Journaling addon (disabled by default) */
-// #define FLECS_PERF_TRACE /**< Enable performance tracing (disabled by default) */
+#define FLECS_ALERTS         /**< Monitor conditions for errors */
+#define FLECS_APP            /**< Application addon */
+// #define FLECS_C           /**< C API convenience macros, always enabled */
+#define FLECS_CPP            /**< C++ API */
+#define FLECS_DOC            /**< Document entities & components */
+// #define FLECS_JOURNAL     /**< Journaling addon (disabled by default) */
+#define FLECS_JSON           /**< Parsing JSON to/from component values */
+#define FLECS_HTTP           /**< Tiny HTTP server for connecting to remote UI */
+#define FLECS_LOG            /**< When enabled ECS provides more detailed logs */
+#define FLECS_META           /**< Reflection support */
+#define FLECS_METRICS        /**< Expose component data as statistics */
+#define FLECS_MODULE         /**< Module support */
+#define FLECS_OS_API_IMPL    /**< Default implementation for OS API */
+// #define FLECS_PERF_TRACE  /**< Enable performance tracing (disabled by default) */
+#define FLECS_PIPELINE       /**< Pipeline support */
+#define FLECS_REST           /**< REST API for querying application data */
+#define FLECS_SCRIPT         /**< Flecs entity notation language */
+// #define FLECS_SCRIPT_MATH /**< Math functions for flecs script (may require linking with libm) */
+#define FLECS_SYSTEM         /**< System support */
+#define FLECS_STATS          /**< Track runtime statistics */
+#define FLECS_TIMER          /**< Timer support */
+#define FLECS_UNITS          /**< Builtin standard units */
 #endif // ifndef FLECS_CUSTOM_BUILD
 
 /** @def FLECS_LOW_FOOTPRINT
@@ -218,7 +209,7 @@
 #ifdef FLECS_LOW_FOOTPRINT
 #define FLECS_HI_COMPONENT_ID (16)
 #define FLECS_HI_ID_RECORD_ID (16)
-#define FLECS_SPARSE_PAGE_BITS (6)
+#define FLECS_SPARSE_PAGE_BITS (4)
 #define FLECS_ENTITY_PAGE_BITS (6)
 #define FLECS_USE_OS_ALLOC
 #endif
@@ -253,7 +244,7 @@
  * determines the page size, which is (1 << bits).
  * Lower values decrease memory utilization, at the cost of more allocations. */
 #ifndef FLECS_SPARSE_PAGE_BITS
-#define FLECS_SPARSE_PAGE_BITS (12)
+#define FLECS_SPARSE_PAGE_BITS (6)
 #endif
 
 /** @def FLECS_ENTITY_PAGE_BITS
@@ -274,7 +265,7 @@
 #define FLECS_ID_DESC_MAX (32)
 #endif
 
-/** \def FLECS_EVENT_DESC_MAX
+/** @def FLECS_EVENT_DESC_MAX
  * Maximum number of events in ecs_observer_desc_t */
 #ifndef FLECS_EVENT_DESC_MAX
 #define FLECS_EVENT_DESC_MAX (8)
@@ -284,19 +275,19 @@
  * Maximum number of query variables per query */
 #define FLECS_VARIABLE_COUNT_MAX (64)
 
-/** \def FLECS_TERM_COUNT_MAX
+/** @def FLECS_TERM_COUNT_MAX
  * Maximum number of terms in queries. Should not exceed 64. */
 #ifndef FLECS_TERM_COUNT_MAX
 #define FLECS_TERM_COUNT_MAX 32
 #endif
 
-/** \def FLECS_TERM_ARG_COUNT_MAX
+/** @def FLECS_TERM_ARG_COUNT_MAX
  * Maximum number of arguments for a term. */
 #ifndef FLECS_TERM_ARG_COUNT_MAX
 #define FLECS_TERM_ARG_COUNT_MAX (16)
 #endif
 
-/** \def FLECS_QUERY_VARIABLE_COUNT_MAX
+/** @def FLECS_QUERY_VARIABLE_COUNT_MAX
  * Maximum number of query variables per query. Should not exceed 128. */
 #ifndef FLECS_QUERY_VARIABLE_COUNT_MAX
 #define FLECS_QUERY_VARIABLE_COUNT_MAX (64)
@@ -306,6 +297,14 @@
  * Maximum nesting depth of query scopes */
 #ifndef FLECS_QUERY_SCOPE_NESTING_MAX
 #define FLECS_QUERY_SCOPE_NESTING_MAX (8)
+#endif
+
+/** @def FLECS_DAG_DEPTH_MAX
+ * Maximum of levels in a DAG (acyclic relationship graph). If a graph with a
+ * depth larger than this is encountered, a CYCLE_DETECTED panic is thrown.
+ */
+#ifndef FLECS_DAG_DEPTH_MAX
+#define FLECS_DAG_DEPTH_MAX (128)
 #endif
 
 /** @} */
@@ -507,7 +506,6 @@ typedef struct ecs_table_cache_hdr_t {
     struct ecs_table_cache_t *cache;  /**< Table cache of element. Of type ecs_id_record_t* for component index elements. */
     ecs_table_t *table;               /**< Table associated with element. */
     struct ecs_table_cache_hdr_t *prev, *next; /**< Next/previous elements for id in table cache. */
-    bool empty;                       /**< Whether element is in empty list. */
 } ecs_table_cache_hdr_t;
 
 /** Metadata describing where a component id is stored in a table.
@@ -865,6 +863,40 @@ struct ecs_observer_t {
  *
  * @ingroup components
  */
+
+/* Flags that can be used to check which hooks a type has set */
+#define ECS_TYPE_HOOK_CTOR                   (1 << 0)
+#define ECS_TYPE_HOOK_DTOR                   (1 << 1)
+#define ECS_TYPE_HOOK_COPY                   (1 << 2)
+#define ECS_TYPE_HOOK_MOVE                   (1 << 3)
+#define ECS_TYPE_HOOK_COPY_CTOR              (1 << 4)
+#define ECS_TYPE_HOOK_MOVE_CTOR              (1 << 5)
+#define ECS_TYPE_HOOK_CTOR_MOVE_DTOR         (1 << 6)
+#define ECS_TYPE_HOOK_MOVE_DTOR              (1 << 7)
+
+/* Flags that can be used to set/check which hooks of a type are invalid */
+#define ECS_TYPE_HOOK_CTOR_ILLEGAL           (1 << 8)
+#define ECS_TYPE_HOOK_DTOR_ILLEGAL           (1 << 9)
+#define ECS_TYPE_HOOK_COPY_ILLEGAL           (1 << 10)
+#define ECS_TYPE_HOOK_MOVE_ILLEGAL           (1 << 11)
+#define ECS_TYPE_HOOK_COPY_CTOR_ILLEGAL      (1 << 12)
+#define ECS_TYPE_HOOK_MOVE_CTOR_ILLEGAL      (1 << 13)
+#define ECS_TYPE_HOOK_CTOR_MOVE_DTOR_ILLEGAL (1 << 14)
+#define ECS_TYPE_HOOK_MOVE_DTOR_ILLEGAL      (1 << 15)
+
+/* All valid hook flags */
+#define ECS_TYPE_HOOKS (ECS_TYPE_HOOK_CTOR|ECS_TYPE_HOOK_DTOR|\
+    ECS_TYPE_HOOK_COPY|ECS_TYPE_HOOK_MOVE|ECS_TYPE_HOOK_COPY_CTOR|\
+    ECS_TYPE_HOOK_MOVE_CTOR|ECS_TYPE_HOOK_CTOR_MOVE_DTOR|\
+    ECS_TYPE_HOOK_MOVE_DTOR)
+
+/* All invalid hook flags */
+#define ECS_TYPE_HOOKS_ILLEGAL (ECS_TYPE_HOOK_CTOR_ILLEGAL|\
+    ECS_TYPE_HOOK_DTOR_ILLEGAL|ECS_TYPE_HOOK_COPY_ILLEGAL|\
+    ECS_TYPE_HOOK_MOVE_ILLEGAL|ECS_TYPE_HOOK_COPY_CTOR_ILLEGAL|\
+    ECS_TYPE_HOOK_MOVE_CTOR_ILLEGAL|ECS_TYPE_HOOK_CTOR_MOVE_DTOR_ILLEGAL|\
+    ECS_TYPE_HOOK_MOVE_DTOR_ILLEGAL)
+
 struct ecs_type_hooks_t {
     ecs_xtor_t ctor;            /**< ctor */
     ecs_xtor_t dtor;            /**< dtor */
@@ -889,6 +921,12 @@ struct ecs_type_hooks_t {
      * not set explicitly it will be derived from other callbacks. */
     ecs_move_t move_dtor;
 
+    /** Hook flags.
+     * Indicates which hooks are set for the type, and which hooks are illegal.
+     * When an ILLEGAL flag is set when calling ecs_set_hooks() a hook callback
+     * will be set that panics when called. */
+    ecs_flags32_t flags;
+
     /** Callback that is invoked when an instance of a component is added. This
      * callback is invoked before triggers are invoked. */
     ecs_iter_action_t on_add;
@@ -910,7 +948,6 @@ struct ecs_type_hooks_t {
     ecs_ctx_free_t ctx_free;           /**< Callback to free ctx */
     ecs_ctx_free_t binding_ctx_free;   /**< Callback to free binding_ctx */
     ecs_ctx_free_t lifecycle_ctx_free; /**< Callback to free lifecycle_ctx */
-
 };
 
 /** Type that contains component information (passed to ctors/dtors/...)
@@ -1401,7 +1438,6 @@ typedef struct ecs_world_info_t {
     int32_t pair_id_count;            /**< Number of pair ids in the world */
 
     int32_t table_count;              /**< Number of tables */
-    int32_t empty_table_count;        /**< Number of tables without entities */
 
     /* -- Command counts -- */
     struct {
@@ -1756,12 +1792,6 @@ FLECS_API extern const ecs_entity_t EcsOnTableCreate;
 
 /** Event that triggers when a table is deleted. */
 FLECS_API extern const ecs_entity_t EcsOnTableDelete;
-
-/** Event that triggers when a table becomes empty (doesn't emit on creation). */
-FLECS_API extern const ecs_entity_t EcsOnTableEmpty;
-
-/** Event that triggers when a table becomes non-empty. */
-FLECS_API extern const ecs_entity_t EcsOnTableFill;
 
 /** Relationship used for specifying cleanup behavior. */
 FLECS_API extern const ecs_entity_t EcsOnDelete;
@@ -2535,6 +2565,24 @@ void ecs_run_aperiodic(
     ecs_world_t *world,
     ecs_flags32_t flags);
 
+/** Used with ecs_delete_empty_tables(). */
+typedef struct ecs_delete_empty_tables_desc_t {
+    /** Optional component filter for the tables to evaluate. */
+    ecs_id_t id;
+
+    /** Free table data when generation > clear_generation. */
+    uint16_t clear_generation;
+
+    /** Delete table when generation > delete_generation. */
+    uint16_t delete_generation;
+
+    /** Minimum number of component ids the table should have. */
+    int32_t min_id_count;
+
+    /** Amount of time operation is allowed to spend. */
+    double time_budget_seconds;
+} ecs_delete_empty_tables_desc_t;
+
 /** Cleanup empty tables.
  * This operation cleans up empty tables that meet certain conditions. Having
  * large amounts of empty tables does not negatively impact performance of the
@@ -2561,21 +2609,13 @@ void ecs_run_aperiodic(
  * The time budget specifies how long the operation should take at most.
  *
  * @param world The world.
- * @param id Optional component filter for the tables to evaluate.
- * @param clear_generation Free table data when generation > clear_generation.
- * @param delete_generation Delete table when generation > delete_generation.
- * @param min_id_count Minimum number of component ids the table should have.
- * @param time_budget_seconds Amount of time operation is allowed to spend.
+ * @param desc Configuration parameters.
  * @return Number of deleted tables.
  */
 FLECS_API
 int32_t ecs_delete_empty_tables(
     ecs_world_t *world,
-    ecs_id_t id,
-    uint16_t clear_generation,
-    uint16_t delete_generation,
-    int32_t min_id_count,
-    double time_budget_seconds);
+    const ecs_delete_empty_tables_desc_t *desc);
 
 /** Get world from poly.
  *
@@ -3985,7 +4025,8 @@ void ecs_get_path_w_sep_buf(
     ecs_entity_t child,
     const char *sep,
     const char *prefix,
-    ecs_strbuf_t *buf);
+    ecs_strbuf_t *buf,
+    bool escape);
 
 /** Find or create entity from path.
  * This operation will find or create an entity from a path, and will create any
@@ -4860,6 +4901,19 @@ const char* ecs_query_args_parse(
 FLECS_API
 bool ecs_query_changed(
     ecs_query_t *query);
+
+/** Get query object.
+ * Returns the query object. Can be used to access various information about
+ * the query.
+ *
+ * @param world The world.
+ * @param query The query.
+ * @return The query object.
+ */
+FLECS_API
+const ecs_query_t* ecs_query_get(
+    const ecs_world_t *world,
+    ecs_entity_t query);
 
 /** Skip a table while iterating.
  * This operation lets the query iterator know that a table was skipped while

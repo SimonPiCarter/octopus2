@@ -89,20 +89,31 @@ set(SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/http.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/app.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/flecs_cpp.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/ast.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/parser.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/stack.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/util.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/visit_eval.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/visit_fold.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/visit_free.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/visit_to_str.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr/visit_type.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/function.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/functions_builtin.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/functions_math.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/vars.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/tokenizer.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/query_parser.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/visit.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/script.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/serialize.c
-	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/interpolate.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/visit_check.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/visit_eval.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/parser.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/visit_to_str.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/visit_free.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/ast.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/template.c
-	${CMAKE_CURRENT_SOURCE_DIR}/src/addons/script/expr.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/value.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/poly.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/observer.c

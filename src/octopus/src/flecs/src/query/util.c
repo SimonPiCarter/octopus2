@@ -556,7 +556,11 @@ void flecs_term_to_buf(
         {
             ecs_strbuf_appendlit(buf, "this");
         } else if (term->src.id & EcsIsVariable) {
-            ecs_strbuf_appendstr(buf, term->src.name);
+            if (term->src.name) {
+                ecs_strbuf_appendstr(buf, term->src.name);
+            } else {
+                ecs_strbuf_appendstr(buf, "<<invalid variable name>>");
+            }
         } else {
             /* Shouldn't happen */
         }
@@ -573,8 +577,8 @@ void flecs_term_to_buf(
 
         if (term->second.id & EcsIsEntity) {
             if (term->second.id != 0) {
-                ecs_get_path_w_sep_buf(
-                    world, 0, ECS_TERM_REF_ID(&term->second), ".", NULL, buf);
+                ecs_get_path_w_sep_buf(world, 0, ECS_TERM_REF_ID(&term->second), 
+                    ".", NULL, buf, false);
             }
         } else {
             if (term->second.id & EcsIsVariable) {

@@ -24,6 +24,7 @@ ecs_cmd_t* flecs_cmd_new(
     ecs_cmd_t *cmd = ecs_vec_append_t(&stage->allocator, &stage->cmd->queue, 
         ecs_cmd_t);
     cmd->is._1.value = NULL;
+    cmd->id = 0;
     cmd->next_for_entity = 0;
     cmd->entry = NULL;
     cmd->system = stage->system;
@@ -76,7 +77,7 @@ void flecs_stage_merge(
     bool is_stage = flecs_poly_is(world, ecs_stage_t);
     ecs_stage_t *stage = flecs_stage_from_world(&world);
 
-    bool measure_frame_time = ECS_BIT_IS_SET(world->flags, 
+    bool measure_frame_time = ECS_BIT_IS_SET(ecs_world_get_flags(world), 
         EcsWorldMeasureFrameTime);
 
     ecs_time_t t_start = {0};
@@ -568,7 +569,6 @@ void flecs_stage_merge_post_frame(
     ecs_vec_clear(&stage->post_frame_actions);
 }
 
-static
 void flecs_commands_init(
     ecs_stage_t *stage,
     ecs_commands_t *cmd)
@@ -579,33 +579,16 @@ void flecs_commands_init(
         &stage->allocators.cmd_entry_chunk, ecs_cmd_entry_t);
 }
 
-static
 void flecs_commands_fini(
     ecs_stage_t *stage,
     ecs_commands_t *cmd)
 {
     /* Make sure stage has no unmerged data */
-    ecs_assert(ecs_vec_count(&stage->cmd->queue) == 0, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(ecs_vec_count(&cmd->queue) == 0, ECS_INTERNAL_ERROR, NULL);
 
     flecs_stack_fini(&cmd->stack);
     ecs_vec_fini_t(&stage->allocator, &cmd->queue, ecs_cmd_t);
     flecs_sparse_fini(&cmd->entries);
-}
-
-void flecs_commands_push(
-    ecs_stage_t *stage)
-{
-    int32_t sp = ++ stage->cmd_sp;
-    ecs_assert(sp < ECS_MAX_DEFER_STACK, ECS_INTERNAL_ERROR, NULL);
-    stage->cmd = &stage->cmd_stack[sp];
-}
-
-void flecs_commands_pop(
-    ecs_stage_t *stage)
-{
-    int32_t sp = -- stage->cmd_sp;
-    ecs_assert(sp >= 0, ECS_INTERNAL_ERROR, NULL);
-    stage->cmd = &stage->cmd_stack[sp];
 }
 
 ecs_entity_t flecs_stage_set_system(
@@ -640,7 +623,7 @@ ecs_stage_t* flecs_stage_new(
     ecs_vec_init_t(a, &stage->post_frame_actions, ecs_action_elem_t, 0);
 
     int32_t i;
-    for (i = 0; i < ECS_MAX_DEFER_STACK; i ++) {
+    for (i = 0; i < 2; i ++) {
         flecs_commands_init(stage, &stage->cmd_stack[i]);
     }
 
@@ -666,9 +649,15 @@ void flecs_stage_free(
     ecs_vec_fini(NULL, &stage->operations, 0);
 
     int32_t i;
-    for (i = 0; i < ECS_MAX_DEFER_STACK; i ++) {
+    for (i = 0; i < 2; i ++) {
         flecs_commands_fini(stage, &stage->cmd_stack[i]);
     }
+
+#ifdef FLECS_SCRIPT
+    if (stage->runtime) {
+        ecs_script_runtime_free(stage->runtime);
+    }
+#endif
 
     flecs_stack_fini(&stage->allocators.iter_stack);
     flecs_stack_fini(&stage->allocators.deser_stack);
@@ -821,8 +810,6 @@ bool ecs_readonly_begin(
     bool multi_threaded)
 {
     flecs_poly_assert(world, ecs_world_t);
-
-    flecs_process_pending_tables(world);
 
     ecs_dbg_3("#[bold]readonly");
     ecs_log_push_3();

@@ -311,6 +311,7 @@ void flecs_table_emit(
     ecs_table_t *table,
     ecs_entity_t event)
 {
+    ecs_defer_begin(world);
     flecs_emit(world, world, 0, &(ecs_event_desc_t) {
         .ids = &table->type,
         .event = event,
@@ -318,6 +319,7 @@ void flecs_table_emit(
         .flags = EcsEventTableOnly,
         .observable = world
     });
+    ecs_defer_end(world);
 }
 
 /* Main table initialization function */
@@ -642,13 +644,12 @@ void flecs_table_add_trigger_flags(
         flags = EcsTableHasOnRemove;
     } else if (event == EcsOnSet) {
         flags = EcsTableHasOnSet;
-    } else if (event == EcsOnTableFill) {
-        flags = EcsTableHasOnTableFill;
-    } else if (event == EcsOnTableEmpty) {
-        flags = EcsTableHasOnTableEmpty;
+    } else if (event == EcsOnTableCreate) {
+        flags = EcsTableHasOnTableCreate;
+    } else if (event == EcsOnTableDelete) {
+        flags = EcsTableHasOnTableDelete;
     } else if (event == EcsWildcard) {
         flags = EcsTableHasOnAdd|EcsTableHasOnRemove|EcsTableHasOnSet|
-            EcsTableHasOnTableFill|EcsTableHasOnTableEmpty|
             EcsTableHasOnTableCreate|EcsTableHasOnTableDelete;
     }
 
@@ -887,7 +888,6 @@ void flecs_table_fini_data(
     ecs_table_t *table,
     bool do_on_remove,
     bool is_delete,
-    bool deactivate,
     bool deallocate)
 {
     ecs_assert(!table->_->lock, ECS_LOCKED_STORAGE, FLECS_LOCKED_STORAGE_MSG);
@@ -944,12 +944,8 @@ void flecs_table_fini_data(
         table->data.entities = NULL;
         table->data.size = 0;
     }
+
     table->data.count = 0;
-
-    if (deactivate && count) {
-        flecs_table_set_empty(world, table);
-    }
-
     table->_->traversable_count = 0;
     table->flags &= ~EcsTableHasTraversable;
 }
@@ -965,7 +961,7 @@ void ecs_table_clear_entities(
     ecs_world_t* world,
     ecs_table_t* table)
 {
-    flecs_table_fini_data(world, table, true, true, true, false);
+    flecs_table_fini_data(world, table, true, true, false);
 }
 
 /* Cleanup, no OnRemove, clear entity index, deactivate table, free allocations */
@@ -973,7 +969,7 @@ void flecs_table_clear_entities_silent(
     ecs_world_t *world,
     ecs_table_t *table)
 {
-    flecs_table_fini_data(world, table, false, false, true, true);
+    flecs_table_fini_data(world, table, false, false, true);
 }
 
 /* Cleanup, run OnRemove, clear entity index, deactivate table, free allocations */
@@ -981,7 +977,7 @@ void flecs_table_clear_entities(
     ecs_world_t *world,
     ecs_table_t *table)
 {
-    flecs_table_fini_data(world, table, true, false, true, true);
+    flecs_table_fini_data(world, table, true, false, true);
 }
 
 /* Cleanup, run OnRemove, delete from entity index, deactivate table, free allocations */
@@ -989,7 +985,7 @@ void flecs_table_delete_entities(
     ecs_world_t *world,
     ecs_table_t *table)
 {
-    flecs_table_fini_data(world, table, true, true, true, true);
+    flecs_table_fini_data(world, table, true, true, true);
 }
 
 /* Unset all components in table. This function is called before a table is 
@@ -1007,6 +1003,8 @@ void flecs_table_fini(
     ecs_world_t *world,
     ecs_table_t *table)
 {
+    flecs_poly_assert(world, ecs_world_t);
+
     bool is_root = table == &world->store.root;
     ecs_assert(!table->_->lock, ECS_LOCKED_STORAGE, FLECS_LOCKED_STORAGE_MSG);
     ecs_assert(is_root || table->id != 0, ECS_INTERNAL_ERROR, NULL);
@@ -1031,10 +1029,8 @@ void flecs_table_fini(
         ecs_log_push_2();
     }
 
-    world->info.empty_table_count -= (ecs_table_count(table) == 0);
-
     /* Cleanup data, no OnRemove, delete from entity index, don't deactivate */
-    flecs_table_fini_data(world, table, false, true, false, true);
+    flecs_table_fini_data(world, table, false, true, true);
     flecs_table_clear_edges(world, table);
 
     if (!is_root) {
@@ -1329,6 +1325,8 @@ int32_t flecs_table_grow_data(
     int32_t size,
     const ecs_entity_t *ids)
 {
+    flecs_poly_assert(world, ecs_world_t);
+
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
 
     int32_t count = ecs_table_count(table);
@@ -1385,10 +1383,6 @@ int32_t flecs_table_grow_data(
 
     /* If the table is monitored indicate that there has been a change */
     flecs_table_mark_table_dirty(world, table, 0);
-
-    if (!(world->flags & EcsWorldReadonly) && !count) {
-        flecs_table_set_empty(world, table);
-    }
 
     /* Return index of first added entity */
     return count;
@@ -1449,9 +1443,6 @@ int32_t flecs_table_append(
         flecs_table_fast_append(world, table);
         table->data.count = v_entities.count;
         table->data.size = v_entities.size;
-        if (!count) {
-            flecs_table_set_empty(world, table); /* See below */
-        }
         return count;
     }
 
@@ -1462,12 +1453,6 @@ int32_t flecs_table_append(
         ECS_INTERNAL_ERROR, NULL);
     table->data.count = v_entities.count;
     table->data.size = v_entities.size;
-
-    /* If this is the first entity in this table, signal queries so that the
-     * table moves from an inactive table to an active table. */
-    if (!count) {
-        flecs_table_set_empty(world, table);
-    }
 
     /* Reobtain size to ensure that the columns have the same size as the 
      * entities and record vectors. This keeps reasoning about when allocations
@@ -1578,9 +1563,6 @@ void flecs_table_delete(
         }
 
         table->data.count --;
-        if (!count) {
-            flecs_table_set_empty(world, table);
-        }
 
         flecs_table_check_sanity(world, table);
         return;
@@ -1644,9 +1626,6 @@ void flecs_table_delete(
     }
 
     table->data.count --;
-    if (!count) {
-        flecs_table_set_empty(world, table);
-    }
 
     flecs_table_check_sanity(world, table);
 }
@@ -2170,11 +2149,6 @@ void flecs_table_merge(
     flecs_table_merge_data(world, dst_table, src_table, dst_count, src_count);
 
     if (src_count) {
-        if (!dst_count) {
-            flecs_table_set_empty(world, dst_table);
-        }
-        flecs_table_set_empty(world, src_table);
-
         flecs_table_traversable_add(dst_table, src_table->_->traversable_count);
         flecs_table_traversable_add(src_table, -src_table->_->traversable_count);
         ecs_assert(src_table->_->traversable_count == 0, ECS_INTERNAL_ERROR, NULL);
@@ -2191,6 +2165,8 @@ void flecs_table_notify(
     ecs_id_t id,
     ecs_table_event_t *event)
 {
+    flecs_poly_assert(world, ecs_world_t);
+
     if (world->flags & EcsWorldFini) {
         return;
     }

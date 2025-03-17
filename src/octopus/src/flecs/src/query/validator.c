@@ -789,6 +789,36 @@ int flecs_term_finalize(
             }
         }
 
+        if (term->first.id & EcsCascade) {
+            flecs_query_validator_error(ctx, 
+                "cascade modifier invalid for term.first");
+            return -1;
+        }
+
+        if (term->second.id & EcsCascade) {
+            flecs_query_validator_error(ctx, 
+                "cascade modifier invalid for term.second");
+            return -1;
+        }
+
+        if (term->first.id & EcsDesc) {
+            flecs_query_validator_error(ctx, 
+                "desc modifier invalid for term.first");
+            return -1;
+        }
+
+        if (term->second.id & EcsDesc) {
+            flecs_query_validator_error(ctx, 
+                "desc modifier invalid for term.second");
+            return -1;
+        }
+
+        if (term->src.id & EcsDesc && !(term->src.id & EcsCascade)) {
+            flecs_query_validator_error(ctx, 
+                "desc modifier invalid without cascade");
+            return -1;
+        }
+
         if (term->src.id & EcsCascade) {
             /* Cascade always implies up traversal */
             term->src.id |= EcsUp;
@@ -1281,6 +1311,8 @@ int flecs_query_finalize_terms(
             ECS_TERMSET_SET(q->var_fields, 1u << term->field_index);
         }
 
+        bool is_sparse = false;
+
         ecs_id_record_t *idr = flecs_id_record_get(world, term->id);
         if (idr) {
             if (ecs_os_has_threading()) {
@@ -1292,17 +1324,26 @@ int flecs_query_finalize_terms(
             term->flags_ |= EcsTermKeepAlive;
 
             if (idr->flags & EcsIdIsSparse) {
-                term->flags_ |= EcsTermIsSparse;
-                ECS_BIT_CLEAR16(term->flags_, EcsTermIsTrivial);
-                if (term->flags_ & EcsTermIsCacheable) {
-                    cacheable_terms --;
-                    ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
-                }
+                is_sparse = true;
+            }
+        } else {
+            ecs_entity_t type = ecs_get_typeid(world, term->id);
+            if (type && ecs_has_id(world, type, EcsSparse)) {
+                is_sparse = true;
+            }
+        }
 
-                /* Sparse component fields must be accessed with ecs_field_at */
-                if (!nodata_term) {
-                    q->row_fields |= flecs_uto(uint32_t, 1llu << i);
-                }
+        if (is_sparse) {
+            term->flags_ |= EcsTermIsSparse;
+            ECS_BIT_CLEAR16(term->flags_, EcsTermIsTrivial);
+            if (term->flags_ & EcsTermIsCacheable) {
+                cacheable_terms --;
+                ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
+            }
+
+            /* Sparse component fields must be accessed with ecs_field_at */
+            if (!nodata_term) {
+                q->row_fields |= flecs_uto(uint32_t, 1llu << i);
             }
         }
 
@@ -1349,6 +1390,7 @@ int flecs_query_finalize_terms(
 
         if (scope_nesting < 0) {
             flecs_query_validator_error(&ctx, "'}' without matching '{'");
+            return -1;
         }
     }
 

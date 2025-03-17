@@ -97,7 +97,7 @@ bool flecs_query_get_fixed_monitor(
     bool check)
 {
     ecs_query_t *q = &impl->pub;
-    ecs_world_t *world = q->world;
+    ecs_world_t *world = q->real_world;
     ecs_term_t *terms = q->terms;
     int32_t i, term_count = q->term_count;
 
@@ -222,7 +222,7 @@ bool flecs_query_check_cache_monitor(
     }
 
     ecs_table_cache_iter_t it;
-    if (flecs_table_cache_iter(&cache->cache, &it)) {
+    if (flecs_table_cache_all_iter(&cache->cache, &it)) {
         ecs_query_cache_table_t *qt;
         while ((qt = flecs_table_cache_next(&it, ecs_query_cache_table_t))) {
             if (flecs_query_check_table_monitor(impl, qt, -1)) {
@@ -364,7 +364,7 @@ void flecs_query_mark_fields_dirty(
         return;
     }
 
-    ecs_world_t *world = q->world;
+    ecs_world_t *world = q->real_world;
     int16_t i, field_count = q->field_count;
     for (i = 0; i < field_count; i ++) {
         ecs_termset_t field_bit = (ecs_termset_t)(1u << i);
@@ -415,7 +415,7 @@ void flecs_query_mark_fixed_fields_dirty(
         return;
     }
 
-    ecs_world_t *world = q->world;
+    ecs_world_t *world = q->real_world;
     int32_t i, field_count = q->field_count;
     for (i = 0; i < field_count; i ++) {
         if (!(fixed_write_fields & flecs_ito(uint32_t, 1 << i))) {
@@ -480,6 +480,9 @@ void flecs_query_sync_match_monitor(
 
             flecs_query_get_column_for_field(q, match, field, &tc);
 
+            /* Query for cache should never point to stage */
+            ecs_assert(q->world == q->real_world, ECS_INTERNAL_ERROR, NULL);
+
             monitor[field + 1] = flecs_table_get_dirty_state(
                 q->world, tc.table)[tc.column + 1];
         }
@@ -509,10 +512,6 @@ bool ecs_query_changed(
      * cached/cacheable and don't have a fixed source, since that requires 
      * storing state per result, which doesn't happen for uncached queries. */
     if (impl->cache) {
-        /* If we're checking the cache, make sure that tables are in the correct
-         * empty/non-empty lists. */
-        flecs_process_pending_tables(q->world);
-
         if (!(impl->pub.flags & EcsQueryHasMonitor)) {
             flecs_query_init_query_monitors(impl);
         }

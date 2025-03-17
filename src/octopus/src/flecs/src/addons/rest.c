@@ -63,6 +63,16 @@ static ECS_DTOR(EcsRest, ptr, {
 
 static char *rest_last_err;
 static ecs_os_api_log_t rest_prev_log;
+static ecs_os_api_log_t rest_prev_fatal_log;
+
+static
+void flecs_set_prev_log(
+    ecs_os_api_log_t prev_log,
+    bool try)
+{
+    rest_prev_log = try ? NULL : prev_log;
+    rest_prev_fatal_log = prev_log;
+}
 
 static 
 void flecs_rest_capture_log(
@@ -73,7 +83,20 @@ void flecs_rest_capture_log(
 {
     (void)file; (void)line;
 
+    if (level <= -4) {
+        /* Make sure to always log fatal errors */
+        if (rest_prev_fatal_log) {
+            ecs_log_enable_colors(true);
+            rest_prev_fatal_log(level, file, line, msg);
+            ecs_log_enable_colors(false);
+            return;
+        } else {
+            fprintf(stderr, "%s:%d: %s", file, line, msg);
+        }
+    }
+
 #ifdef FLECS_DEBUG
+    /* In debug mode, log unexpected errors to the console */
     if (level < 0) {
         /* Also log to previous log function in debug mode */
         if (rest_prev_log) {
@@ -84,7 +107,7 @@ void flecs_rest_capture_log(
     }
 #endif
 
-    if (!rest_last_err && level < 0) {
+    if (!rest_last_err && level <= -3) {
         rest_last_err = ecs_os_strdup(msg);
     }
 }
@@ -506,16 +529,23 @@ bool flecs_rest_script(
 
     const char *code = ecs_http_get_param(req, "code");
     if (!code) {
-        flecs_reply_error(reply, "missing data parameter");
-        return true;
+        code = req->body;
     }
-
+    
     bool try = false;
     flecs_rest_bool_param(req, "try", &try);
 
+    if (!code) {
+        flecs_reply_error(reply, "missing code parameter");
+        if (!try) {
+            reply->code = 400;
+        }
+        return true;
+    }
+
     bool prev_color = ecs_log_enable_colors(false);
     ecs_os_api_log_t prev_log = ecs_os_api.log_;
-    rest_prev_log = try ? NULL : prev_log;
+    flecs_set_prev_log(ecs_os_api.log_, try);
     ecs_os_api.log_ = flecs_rest_capture_log;
 
     script = ecs_script(world, {
@@ -527,7 +557,7 @@ bool flecs_rest_script(
         char *err = flecs_rest_get_captured_log();
         char *escaped_err = flecs_astresc('"', err);
         if (escaped_err) {
-            flecs_reply_error(reply, escaped_err);
+            flecs_reply_error(reply, "%s", escaped_err);
         } else {
             flecs_reply_error(reply, "error parsing script");
         }
@@ -554,7 +584,7 @@ void flecs_rest_reply_set_captured_log(
     char *err = flecs_rest_get_captured_log();
     if (err) {
         char *escaped_err = flecs_astresc('"', err);
-        flecs_reply_error(reply, escaped_err);
+        flecs_reply_error(reply, "%s", escaped_err);
         ecs_os_free(escaped_err);
         ecs_os_free(err);
     }
@@ -606,6 +636,9 @@ bool flecs_rest_reply_existing_query(
         return true;
     }
 
+    bool try = false;
+    flecs_rest_bool_param(req, "try", &try);
+
     ecs_query_t *q = NULL;
     const EcsPoly *poly_comp = ecs_get_pair(world, qe, EcsPoly, EcsQuery);
     if (!poly_comp) {
@@ -632,7 +665,7 @@ bool flecs_rest_reply_existing_query(
 
     ecs_dbg_2("rest: request query '%s'", name);
     bool prev_color = ecs_log_enable_colors(false);
-    rest_prev_log = ecs_os_api.log_;
+    flecs_set_prev_log(ecs_os_api.log_, try);
     ecs_os_api.log_ = flecs_rest_capture_log;
 
     const char *vars = ecs_http_get_param(req, "vars");
@@ -682,7 +715,7 @@ bool flecs_rest_get_query(
     ecs_dbg_2("rest: request query '%s'", expr);
     bool prev_color = ecs_log_enable_colors(false);
     ecs_os_api_log_t prev_log = ecs_os_api.log_;
-    rest_prev_log = try ? NULL : prev_log;
+    flecs_set_prev_log(ecs_os_api.log_, try);
     ecs_os_api.log_ = flecs_rest_capture_log;
 
     ecs_query_t *q = ecs_query(world, { .expr = expr });
@@ -871,7 +904,7 @@ void flecs_system_stats_to_json(
 {
     ecs_strbuf_list_push(reply, "{", ",");
     ecs_strbuf_list_appendlit(reply, "\"name\":\"");
-    ecs_get_path_w_sep_buf(world, 0, system, ".", NULL, reply);
+    ecs_get_path_w_sep_buf(world, 0, system, ".", NULL, reply, true);
     ecs_strbuf_appendch(reply, '"');
 
     bool disabled = ecs_has_id(world, system, EcsDisabled);

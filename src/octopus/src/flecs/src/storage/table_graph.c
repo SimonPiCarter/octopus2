@@ -506,22 +506,6 @@ void flecs_table_init_node(
     flecs_table_init_edges(&node->remove);
 }
 
-bool flecs_table_records_update_empty(
-    ecs_table_t *table)
-{
-    bool result = false;
-    bool is_empty = ecs_table_count(table) == 0;
-
-    int32_t i, count = table->_->record_count;
-    for (i = 0; i < count; i ++) {
-        ecs_table_record_t *tr = &table->_->records[i];
-        ecs_table_cache_t *cache = tr->hdr.cache;
-        result |= ecs_table_cache_set_empty(cache, table, is_empty);
-    }
-
-    return result;
-}
-
 static
 void flecs_init_table(
     ecs_world_t *world,
@@ -594,7 +578,6 @@ ecs_table_t *flecs_table_new(
 
     /* Update counters */
     world->info.table_count ++;
-    world->info.empty_table_count ++;
     world->info.table_create_total ++;
 
     ecs_log_pop_2();
@@ -788,7 +771,8 @@ void flecs_add_overrides_for_base(
     ecs_id_t pair)
 {
     ecs_entity_t base = ecs_pair_second(world, pair);
-    ecs_assert(base != 0, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(base != 0, ECS_INVALID_PARAMETER, 
+        "target of IsA pair is not alive");
     ecs_table_t *base_table = ecs_get_table(world, base);
     if (!base_table) {
         return;
@@ -1138,10 +1122,12 @@ ecs_table_t* flecs_table_traverse_add(
     if (node != to || edge->diff) {
         if (edge->diff) {
             *diff = *edge->diff;
-            if (edge->diff->added_flags & EcsIdIsUnion) {
-                diff->added.array = id_ptr;
-                diff->added.count = 1;
-                diff->removed.count = 0;
+            if (diff->added_flags & EcsIdIsUnion) {
+                if (diff->added.count == 1) {
+                    diff->added.array = id_ptr;
+                    diff->added.count = 1;
+                    diff->removed.count = 0;
+                }
             }
         } else {
             diff->added.array = id_ptr;
