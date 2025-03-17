@@ -19,8 +19,16 @@ public:
 	RandomGenerator(unsigned long seed_p, bool alwaysMin_p=false);
 	~RandomGenerator();
 
+	/// @brief roll an integer random number
+	/// @param min_p min value allowed
+	/// @param max_p max value allowed (included)
+	/// @return a value
 	int roll(int min_p, int max_p);
 
+	/// @brief roll an real random number
+	/// @param min_p min value allowed
+	/// @param max_p max value allowed (included)
+	/// @return a value
 	double roll_double(double min_p, double max_p);
 
 private:
