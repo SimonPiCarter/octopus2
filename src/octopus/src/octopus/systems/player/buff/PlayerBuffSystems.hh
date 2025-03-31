@@ -4,6 +4,7 @@
 
 #include "octopus/components/advanced/player/buff/PlayerBuff.hh"
 #include "octopus/components/basic/hitpoint/Destroyable.hh"
+#include "octopus/world/player/PlayerInfo.hh"
 
 namespace octopus
 {
