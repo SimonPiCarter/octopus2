@@ -21,7 +21,7 @@ void Triangulation::init(int x, int y)
 	_size_x = x;
 	_size_y = y;
 
-	cdt.insertVertices({{0,0},{x,0},{x,y},{0,y},
+	cdt.insertVertices({{-100,-100},{x+100,-100},{x+100,y+100},{-100,y+100},
 	});
 	insert_edge(3,0);
 	insert_edge(2,3);
