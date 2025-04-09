@@ -67,22 +67,22 @@ struct PathFindingCache
 	/// @brief Sync with grid
 	/// @tparam Grid to be synced with
 	/// Must have public members :
-	/// - nb_tiles
-	/// - nb_tiles_x
-	/// - tile_size
-	/// - revision
-	/// - free : vector of boolean (dim nb_tiles*nb_tiles)
+	/// - get_nb_tiles
+	/// - get_size_x
+	/// - get_tile_size
+	/// - get_revision
+	/// - is_free : vector of boolean (dim nb_tiles*nb_tiles)
 	template<typename Grid>
-	void declare_sync_system(flecs::world &ecs, Grid const &grid)
+	void declare_sync_system(flecs::world &ecs, Grid const *grid)
 	{
-		nb_tiles = grid.nb_tiles;
-		nb_tiles_x = grid.nb_tiles_x;
-		tile_size = grid.tile_size;
+		nb_tiles = grid->get_nb_tiles();
+		nb_tiles_x = grid->get_size_x();
+		tile_size = grid->get_tile_size();
 		// update cache on each loop if necessary
 		ecs.system<>()
 			.kind(ecs.entity(PrepingUpdatePhase))
-			.run([this, &grid](flecs::iter) {
-				if(paths_info.empty() || (grid.revision != revision))
+			.run([this, grid](flecs::iter) {
+				if(paths_info.empty() || (grid->get_revision() != revision))
 				{
 					// default values
 					const PathsInfo empty_path_info {std::vector<std::size_t>(nb_tiles, nb_tiles)};
@@ -95,11 +95,11 @@ struct PathFindingCache
 					accessible = std::vector<bool>(nb_tiles, true);
 					for(std::size_t i = 0 ; i < nb_tiles ; ++ i)
 					{
-						accessible[i] = grid.free[i];
+						accessible[i] = grid->is_free(i);
 					}
 
 					// update revision
-					revision = grid.revision;
+					revision = grid->get_revision();
 				}
 			});
 	}

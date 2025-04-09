@@ -62,7 +62,7 @@ TEST(path_finding_cache, basic_query_system)
     // Position
     Position pos {{10,30}};
 
-    cache->declare_sync_system(ecs, grid);
+    cache->declare_sync_system(ecs, &grid);
     cache->declare_cache_update_system(ecs, stats);
 
     ecs.progress();
