@@ -46,22 +46,31 @@ struct PathRequest
 /// reset the cache except if your are sur that your cache were synced before reverting
 struct PathFindingCache
 {
-	/// @brief Compute a path request based on vector positions
-	PathRequest get_request(Vector const &orig, Vector const &dest) const;
-
+	/// @brief Query a path based on a position and a target
+	/// @param pos
+	/// @param target
+	/// @return
 	PathQuery query_path(Position const &pos, Vector const &target) const;
 
-	std::vector<PathsInfo> const &get_paths_info() const;
+	/// @brief Simple getter for debug purpose
+	std::vector<PathsInfo> const &get_paths_info() const { return paths_info; }
 
-	std::vector<std::size_t> build_path(std::size_t orig, std::size_t dest) const;
-
+	/// @brief Compute paths
 	void compute_paths(flecs::world &ecs);
 
+	/// @brief Checks if a path has been computed between two indexes
 	bool has_path(std::size_t orig, std::size_t dest) const;
 
+	/// @brief Declare system to compute paths
+	/// and update triangulation
 	void declare_cache_update_system(flecs::world &ecs, Triangulation const &tr, TimeStats &st);
 
 private:
+	/// @brief Compute a path request based on vector positions
+	PathRequest get_request(Vector const &orig, Vector const &dest) const;
+	/// @brief Build a path from indexes
+	std::vector<std::size_t> build_path(std::size_t orig, std::size_t dest) const;
+
 	Triangulation const *triangulation = nullptr;
 	TimeStats *stats = nullptr;
 	/// @brief fill paths info from a path

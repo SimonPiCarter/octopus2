@@ -37,8 +37,6 @@ PathQuery PathFindingCache::query_path(Position const &pos, Vector const &target
 	return PathQuery { this, request.orig, request.dest, pos.pos, target };
 }
 
-std::vector<PathsInfo> const &PathFindingCache::get_paths_info() const { return paths_info; }
-
 std::vector<std::size_t> PathFindingCache::build_path(std::size_t orig, std::size_t dest) const
 {
 	std::vector<std::size_t> path;
