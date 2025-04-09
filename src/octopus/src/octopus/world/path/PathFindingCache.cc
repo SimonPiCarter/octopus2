@@ -142,16 +142,12 @@ std::vector<std::size_t> PathFindingCache::compute_path(std::size_t orig, std::s
 	labels[orig].opened = true;
 	labels[orig].heur = square_distance(get_position(orig), get_position(dest));
 
-	bool foundPath_l = false;
-
 	while(!open_list_l.empty())
 	{
 		Label const * cur_l = *open_list_l.begin();
 		open_list_l.erase(open_list_l.begin());
 		if(cur_l->node == dest)
 		{
-			// found path
-			foundPath_l = true;
 			break;
 		}
 		for(std::size_t const &n : get_neighbors(cur_l->node, dest))
