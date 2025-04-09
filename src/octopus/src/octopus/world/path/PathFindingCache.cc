@@ -38,16 +38,21 @@ std::vector<std::size_t> PathFindingCache::build_path(std::size_t orig, std::siz
 {
 	std::vector<std::size_t> path;
 
+	if(paths_info[dest].get_line_of_sight(orig) > 0)
+	{
+		return {orig, dest};
+	}
+
 	std::size_t cur = orig;
 	// while end or no more path
 	while(cur != dest
-	   && cur < paths_info[dest].indexes.size()
-	   && paths_info[dest].indexes[cur] != cur)
+	   && cur < paths_info[dest].get_indexes_size()
+	   && paths_info[dest].get_indexes(cur) != cur)
 	{
 		// add current index
 		path.push_back(cur);
 		// update current index based on precomputed path
-		cur = paths_info[dest].indexes[cur];
+		cur = paths_info[dest].get_indexes(cur);
 	}
 
 	path.push_back(dest);
@@ -100,9 +105,9 @@ Vector PathFindingCache::get_position(std::size_t idx) const
 
 std::vector<std::size_t> PathFindingCache::get_neighbors(std::size_t idx, std::size_t dest) const
 {
-	if(paths_info[dest].indexes[idx] < nb_tiles)
+	if(paths_info[dest].get_indexes(idx) < nb_tiles)
 	{
-		return {paths_info[dest].indexes[idx]};
+		return {paths_info[dest].get_indexes(idx)};
 	}
 	std::vector<std::size_t> neighbors;
 	neighbors.reserve(4);
@@ -219,7 +224,7 @@ void PathFindingCache::compute_paths(flecs::world &ecs)
 		std::vector<std::size_t> path = compute_path(request.orig, request.dest);
 		if(path.empty() || path[path.size()-1] != request.dest)
 		{
-			paths_info[request.dest].indexes[request.orig] = request.orig;
+			paths_info[request.dest].get_indexes(request.orig) = request.orig;
 		}
 		else
 		{
@@ -237,7 +242,7 @@ bool PathFindingCache::has_path(std::size_t orig, std::size_t dest) const
 {
 	if(orig < paths_info.size() && dest < paths_info.size())
 	{
-		return paths_info[dest].indexes[orig] < paths_info.size();
+		return paths_info[dest].get_indexes(orig) < paths_info.size();
 	}
 	return false;
 }
@@ -271,11 +276,17 @@ void PathFindingCache::consolidate_path(std::vector<std::size_t> const &path)
 	{
 		if(last < paths_info.size())
 		{
-			paths_info[dest].indexes[last] = cur;
+			paths_info[dest].get_indexes(last) = cur;
+		}
+		if(paths_info[dest].get_line_of_sight(cur) < 0)
+		{
+			char const los = losCheck(get_position(cur), get_position(dest)) ? 1 : 0;
+			paths_info[dest].get_line_of_sight(cur) = los;
+			paths_info[cur].get_line_of_sight(dest) = los;
 		}
 		last = cur;
 	}
-	paths_info[dest].indexes[dest] = dest;
+	paths_info[dest].get_indexes(dest) = dest;
 }
 
 bool PathQuery::is_valid() const
@@ -301,5 +312,76 @@ Vector PathQuery::get_direction() const
 	END_TIME_PTR(path_funnelling, cache->stats)
 	return dir;
 }
+
+
+Vector const &getLeftMost(Vector const &pos1_p, Vector const &pos2_p)
+{
+	if(pos1_p.x > pos2_p.x)
+	{
+		return pos2_p;
+	}
+	return pos1_p;
+}
+
+Vector const &getRightMost(Vector const &pos1_p, Vector const &pos2_p)
+{
+	if(pos1_p.x > pos2_p.x)
+	{
+		return pos1_p;
+	}
+	return pos2_p;
+}
+
+bool PathFindingCache::losCheck(Vector const &pos1_p, Vector const &pos2_p) const
+{
+	Vector const & leftMost_l = getLeftMost(pos1_p, pos2_p);
+	Vector const & rightMost_l = getRightMost(pos2_p, pos1_p);
+
+	Vector const leftToRight_l = rightMost_l - leftMost_l;
+
+	// floor x to perform ray cast check
+	int x = to_int(leftMost_l.x);
+	int x_end = to_int(rightMost_l.x);
+	int cur_l = 0;
+	Fixed range_l(x_end-x);
+
+	// start point is put on a integer value of x (x computed right above)
+	Vector start_l = leftMost_l;
+	if(range_l > 1)
+	{
+		start_l += leftToRight_l * (Fixed(x) - leftMost_l.x) / range_l;
+	}
+	do
+	{
+		Fixed t0 = 0;
+		Fixed t1 = 1;
+		if(range_l > 1)
+		{
+			t0 = cur_l / range_l;
+			t1 = (cur_l+1) / range_l;
+		}
+		// y range along 1 range of x (warning lower may be higher than upper along y in case dy < 0)
+		int lower_y = to_int(start_l.y + leftToRight_l.y * t0);
+		int upper_y = to_int(start_l.y + leftToRight_l.y * t1);
+		if(lower_y > upper_y)
+		{
+			std::swap(lower_y, upper_y);
+		}
+
+		// perform check on every casted node
+		for(int y = std::max(0, lower_y) ; y <= upper_y && y < nb_tiles_x*tile_size - 1e-3 ; ++ y)
+		{
+			if(!accessible[get_index(Vector(x+cur_l, y))])
+			{
+				return false;
+			}
+		}
+
+		++cur_l;
+	} while(cur_l < range_l && x+cur_l < nb_tiles_x*tile_size - 1e-3);
+
+	return true;
+}
+
 
 }

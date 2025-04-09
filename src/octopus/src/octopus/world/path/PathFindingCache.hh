@@ -27,12 +27,52 @@ struct PathQuery
 };
 
 /// @brief Store, for a destination, the index of the
-/// following triangle in the path
+/// following tile in the path
 /// if value = size of the vector it means no path
 /// has been computed yet
+/// also store the line_of_sight from every tile
+/// where -1 means not computed yet, 0 no los and 1 los
 struct PathsInfo
 {
+	std::size_t get_indexes_size() const { return indexes.size(); }
+	std::size_t const &get_indexes(std::size_t idx) const
+	{
+		static std::size_t const default_val = 1e10;
+		if(idx >= indexes.size())
+		{
+			return default_val;
+		}
+		return indexes[idx];
+	}
+	std::size_t &get_indexes(std::size_t idx)
+	{
+		if(idx >= indexes.size())
+		{
+			indexes.resize(idx+1, 1e10);
+		}
+		return indexes[idx];
+	}
+
+	char const &get_line_of_sight(std::size_t idx) const
+	{
+		static char const default_val = -1;
+		if(idx >= line_of_sight.size())
+		{
+			return default_val;
+		}
+		return line_of_sight[idx];
+	}
+	char &get_line_of_sight(std::size_t idx)
+	{
+		if(idx >= line_of_sight.size())
+		{
+			line_of_sight.resize(idx+1, -1);
+		}
+		return line_of_sight[idx];
+	}
+private:
 	std::vector<std::size_t> indexes;
+	std::vector<char> line_of_sight;
 };
 
 struct PathRequest
@@ -85,18 +125,20 @@ struct PathFindingCache
 				if(paths_info.empty() || (grid->get_revision() != revision))
 				{
 					// default values
-					const PathsInfo empty_path_info {std::vector<std::size_t>(nb_tiles, nb_tiles)};
-
-					// reset info to default values
-					std::fill(paths_info.begin(), paths_info.end(), empty_path_info);
-					paths_info.resize(nb_tiles, empty_path_info);
+					printf("ok1\n");
+					std::fill(paths_info.begin(), paths_info.end(), PathsInfo());
+					printf("ok2\n");
+					paths_info.resize(nb_tiles, PathsInfo());
+					printf("ok3\n");
 					list_requests.clear();
+					printf("ok4\n");
 
 					accessible = std::vector<bool>(nb_tiles, true);
 					for(std::size_t i = 0 ; i < nb_tiles ; ++ i)
 					{
 						accessible[i] = grid->is_free(i);
 					}
+					printf("ok5\n");
 
 					// update revision
 					revision = grid->get_revision();
@@ -115,6 +157,8 @@ private:
 	std::vector<std::size_t> compute_path(std::size_t orig, std::size_t dest) const;
 	std::vector<std::size_t> get_neighbors(std::size_t idx, std::size_t dest) const;
 
+	/// @brief compute los between two position
+	bool losCheck(Vector const &pos1_p, Vector const &pos2_p) const;
 
 	// grid properties
 	std::size_t nb_tiles_x = 0;
