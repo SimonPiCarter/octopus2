@@ -1,6 +1,7 @@
 #include "PathFindingCache.hh"
 #include "octopus/utils/log/Logger.hh"
 
+#include <algorithm>
 #include <set>
 
 namespace octopus
@@ -85,16 +86,16 @@ Fixed square_distance(Vector const &a, Vector const &b)
 
 std::size_t PathFindingCache::get_index(Vector const &pos) const
 {
-	int x = (pos.x / tile_size).to_int();
-	int y = (pos.y / tile_size).to_int();
-	return x * nb_tiles_x + y;
+	int x = std::clamp<int>((pos.x / tile_size).to_int(), 0, nb_tiles_x-1);
+	int y = std::clamp<int>((pos.y / tile_size).to_int(), 0, nb_tiles_x-1);
+	return x + y * nb_tiles_x;
 }
 
 Vector PathFindingCache::get_position(std::size_t idx) const
 {
-	std::size_t x = idx / nb_tiles_x;
-	std::size_t y = idx - x * nb_tiles_x;
-	return {tile_size*x, tile_size*y};
+	std::size_t y = idx / nb_tiles_x;
+	std::size_t x = idx - y * nb_tiles_x;
+	return {tile_size*x + tile_size/2, tile_size*y + tile_size/2};
 }
 
 std::vector<std::size_t> PathFindingCache::get_neighbors(std::size_t idx, std::size_t dest) const
@@ -113,7 +114,7 @@ std::vector<std::size_t> PathFindingCache::get_neighbors(std::size_t idx, std::s
 	{
 		neighbors.push_back(idx-nb_tiles_x);
 	}
-	if(idx < nb_tiles)
+	if(idx+1 < nb_tiles)
 	{
 		neighbors.push_back(idx+1);
 	}
