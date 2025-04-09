@@ -6,7 +6,7 @@
 
 #include "flecs.h"
 #include "octopus/components/basic/position/Position.hh"
-#include "octopus/utils/triangulation/Triangulation.hh"
+#include "octopus/systems/phases/Phases.hh"
 #include "octopus/world/stats/TimeStats.hh"
 
 namespace octopus
@@ -62,16 +62,65 @@ struct PathFindingCache
 	bool has_path(std::size_t orig, std::size_t dest) const;
 
 	/// @brief Declare system to compute paths
-	/// and update triangulation
-	void declare_cache_update_system(flecs::world &ecs, Triangulation const &tr, TimeStats &st);
+	void declare_cache_update_system(flecs::world &ecs, TimeStats &st);
 
+	/// @brief Sync with grid
+	/// @tparam Grid to be synced with
+	/// Must have public members :
+	/// - nb_tiles
+	/// - nb_tiles_x
+	/// - tile_size
+	/// - revision
+	/// - free : vector of boolean (dim nb_tiles*nb_tiles)
+	template<typename Grid>
+	void declare_sync_system(flecs::world &ecs, Grid const &grid)
+	{
+		nb_tiles = grid.nb_tiles;
+		nb_tiles_x = grid.nb_tiles_x;
+		tile_size = grid.tile_size;
+		// update cache on each loop if necessary
+		ecs.system<>()
+			.kind(ecs.entity(PrepingUpdatePhase))
+			.run([this, &grid](flecs::iter) {
+				if(paths_info.empty() || (grid.revision != revision))
+				{
+					// default values
+					const PathsInfo empty_path_info {std::vector<std::size_t>(nb_tiles, nb_tiles)};
+
+					// reset info to default values
+					std::fill(paths_info.begin(), paths_info.end(), empty_path_info);
+					paths_info.resize(nb_tiles, empty_path_info);
+					list_requests.clear();
+
+					accessible = std::vector<bool>(nb_tiles, true);
+					for(std::size_t i = 0 ; i < nb_tiles ; ++ i)
+					{
+						accessible[i] = grid.free[i];
+					}
+
+					// update revision
+					revision = grid.revision;
+				}
+			});
+	}
+
+	/// @brief Build a path from indexes
+	std::vector<std::size_t> build_path(std::size_t orig, std::size_t dest) const;
+	Vector get_position(std::size_t idx) const;
+	std::size_t get_index(Vector const &pos) const;
 private:
 	/// @brief Compute a path request based on vector positions
 	PathRequest get_request(Vector const &orig, Vector const &dest) const;
-	/// @brief Build a path from indexes
-	std::vector<std::size_t> build_path(std::size_t orig, std::size_t dest) const;
 
-	Triangulation const *triangulation = nullptr;
+	std::vector<std::size_t> compute_path(std::size_t orig, std::size_t dest) const;
+	std::vector<std::size_t> get_neighbors(std::size_t idx, std::size_t dest) const;
+
+
+	// grid properties
+	std::size_t nb_tiles_x = 0;
+	std::size_t nb_tiles = 0;
+	Fixed tile_size;
+
 	TimeStats *stats = nullptr;
 	/// @brief fill paths info from a path
 	void consolidate_path(std::vector<std::size_t> const &path);
@@ -79,8 +128,10 @@ private:
 	std::vector<PathsInfo> paths_info;
 	// to allow pusing requests when calling for getter
 	mutable std::list<PathRequest> list_requests;
-	// revision to keep track if we are up to date with triangulation
+	// revision to keep track if we are up to date with grid
     uint64_t revision = 0;
+	/// @brief true if the tile is accessible
+	std::vector<bool> accessible;
 
 	// to protect insertion
 	mutable std::mutex mutex;

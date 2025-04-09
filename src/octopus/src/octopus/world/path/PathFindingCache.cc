@@ -1,6 +1,7 @@
 #include "PathFindingCache.hh"
 #include "octopus/utils/log/Logger.hh"
-#include "octopus/systems/phases/Phases.hh"
+
+#include <set>
 
 namespace octopus
 {
@@ -8,14 +9,9 @@ namespace octopus
 /// @brief Compute a path request based on vector positions
 PathRequest PathFindingCache::get_request(Vector const &orig, Vector const &dest) const
 {
-	assert(triangulation);
-	PathRequest request {triangulation->cdt.triangles.size(), triangulation->cdt.triangles.size()};
-	request.orig = triangulation->cdt.get_triangle({orig.x,orig.y})[0];
-	request.dest = triangulation->cdt.get_triangle({dest.x,dest.y})[0];
-	if(request.orig != request.dest)
-	{
-		request.orig = triangulation->cdt.get_closest_non_tagged_triangle(request.orig, {orig.x,orig.y}, triangulation->forbidden_triangles);
-	}
+	PathRequest request {accessible.size(), accessible.size()};
+	request.orig = get_index(orig);
+	request.dest = get_index(dest);
 	return request;
 }
 
@@ -23,8 +19,8 @@ PathQuery PathFindingCache::query_path(Position const &pos, Vector const &target
 {
 	START_TIME(query_path)
 
-	// skip if no triangulation
-	if(!triangulation) { return PathQuery(); }
+	// skip if no sync
+	if(accessible.empty()) { return PathQuery(); }
 
 	// build request
 	PathRequest request = get_request(pos.pos, target);
@@ -57,9 +53,158 @@ std::vector<std::size_t> PathFindingCache::build_path(std::size_t orig, std::siz
 	return path;
 }
 
+struct Label
+{
+	std::size_t node = 0;
+	Fixed cost;
+	Fixed heur;
+	bool opened = false;
+	bool closed = false;
+	std::size_t prev = 0;
+
+	bool operator<(Label const &other_p) const
+	{
+		if(heur == other_p.heur)
+		{
+			return node < other_p.node;
+		}
+		return heur < other_p.heur;
+	}
+};
+
+template<typename T>
+struct comparator_ptr
+{
+	bool operator()(T const *a, T const *b) const { return *a < *b; }
+};
+
+Fixed square_distance(Vector const &a, Vector const &b)
+{
+	return (a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y);
+}
+
+std::size_t PathFindingCache::get_index(Vector const &pos) const
+{
+	int x = (pos.x / tile_size).to_int();
+	int y = (pos.y / tile_size).to_int();
+	return x * nb_tiles_x + y;
+}
+
+Vector PathFindingCache::get_position(std::size_t idx) const
+{
+	std::size_t x = idx / nb_tiles_x;
+	std::size_t y = idx - x * nb_tiles_x;
+	return {tile_size*x, tile_size*y};
+}
+
+std::vector<std::size_t> PathFindingCache::get_neighbors(std::size_t idx, std::size_t dest) const
+{
+	if(paths_info[dest].indexes[idx] < nb_tiles)
+	{
+		return {paths_info[dest].indexes[idx]};
+	}
+	std::vector<std::size_t> neighbors;
+	neighbors.reserve(4);
+	if(idx > 0)
+	{
+		neighbors.push_back(idx-1);
+	}
+	if(idx >= nb_tiles_x)
+	{
+		neighbors.push_back(idx-nb_tiles_x);
+	}
+	if(idx < nb_tiles)
+	{
+		neighbors.push_back(idx+1);
+	}
+	if(idx+nb_tiles_x < nb_tiles)
+	{
+		neighbors.push_back(idx+nb_tiles_x);
+	}
+	return neighbors;
+}
+
+std::vector<std::size_t> PathFindingCache::compute_path(std::size_t orig, std::size_t dest) const
+{
+	// pointer to the labels list
+	std::set<Label const *, comparator_ptr<Label> > open_list_l;
+	// one label per node at most
+	std::vector<Label> labels;
+
+	// init labels
+	labels.resize(nb_tiles, Label());
+	for(std::size_t i = 0 ; i < nb_tiles ; ++ i)
+	{
+		labels[i].node = i;
+	}
+	// init start
+	open_list_l.insert(&labels[orig]);
+	labels[orig].opened = true;
+	labels[orig].heur = square_distance(get_position(orig), get_position(dest));
+
+	bool foundPath_l = false;
+
+	while(!open_list_l.empty())
+	{
+		Label const * cur_l = *open_list_l.begin();
+		open_list_l.erase(open_list_l.begin());
+		if(cur_l->node == dest)
+		{
+			// found path
+			foundPath_l = true;
+			break;
+		}
+		for(std::size_t const &n : get_neighbors(cur_l->node, dest))
+		{
+			if(labels[n].closed)
+			{
+				continue;
+			}
+			Fixed cost_l = cur_l->cost + tile_size*tile_size;
+			if(!accessible[n])
+			{
+				cost_l += tile_size*tile_size*nb_tiles;
+			}
+			Fixed heur_l = cost_l + square_distance(get_position(n), get_position(dest));
+			if(!labels[n].opened || labels[n].heur > heur_l)
+			{
+				// remove
+				if(labels[n].opened)
+					open_list_l.erase(open_list_l.find(&labels[n]));
+				// update
+				labels[n].cost = cost_l;
+				labels[n].heur = heur_l;
+				labels[n].opened = true;
+				labels[n].prev = cur_l->node;
+				// reinsert
+				open_list_l.insert(&labels[n]);
+			}
+		}
+		labels[cur_l->node].closed = true;
+		labels[cur_l->node].opened = false;
+	}
+
+	std::size_t reached_target = dest;
+
+	// if path
+	std::vector<std::size_t> reversed_path_l;
+	std::size_t cur_l = reached_target;
+	while(cur_l != orig)
+	{
+		reversed_path_l.push_back(cur_l);
+		cur_l = labels[cur_l].prev;
+	}
+	std::vector<std::size_t> path_l;
+	path_l.push_back(orig);
+	for(auto &&rit_l = reversed_path_l.rbegin() ; rit_l != reversed_path_l.rend() ;++rit_l)
+	{
+		path_l.push_back(*rit_l);
+	}
+	return path_l;
+}
+
 void PathFindingCache::compute_paths(flecs::world &ecs)
 {
-	if(!triangulation) {return;}
 	START_TIME(path_finding)
 	std::size_t const max_run = 10;
 	std::size_t run = 0;
@@ -74,7 +219,7 @@ void PathFindingCache::compute_paths(flecs::world &ecs)
 			continue;
 		}
 		// compute path
-		std::vector<std::size_t> path = triangulation->compute_path_from_idx(request.orig, request.dest);
+		std::vector<std::size_t> path = compute_path(request.orig, request.dest);
 		if(path.empty() || path[path.size()-1] != request.dest)
 		{
 			paths_info[request.dest].indexes[request.orig] = request.orig;
@@ -100,34 +245,15 @@ bool PathFindingCache::has_path(std::size_t orig, std::size_t dest) const
 	return false;
 }
 
-void PathFindingCache::declare_cache_update_system(flecs::world &ecs, Triangulation const &tr, TimeStats &st)
+void PathFindingCache::declare_cache_update_system(flecs::world &ecs, TimeStats &st)
 {
-	triangulation = &tr;
 	stats = &st;
-	// update cache on each loop if necessary
-	ecs.system<>()
-		.kind(ecs.entity(PrepingUpdatePhase))
-		.run([this](flecs::iter) {
-			if(paths_info.empty() || (triangulation && triangulation->revision != revision))
-			{
-				// default values
-				const std::size_t nb_triangles = triangulation->cdt.triangles.size();
-				const PathsInfo empty_path_info {std::vector<std::size_t>(nb_triangles, nb_triangles)};
-				// reset info to default values
-				std::fill(paths_info.begin(), paths_info.end(), empty_path_info);
-				paths_info.resize(nb_triangles, empty_path_info);
-				list_requests.clear();
-				// update revision
-				revision = triangulation->revision;
-			}
-		});
 
 	// compute paths on each loop
 	ecs.system<>()
 		.kind(ecs.entity(PrepingUpdatePhase))
 		.run([this, &ecs](flecs::iter) {
 			// Logger::getDebug() << "compute_paths :: start"<<std::endl;
-			if(!triangulation) { return; }
 			compute_paths(ecs);
 			// Logger::getDebug() << "compute_paths :: done"<<std::endl;
 		});
@@ -165,28 +291,16 @@ Vector PathQuery::get_direction() const
 	START_TIME(path_funnelling)
 	std::vector<std::size_t> path = cache->build_path(orig, dest);
 
-	Triangulation const *tr = cache->triangulation;
-	if(!tr || path.size() == 1) { return vert_dest - vert_orig; }
+	if(path.size() <= 1) { return vert_dest - vert_orig; }
 
-	std::vector<Vector> funnel = tr->compute_funnel_from_path(vert_orig, vert_dest, path);
-	if(funnel.size() < 2)
-	{
-		return vert_dest - vert_orig;
-	}
-	size_t idx = 1;
-	Vector dir = funnel[1] - funnel[0];
-	while( dir.x < Fixed::One()/10 && dir.x > -Fixed::One()/10
-		&& dir.y < Fixed::One()/10 && dir.y > -Fixed::One()/10
-		&& idx < funnel.size()-1)
-	{
-		++idx;
-		dir = funnel[idx] - funnel[idx-1];
-	}
+	Vector dir = cache->get_position(path[1]) - vert_orig;
+
 	if(dir.x < Fixed(100, true) && dir.x > Fixed(-100, true)
 	&& dir.y < Fixed(100, true) && dir.y > Fixed(-100, true))
 	{
 		dir *= 100;
 	}
+
 	END_TIME_PTR(path_funnelling, cache->stats)
 	return dir;
 }
