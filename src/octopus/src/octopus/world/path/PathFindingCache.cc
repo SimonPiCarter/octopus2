@@ -299,7 +299,7 @@ Vector PathQuery::get_direction() const
 	START_TIME(path_funnelling)
 	std::vector<std::size_t> path = cache->build_path(orig, dest);
 
-	if(path.size() <= 1) { return vert_dest - vert_orig; }
+	if(path.size() <= 2) { return vert_dest - vert_orig; }
 
 	Vector dir = cache->get_position(path[1]) - vert_orig;
 
