@@ -63,4 +63,21 @@ void CollisionStep::revert_step(Data &d, Memento const &memento) const
 	d.collision = memento.old_collision;
 }
 
+
+///////////////////////////
+/// StuckInfo STEP
+///////////////////////////
+
+
+void StuckInfoStep::apply_step(Data &d, Memento &memento) const
+{
+	memento.old_info = d.stuck_info;
+	d.stuck_info = new_info;
+}
+
+void StuckInfoStep::revert_step(Data &d, Memento const &memento) const
+{
+	d.stuck_info = memento.old_info;
+}
+
 }

@@ -122,6 +122,11 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: separation force = "<<sep_l<<std::endl;
 			f += sep_l;
 
+			if(pos_p.stuck_info.step_stuck > 25)
+			{
+				f += Vector(-seek_l.y, seek_l.x);
+			}
+
 			limit_length(f, max_force);
 			Logger::getDebug() << "Flocking :: total force = "<<f<<std::endl;
 
@@ -142,6 +147,35 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: move = "<<move_p.move<<std::endl;
 			END_TIME(position_system)
 			Logger::getDebug() << "Flocking :: end" << std::endl;
+		});
+
+	ecs.system<Position>()
+		.kind(ecs.entity(MovingPhase))
+		.multi_threaded()
+		.run([&manager, &time_stats_p](flecs::iter &it)
+		{
+			START_TIME(position_system)
+		    while (it.next())
+			{
+				auto pos = it.field<Position const>(0);
+				size_t thread_idx = it.world().get_stage_id();
+				for(size_t ent_idx = 0; ent_idx < it.count(); ++ ent_idx)
+				{
+					flecs::entity e = it.entity(ent_idx);
+					StuckInfo info = pos[ent_idx].stuck_info;
+					if(square_length(info.last_pos - pos[ent_idx].pos) > 0.5)
+					{
+						info.step_stuck = 0;
+						info.last_pos = pos[ent_idx].pos;
+					}
+					else
+					{
+						info.step_stuck += 1;
+					}
+					manager.get_last_layer()[thread_idx].template get<StuckInfoStep>().add_step(e, {info});
+				}
+			}
+			END_TIME(position_system)
 		});
 
 	ecs.system<Move>()

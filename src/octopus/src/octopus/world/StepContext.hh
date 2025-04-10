@@ -27,6 +27,7 @@
 octopus::HitPointMaxStep, \
 octopus::DestroyableStep, \
 octopus::PositionStep, \
+octopus::StuckInfoStep, \
 octopus::PositionInTreeStep, \
 octopus::MassStep, \
 octopus::VelocityStep, \

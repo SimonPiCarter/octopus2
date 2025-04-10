@@ -7,12 +7,20 @@
 namespace octopus
 {
 
+/// @brief Structure to allow tracking for
+/// stuck entities
+struct StuckInfo {
+	uint8_t step_stuck = 0;
+	Vector last_pos;
+};
+
 struct Position {
 	Vector pos;
 	Vector velocity;
 	Fixed mass = Fixed::One();
 	Fixed ray = 0.5;
 	bool collision = true;
+	StuckInfo stuck_info;
 };
 
 ///////////////////////////
@@ -90,5 +98,25 @@ struct CollisionStep {
 
 	void revert_step(Data &d, Memento const &memento) const;
 };
+
+///////////////////////////
+/// StuckInfo STEP
+///////////////////////////
+
+struct StuckInfoMemento {
+	StuckInfo old_info;
+};
+
+struct StuckInfoStep {
+	StuckInfo new_info;
+
+	typedef Position Data;
+	typedef StuckInfoMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const;
+
+	void revert_step(Data &d, Memento const &memento) const;
+};
+
 
 }
