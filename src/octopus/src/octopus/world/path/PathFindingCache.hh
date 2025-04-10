@@ -125,20 +125,15 @@ struct PathFindingCache
 				if(paths_info.empty() || (grid->get_revision() != revision))
 				{
 					// default values
-					printf("ok1\n");
 					std::fill(paths_info.begin(), paths_info.end(), PathsInfo());
-					printf("ok2\n");
 					paths_info.resize(nb_tiles, PathsInfo());
-					printf("ok3\n");
 					list_requests.clear();
-					printf("ok4\n");
 
 					accessible = std::vector<bool>(nb_tiles, true);
 					for(std::size_t i = 0 ; i < nb_tiles ; ++ i)
 					{
 						accessible[i] = grid->is_free(i);
 					}
-					printf("ok5\n");
 
 					// update revision
 					revision = grid->get_revision();
