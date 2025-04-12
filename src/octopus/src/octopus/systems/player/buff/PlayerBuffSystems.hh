@@ -40,7 +40,21 @@ void declare_player_buff_systems(flecs::world &ecs)
 			});
 		});
 
-	// revert buff all units when buff is added
+	// revert buff all units when buff is removed
+	ecs.observer<PlayerInfo const, PlayerBuff<TargetType, BuffType, ComponentTypes...> const >()
+		.template event<DebuffAll>()
+		.each([query_units] (PlayerInfo const &player, PlayerBuff<TargetType, BuffType, ComponentTypes...> const &player_buff) {
+			query_units.each([&](PlayerAppartenance const &player_appartenance, ComponentTypes&... component)
+			{
+				if(player_appartenance.idx != player.idx)
+				{
+					return;
+				}
+				player_buff.buff.revert(component ...);
+			});
+		});
+
+	// revert buff all units Debuff event is emited (usually before a save)
 	ecs.observer<PlayerInfo const, PlayerBuff<TargetType, BuffType, ComponentTypes...> const >()
 		.event(flecs::OnRemove)
 		.each([query_units] (PlayerInfo const &player, PlayerBuff<TargetType, BuffType, ComponentTypes...> const &player_buff) {
