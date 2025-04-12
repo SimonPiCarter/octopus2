@@ -109,6 +109,10 @@ void basic_components_support(flecs::world& ecs)
 	ecs.component<CostReduction>()
 		.member("reduction", &CostReduction::reduction);
 
+	ecs.component<Entry<std::string, CostReduction>>()
+		.member("key", &Entry<std::string, CostReduction>::key)
+		.member("val", &Entry<std::string, CostReduction>::val);
+
     ecs.component<fast_map<std::string, CostReduction> >()
         .opaque(fast_map_support<std::string, CostReduction>);
 
