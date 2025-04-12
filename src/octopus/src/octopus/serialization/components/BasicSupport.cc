@@ -99,6 +99,10 @@ void basic_components_support(flecs::world& ecs)
 		.member("quantity", &ResourceInfo::quantity)
 		.member("cap", &ResourceInfo::cap);
 
+	ecs.component<Entry<std::string, Fixed>>()
+		.member("key", &Entry<std::string, Fixed>::key)
+		.member("val", &Entry<std::string, Fixed>::val);
+
     ecs.component<fast_map<std::string, Fixed> >()
         .opaque(fast_map_support<std::string, Fixed>);
 
@@ -122,8 +126,8 @@ void basic_components_support(flecs::world& ecs)
         .member("key", &Entry<std::string, int64_t>::key)
         .member("val", &Entry<std::string, int64_t>::val);
 
-    ecs.component<fast_map<std::string, int64_t> >()
-        .opaque(fast_map_support<std::string, int64_t>);
+	ecs.component<fast_map<std::string, int64_t> >()
+		.opaque(fast_map_support<std::string, int64_t>);
 
 	ecs.component<PlayerUpgrade>()
 		.member("upgrades", &PlayerUpgrade::upgrades);
