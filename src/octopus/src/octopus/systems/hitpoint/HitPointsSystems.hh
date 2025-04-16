@@ -74,7 +74,7 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 	ecs.system<Destroyable const>()
 		// .multi_threaded() cannot be multithreaded because destroyed event will cause data race
-		.kind(ecs.entity(UpdatePhase))
+		.kind(ecs.entity(UpdateUnpausedPhase))
 		.without<Created>()
 		.each([&ecs](flecs::entity e, Destroyable const &destroyable_p) {
 			ecs.event<Created>()

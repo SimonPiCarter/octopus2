@@ -48,6 +48,8 @@ Apply all steps :
 
 ## Update (UpdatePhase)
 
+Will be disabled during a pause.
+
 ### Position
 
 - Update AABB Tree in PositionContext (PositionSystems)
@@ -60,7 +62,17 @@ Apply all steps :
 
 - Update time stamp (using step so update will be shown on next iteration)
 
+## UpdateUnpaused (UpdateUnpausedPhase)
+
+Will NOT be disabled during a pause.
+
+### Hitpoints
+
+- Add Created tag to Destroyable and emit Created event.
+
 ## PostUpdate (PostUpdatePhase)
+
+Will be disabled during a pause.
 
 ### commands
 
@@ -69,6 +81,14 @@ Apply all steps :
 ### production
 
 - All production
+
+## PostUpdateUnpaused (PostUpdateUnpausedPhase)
+
+Will NOT be disabled during a pause.
+
+### commands
+
+- All actions from commands that should still run during a pause
 
 ## EndUpdate (EndUpdatePhase)
 

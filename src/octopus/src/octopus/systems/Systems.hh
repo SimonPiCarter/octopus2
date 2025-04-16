@@ -26,6 +26,8 @@ namespace octopus
 {
 
 void set_up_phases(flecs::world &ecs);
+void pause_phases(flecs::world &ecs);
+void unpause_phases(flecs::world &ecs);
 
 /// @brief Set up all required system for the engine to run
 template<typename StepContext_t>

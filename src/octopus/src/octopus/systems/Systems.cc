@@ -37,15 +37,25 @@ void set_up_phases(flecs::world &ecs)
 		.add(flecs::Phase)
 		.depends_on(preUpdatePhase);
 
+	/// UpdateUnpausedPhase
+	flecs::entity updateUnpausedPhase = ecs.entity(UpdateUnpausedPhase)
+		.add(flecs::Phase)
+		.depends_on(updatePhase);
+
 	/// PostUpdatePhase
 	flecs::entity postUpdatePhase = ecs.entity(PostUpdatePhase)
 		.add(flecs::Phase)
-		.depends_on(updatePhase);
+		.depends_on(updateUnpausedPhase);
+
+	/// PostUpdateUnpausedPhase
+	flecs::entity postUpdateUnpausedPhase = ecs.entity(PostUpdateUnpausedPhase)
+		.add(flecs::Phase)
+		.depends_on(postUpdatePhase);
 
 	/// EndUpdate
 	flecs::entity endUpdatePhase = ecs.entity(EndUpdatePhase)
 		.add(flecs::Phase)
-		.depends_on(postUpdatePhase);
+		.depends_on(postUpdateUnpausedPhase);
 
 	/// MovingPhase
 	flecs::entity movingPhase = ecs.entity(MovingPhase)
@@ -76,6 +86,30 @@ void set_up_phases(flecs::world &ecs)
 	/*flecs::entity endCleanupPhase = */ecs.entity(EndCleanUpPhase)
 		.add(flecs::Phase)
 		.depends_on(displaySyncPhase);
+}
+
+void pause_phases(flecs::world &ecs)
+{
+	ecs.entity(UpdatePhase).disable();
+	ecs.entity(PostUpdatePhase).disable();
+
+    ecs.entity(UpdateUnpausedPhase).add(flecs::DependsOn, ecs.entity(PreUpdatePhase));
+    ecs.entity(UpdateUnpausedPhase).remove(flecs::DependsOn, ecs.entity(UpdatePhase));
+
+    ecs.entity(PostUpdateUnpausedPhase).add(flecs::DependsOn, ecs.entity(UpdateUnpausedPhase));
+    ecs.entity(PostUpdateUnpausedPhase).remove(flecs::DependsOn, ecs.entity(PostUpdatePhase));
+}
+
+void unpause_phases(flecs::world &ecs)
+{
+	ecs.entity(UpdatePhase).enable();
+	ecs.entity(PostUpdatePhase).enable();
+
+    ecs.entity(UpdateUnpausedPhase).remove(flecs::DependsOn, ecs.entity(PreUpdatePhase));
+    ecs.entity(UpdateUnpausedPhase).add(flecs::DependsOn, ecs.entity(UpdatePhase));
+
+    ecs.entity(PostUpdateUnpausedPhase).remove(flecs::DependsOn, ecs.entity(UpdateUnpausedPhase));
+    ecs.entity(PostUpdateUnpausedPhase).add(flecs::DependsOn, ecs.entity(PostUpdatePhase));
 }
 
 }
