@@ -2,14 +2,17 @@
 
 #include <string>
 #include <vector>
+#include "octopus/utils/Vector.hh"
 
 namespace octopus
 {
 
 struct ProductionQueue
 {
-    int64_t start_timestamp = 0;
-    std::vector<std::string> queue;
+	int64_t start_timestamp = 0;
+	std::vector<std::string> queue;
+	/// @brief point where unit should spawn
+	Vector spawn_point = Vector(0,4);
 };
 
 struct ProductionQueueTimestampMemento {
