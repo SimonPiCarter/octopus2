@@ -15,6 +15,7 @@
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/projectile/Projectile.hh"
+#include "octopus/components/basic/rally_point/RallyPoint.hh"
 #include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/systems/input/Input.hh"
@@ -141,7 +142,11 @@ void basic_components_support(flecs::world& ecs)
 
 	ecs.component<ProductionQueue>()
 		.member("start_timestamp", &ProductionQueue::start_timestamp)
-		.member("queue", &ProductionQueue::queue);
+		.member("queue", &ProductionQueue::queue)
+		.member("spawn_point", &ProductionQueue::spawn_point)
+	;
+
+	declare_rally_points(ecs);
 
 	ecs.component<Caster>()
 		.member("timestamp_last_cast", &Caster::timestamp_last_cast)

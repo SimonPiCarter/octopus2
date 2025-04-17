@@ -15,6 +15,7 @@
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/projectile/Projectile.hh"
+#include "octopus/components/basic/rally_point/RallyPoint.hh"
 #include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/components/step/BuffComponentStep.hh"
@@ -46,6 +47,7 @@ octopus::CasterWindupStep, \
 octopus::ReductionLibraryStep, \
 octopus::ProjectileStep, \
 octopus::PlayerUpgradeStep, \
+octopus::RallyPointStep, \
 octopus::TimeStampIncrementStep \
 
 
