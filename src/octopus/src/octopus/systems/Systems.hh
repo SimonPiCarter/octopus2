@@ -8,6 +8,7 @@
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/AttackCommandSystem.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
+#include "octopus/commands/basic/rally_point/SetRallyPointCommand.hh"
 #include "octopus/systems/hitpoint/HitPointsSystems.hh"
 #include "octopus/systems/position/PositionSystems.hh"
 #include "octopus/systems/step/StepSystems.hh"
@@ -61,6 +62,7 @@ void set_up_systems(
 	set_up_move_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager, world.time_stats);
 	set_up_attack_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
 		world.ecs, step_context.step_manager, world, world.time_stats, world.attack_retarget_wait);
+	set_up_rally_point_command_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(world.ecs, step_context.step_manager);
 
 	set_up_cast_system<typename StepContext_t::step, CommandQueue<typename StepContext_t::variant>>(
 		world.ecs, step_context.step_manager
