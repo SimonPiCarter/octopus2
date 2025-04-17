@@ -2,7 +2,7 @@
 
 #include "flecs.h"
 #include "octopus/utils/FixedPoint.hh"
-#include "octopus/utils/vector.hh"
+#include "octopus/utils/Vector.hh"
 
 namespace octopus
 {
