@@ -23,7 +23,7 @@ void set_up_rally_point_command_system(flecs::world &ecs, StepManager_t &manager
 		.each([&ecs, &manager](flecs::entity e, Position const &pos, SetRallyPointCommand const &rally_point_command, CommandQueue_t &queue) {
 			if(pos.pos == rally_point_command.rally_point.target)
 			{
-				manager.get_last_layer().back().template get<RallyPointStep>().add_step(e, {pos.pos, 0, true});
+				manager.get_last_layer().back().template get<RallyPointStep>().add_step(e, {pos.pos, 0, false});
 			}
 			else
 			{
