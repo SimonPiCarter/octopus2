@@ -16,6 +16,10 @@ Here are all the default phases in the running order :
 - Push new step layer for command clean up actions (StepManager.get_last_prelayer)
 - Push new step layer for state modifiction (StateChangeSteps) : modifying components
 
+### ResourceSpent
+
+- Reset maps of resource spent
+
 ## PrepingUpdate (PrepingUpdatePhase)
 
 ### CommandQueueSystems

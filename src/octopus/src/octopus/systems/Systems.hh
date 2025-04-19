@@ -18,6 +18,7 @@
 #include "octopus/systems/timestamp/TimeStampSystems.hh"
 
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
+#include "octopus/world/resources/ResourceSpent.hh"
 #include "octopus/world/StepContext.hh"
 #include "octopus/world/WorldContext.hh"
 
@@ -73,6 +74,9 @@ void set_up_systems(
 
 	// input systems
 	set_up_input_system<typename StepContext_t::variant, typename StepContext_t::step>(world, step_context.step_manager);
+
+	// resource spent system
+	set_up_resource_spent_system(world.ecs);
 }
 
 }

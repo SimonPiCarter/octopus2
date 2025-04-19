@@ -22,6 +22,7 @@
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/CostReduction.hh"
 #include "octopus/world/resources/ResourceStock.hh"
+#include "octopus/world/resources/ResourceSpent.hh"
 
 #include "octopus/serialization/utils/UtilsSupport.hh"
 #include "octopus/serialization/containers/VectorSupport.hh"
@@ -161,6 +162,8 @@ void basic_components_support(flecs::world& ecs)
 
 	ecs.component<ResourceStock>()
 		.member("resource", &ResourceStock::resource);
+
+	ecs.component<ResourceSpent>();
 
 	ecs.component<TimeStamp>()
 		.member("time", &TimeStamp::time);
