@@ -23,7 +23,6 @@ void handle_add_production(
 	InputAddProduction const &input,
 	ProductionTemplateLibrary<StepManager_t> const &prod_lib,
 	flecs::query<PlayerInfo> &query_player,
-	std::unordered_map<uint32_t, std::unordered_map<std::string, Fixed> > &map_locked_resources,
 	flecs::world &ecs,
 	StepManager_t &manager
 )
@@ -44,6 +43,7 @@ void handle_add_production(
 	PlayerInfo const * player_info = player.get<PlayerInfo>();
 	ResourceStock const * resource_stock = player.get<ResourceStock>();
 	ReductionLibrary const * reductionibrary = player.get<ReductionLibrary>();
+	ResourceSpent * resource_spent = player.get_mut<ResourceSpent>();
 
 	auto resource_cost = prod->resource_consumption();
 	if(reductionibrary && reductionibrary->reductions.has(prod->name()))
@@ -53,8 +53,9 @@ void handle_add_production(
 
 	if(player_info
 	&& resource_stock
+	&& resource_spent
 	&& prod->check_requirement(input.producer, ecs)
-	&& check_resources(resource_stock->resource, map_locked_resources[player_info->idx], resource_cost))
+	&& check_resources(resource_stock->resource, resource_spent->resources_spent, resource_cost))
 	{
 		manager.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input.producer, {input.production, -1});
 		prod->enqueue(input.producer, ecs, manager);
@@ -63,10 +64,8 @@ void handle_add_production(
 			std::string const &resource = pair.first;
 			Fixed resource_consumed = pair.second;
 
-			// lock resource for future checks
-			map_locked_resources[player_info->idx][resource] += resource_consumed;
 			// add step for consumption
-			manager.get_last_layer().back().template get<ResourceStockStep>().add_step(player, {-resource_consumed, resource});
+			octopus::spend_resources(manager, resource_spent, player, resource_consumed, resource);
 		}
 	}
 }

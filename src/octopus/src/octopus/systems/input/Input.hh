@@ -154,11 +154,10 @@ public:
     	flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
 		if(prod_lib)
 		{
-			std::unordered_map<uint32_t, std::unordered_map<std::string, Fixed> > map_locked_resources;
 			// Input add production
 			for(InputAddProduction const &input_l : container.container_add_production.get_front_layer())
 			{
-				handle_add_production(input_l, *prod_lib, query_player, map_locked_resources, ecs, manager_p);
+				handle_add_production(input_l, *prod_lib, query_player, ecs, manager_p);
 			}
 
 			for(InputCancelProduction const &input_l : container.container_cancel_production.get_front_layer())
