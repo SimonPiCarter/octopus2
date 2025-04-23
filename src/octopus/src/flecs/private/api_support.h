@@ -2,9 +2,9 @@
  * @file api_support.h
  * @brief Support functions and constants.
  *
- * Supporting types and functions that need to be exposed either in support of 
- * the public API or for unit tests, but that may change between minor / patch 
- * releases. 
+ * Supporting types and functions that need to be exposed either in support of
+ * the public API or for unit tests, but that may change between minor / patch
+ * releases.
  */
 
 #ifndef FLECS_API_SUPPORT_H
@@ -26,7 +26,7 @@ extern "C" {
 #define ECS_MAX_RECURSION (512)
 
 /** Maximum length of a parser token (used by parser-related addons) */
-#define ECS_MAX_TOKEN_SIZE (256)
+#define ECS_MAX_TOKEN_SIZE (2048)
 
 FLECS_API
 char* flecs_module_path_from_c(
@@ -38,8 +38,8 @@ bool flecs_identifier_is_0(
 /* Constructor that zeromem's a component value */
 FLECS_API
 void flecs_default_ctor(
-    void *ptr, 
-    int32_t count, 
+    void *ptr,
+    int32_t count,
     const ecs_type_info_t *ctx);
 
 /* Create allocated string from format */
@@ -164,17 +164,17 @@ int32_t flecs_component_ids_index_get(void);
 
 FLECS_API
 ecs_entity_t flecs_component_ids_get(
-    const ecs_world_t *world, 
+    const ecs_world_t *world,
     int32_t index);
 
 FLECS_API
 ecs_entity_t flecs_component_ids_get_alive(
-    const ecs_world_t *stage_world, 
+    const ecs_world_t *stage_world,
     int32_t index);
 
 FLECS_API
 void flecs_component_ids_set(
-    ecs_world_t *world, 
+    ecs_world_t *world,
     int32_t index,
     ecs_entity_t id);
 
@@ -198,12 +198,12 @@ void flecs_component_ids_set(
 
 /** Enable/disable bitsets */
 #define ECS_BIT_SET(flags, bit) (flags) |= (bit)
-#define ECS_BIT_CLEAR(flags, bit) (flags) &= ~(bit) 
+#define ECS_BIT_CLEAR(flags, bit) (flags) &= ~(bit)
 #define ECS_BIT_COND(flags, bit, cond) ((cond) \
     ? (ECS_BIT_SET(flags, bit)) \
     : (ECS_BIT_CLEAR(flags, bit)))
 
-#define ECS_BIT_CLEAR16(flags, bit) (flags) &= (ecs_flags16_t)~(bit)   
+#define ECS_BIT_CLEAR16(flags, bit) (flags) &= (ecs_flags16_t)~(bit)
 #define ECS_BIT_COND16(flags, bit, cond) ((cond) \
     ? (ECS_BIT_SET(flags, bit)) \
     : (ECS_BIT_CLEAR16(flags, bit)))
