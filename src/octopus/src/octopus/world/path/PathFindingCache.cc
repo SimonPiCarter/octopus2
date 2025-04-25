@@ -335,7 +335,7 @@ Vector const &getRightMost(Vector const &pos1_p, Vector const &pos2_p)
 bool PathFindingCache::losCheck(Vector const &pos1_p, Vector const &pos2_p) const
 {
 	Vector const & leftMost_l = getLeftMost(pos1_p, pos2_p);
-	Vector const & rightMost_l = getRightMost(pos2_p, pos1_p);
+	Vector const & rightMost_l = getRightMost(pos1_p, pos2_p);
 
 	Vector const leftToRight_l = rightMost_l - leftMost_l;
 
