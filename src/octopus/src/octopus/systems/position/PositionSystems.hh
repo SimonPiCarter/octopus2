@@ -144,6 +144,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: v = "<<v<<std::endl;
 
 			move_p.move = v * move_p.speed / max_speed;
+			limit_length(move_p.move, move_p.speed);
 			Logger::getDebug() << "Flocking :: move = "<<move_p.move<<std::endl;
 			END_TIME(position_system)
 			Logger::getDebug() << "Flocking :: end" << std::endl;
