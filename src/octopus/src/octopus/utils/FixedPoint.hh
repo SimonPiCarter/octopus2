@@ -330,7 +330,7 @@ bool operator<=(Number const &f, octopus::FixedPoint<e> const &fp)
 template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
 bool operator==(Number const &f, octopus::FixedPoint<e> const &fp)
 {
-	return fp == f;
+	return fp.operator==(f);
 }
 
 template <int64_t e, class Number, class = typename std::enable_if<std::is_arithmetic<Number>::value>::type>
