@@ -53,22 +53,30 @@ TEST(path_finding_cache, basic_query_system)
 
     TestGrid grid;
     grid.free.resize(grid.nb_tiles, true);
-    for(size_t x = 5 ; x < 10 ; ++x)
-        for(size_t y = 5 ; y < 10 ; ++y)
-            grid.free[x*grid.nb_tiles_x+y] = false;
+    for(size_t x = 3 ; x < 12 ; ++x)
+    {
+        grid.free[10*grid.nb_tiles_x+x] = false;
+    }
+
+    for(size_t y = 8 ; y < 10 ; ++y)
+    {
+        grid.free[y * grid.nb_tiles_x + 3 ] = false;
+        grid.free[y * grid.nb_tiles_x + 11] = false;
+    }
 
     set_up_phases(ecs);
 
-
     // Position
-    Position pos {{10,30}};
+    Position pos {{30,30}};
+    Vector target {50,50};
 
     cache->declare_sync_system(ecs, &grid);
     cache->declare_cache_update_system(ecs, stats);
 
     ecs.progress();
 
-    PathQuery query = ecs.get<PathFindingCache>()->query_path(pos, {50,30});
+    /// query 30,30 -> 50,50 (in coord ths means ~ 7,7 -> 12,12)
+    PathQuery query = ecs.get<PathFindingCache>()->query_path(pos, target);
 
     EXPECT_FALSE(query.is_valid());
 
@@ -76,32 +84,35 @@ TEST(path_finding_cache, basic_query_system)
 
     ASSERT_TRUE(query.is_valid());
 
+    std::vector<std::size_t> path = cache->build_path(cache->get_index(pos.pos), cache->get_index(target));
+    EXPECT_EQ(11, path.size());
+
     Vector direction_1 = query.get_direction();
-    EXPECT_EQ(Vector(10, -10), direction_1);
+    EXPECT_EQ(Vector(4, 0), direction_1);
 
     pos.pos += direction_1;
 
-    query = cache->query_path(pos, {50,30});
+    query = cache->query_path(pos, target);
 
     ASSERT_TRUE(query.is_valid());
 
-    std::vector<std::size_t> path = cache->build_path(cache->get_index(pos.pos), cache->get_index({50,30}));
+    path = cache->build_path(cache->get_index(pos.pos), cache->get_index(target));
     for(size_t p : path)
     {
-        std::cout<<cache->get_position(p)<<std::endl;
+        std::cout<<cache->get_coord(p)<<std::endl;
     }
 
     Vector direction_2 = query.get_direction();
-    EXPECT_EQ(Vector(20, 0), direction_2);
+    EXPECT_EQ(Vector(4, 0), direction_2);
 
     pos.pos += direction_2;
 
-    query = cache->query_path(pos, {50,30});
+    query = cache->query_path(pos, target);
 
     ASSERT_TRUE(query.is_valid());
 
     Vector direction_3 = query.get_direction();
-    EXPECT_EQ(Vector(10, 10), direction_3);
+    EXPECT_EQ(Vector(4, 0), direction_3);
 
     std::cout<<"path_finding : "<<stats.path_finding/10e6<<"ms"<<std::endl;
     std::cout<<"path_funnelling : "<<stats.path_funnelling/10e6<<"ms"<<std::endl;
