@@ -89,6 +89,11 @@ Fixed square_distance(Vector const &a, Vector const &b)
 	return (a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y);
 }
 
+Fixed distance(Vector const &a, Vector const &b)
+{
+	return numeric::abs(a.x-b.x) + numeric::abs(a.y-b.y);
+}
+
 std::size_t PathFindingCache::get_index(Vector const &pos) const
 {
 	int x = std::clamp<int>((pos.x / tile_size).to_int(), 0, nb_tiles_x-1);
@@ -101,6 +106,13 @@ Vector PathFindingCache::get_position(std::size_t idx) const
 	std::size_t y = idx / nb_tiles_x;
 	std::size_t x = idx - y * nb_tiles_x;
 	return {tile_size*x + tile_size/2, tile_size*y + tile_size/2};
+}
+
+Vector PathFindingCache::get_coord(std::size_t idx) const
+{
+	std::size_t y = idx / nb_tiles_x;
+	std::size_t x = idx - y * nb_tiles_x;
+	return {x , y};
 }
 
 std::vector<std::size_t> PathFindingCache::get_neighbors(std::size_t idx, std::size_t dest) const
@@ -146,7 +158,7 @@ std::vector<std::size_t> PathFindingCache::compute_path(std::size_t orig, std::s
 	// init start
 	open_list_l.insert(&labels[orig]);
 	labels[orig].opened = true;
-	labels[orig].heur = square_distance(get_position(orig), get_position(dest));
+	labels[orig].heur = distance(get_position(orig), get_position(dest));
 
 	while(!open_list_l.empty())
 	{
@@ -162,12 +174,12 @@ std::vector<std::size_t> PathFindingCache::compute_path(std::size_t orig, std::s
 			{
 				continue;
 			}
-			Fixed cost_l = cur_l->cost + tile_size*tile_size;
+			Fixed cost_l = cur_l->cost + tile_size;
 			if(!accessible[n])
 			{
-				cost_l += tile_size*tile_size*nb_tiles;
+				cost_l += tile_size*nb_tiles;
 			}
-			Fixed heur_l = cost_l + square_distance(get_position(n), get_position(dest));
+			Fixed heur_l = cost_l + distance(get_position(n), get_position(dest));
 			if(!labels[n].opened || labels[n].heur > heur_l)
 			{
 				// remove

@@ -144,6 +144,7 @@ struct PathFindingCache
 	/// @brief Build a path from indexes
 	std::vector<std::size_t> build_path(std::size_t orig, std::size_t dest) const;
 	Vector get_position(std::size_t idx) const;
+	Vector get_coord(std::size_t idx) const;
 	std::size_t get_index(Vector const &pos) const;
 private:
 	/// @brief Compute a path request based on vector positions
