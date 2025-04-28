@@ -34,15 +34,19 @@ struct TestGrid
 	octopus::Fixed tile_size = 4;
 	uint64_t revision = 0;
     std::vector<bool> free;
+
+    std::size_t get_nb_tiles() const { return nb_tiles; }
+    std::size_t get_size_x() const { return nb_tiles_x; }
+    octopus::Fixed get_tile_size() const {return tile_size;}
+    uint64_t get_revision() const {return revision;}
+    bool is_free(std::size_t i) const {return free[i];}
 };
 
 TEST(path_finding_cache, basic_query_system)
 {
     TimeStats stats;
-    Triangulation triangulation;
     flecs::world ecs;
     ecs.add<PathFindingCache>();
-    ecs.set<TriangulationPtr>(TriangulationPtr {&triangulation});
     ecs.set<TimeStatsPtr>(TimeStatsPtr {&stats});
 
     PathFindingCache * cache = ecs.get_mut<PathFindingCache>();
@@ -55,9 +59,6 @@ TEST(path_finding_cache, basic_query_system)
 
     set_up_phases(ecs);
 
-    triangulation.init(500, 500);
-    insert_box(triangulation, 20, 20, 20, 20, true);
-    triangulation.finalize();
 
     // Position
     Position pos {{10,30}};
