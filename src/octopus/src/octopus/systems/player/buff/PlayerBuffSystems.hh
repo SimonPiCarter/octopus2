@@ -30,13 +30,13 @@ void declare_player_buff_systems(flecs::world &ecs)
 	ecs.observer<PlayerInfo const, PlayerBuff<TargetType, BuffType, ComponentTypes...> const >()
 		.event(flecs::OnSet)
 		.each([query_units] (PlayerInfo const &player, PlayerBuff<TargetType, BuffType, ComponentTypes...> const &player_buff) {
-			query_units.each([&](PlayerAppartenance const &player_appartenance, ComponentTypes&... component)
+			query_units.each([&](flecs::entity e, PlayerAppartenance const &player_appartenance, ComponentTypes&... component)
 			{
 				if(player_appartenance.idx != player.idx)
 				{
 					return;
 				}
-				player_buff.buff.apply(component ...);
+				player_buff.buff.apply(e, component ...);
 			});
 		});
 
@@ -44,13 +44,13 @@ void declare_player_buff_systems(flecs::world &ecs)
 	ecs.observer<PlayerInfo const, PlayerBuff<TargetType, BuffType, ComponentTypes...> const >()
 		.template event<DebuffAll>()
 		.each([query_units] (PlayerInfo const &player, PlayerBuff<TargetType, BuffType, ComponentTypes...> const &player_buff) {
-			query_units.each([&](PlayerAppartenance const &player_appartenance, ComponentTypes&... component)
+			query_units.each([&](flecs::entity e, PlayerAppartenance const &player_appartenance, ComponentTypes&... component)
 			{
 				if(player_appartenance.idx != player.idx)
 				{
 					return;
 				}
-				player_buff.buff.revert(component ...);
+				player_buff.buff.revert(e, component ...);
 			});
 		});
 
@@ -58,20 +58,20 @@ void declare_player_buff_systems(flecs::world &ecs)
 	ecs.observer<PlayerInfo const, PlayerBuff<TargetType, BuffType, ComponentTypes...> const >()
 		.event(flecs::OnRemove)
 		.each([query_units] (PlayerInfo const &player, PlayerBuff<TargetType, BuffType, ComponentTypes...> const &player_buff) {
-			query_units.each([&](PlayerAppartenance const &player_appartenance, ComponentTypes&... component)
+			query_units.each([&](flecs::entity e, PlayerAppartenance const &player_appartenance, ComponentTypes&... component)
 			{
 				if(player_appartenance.idx != player.idx)
 				{
 					return;
 				}
-				player_buff.buff.revert(component ...);
+				player_buff.buff.revert(e, component ...);
 			});
 		});
 
 	// buff new unit when created
 	ecs.observer<PlayerAppartenance const, TargetType const, ComponentTypes...>()
 		.event(flecs::OnSet)
-		.each([query_player](PlayerAppartenance const &player_appartenance, TargetType const &, ComponentTypes&... component) {
+		.each([query_player](flecs::entity e, PlayerAppartenance const &player_appartenance, TargetType const &, ComponentTypes&... component) {
 			query_player.each([&]
 				(PlayerInfo const &player, PlayerBuff<TargetType, BuffType, ComponentTypes...> const &player_buff)
 				{
@@ -79,7 +79,7 @@ void declare_player_buff_systems(flecs::world &ecs)
 					{
 						return;
 					}
-					player_buff.buff.apply(component ...);
+					player_buff.buff.apply(e, component ...);
 				}
 			);
 		});

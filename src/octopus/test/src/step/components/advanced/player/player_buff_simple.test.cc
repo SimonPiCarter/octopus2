@@ -53,12 +53,12 @@ struct Ranger {};
 
 struct PlayerBuffTestSimple
 {
-	void apply(HitPoint &hp) const
+	void apply(flecs::entity e, HitPoint &hp) const
 	{
 		hp.qty += added;
 	}
 
-	void revert(HitPoint &hp) const
+	void revert(flecs::entity e, HitPoint &hp) const
 	{
 		hp.qty -= added;
 	}

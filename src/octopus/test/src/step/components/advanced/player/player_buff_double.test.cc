@@ -53,13 +53,13 @@ struct Ranger {};
 
 struct PlayerBuffTestDouble
 {
-	void apply(HitPoint &hp, HitPointMax &hp_max) const
+	void apply(flecs::entity e, HitPoint &hp, HitPointMax &hp_max) const
 	{
 		hp.qty += added;
 		hp_max.qty += added;
 	}
 
-	void revert(HitPoint &hp, HitPointMax &hp_max) const
+	void revert(flecs::entity e, HitPoint &hp, HitPointMax &hp_max) const
 	{
 		hp.qty -= added;
 		hp_max.qty -= added;
