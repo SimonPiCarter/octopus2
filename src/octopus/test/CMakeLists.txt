@@ -41,6 +41,7 @@ target_sources (unit_tests
 	src/serialization/ser_vector.test.cc
 	src/step/command/state_change_steps.test.cc
 	src/step/components/advanced/player/player_buff_double.test.cc
+	src/step/components/advanced/player/player_buff_no_component.test.cc
 	src/step/components/advanced/player/player_buff_simple.test.cc
 	src/step/components/advanced/ability_loop.test.cc
 	src/step/components/advanced/buff_component_loop.test.cc
