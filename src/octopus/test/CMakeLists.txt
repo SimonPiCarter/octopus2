@@ -28,6 +28,7 @@ target_sources (unit_tests
 	src/input/input_cost_reduction.test.cc
 	src/input/input_move.test.cc
 	src/input/input_production.test.cc
+	src/noop_command.test.cc
 	src/save/ability_save.cc
 	src/save/attack_move_save.test.cc
 	src/save/move_save.test.cc
@@ -39,6 +40,7 @@ target_sources (unit_tests
 	src/serialization/ser_list.test.cc
 	src/serialization/ser_variant.test.cc
 	src/serialization/ser_vector.test.cc
+	src/set_rally_point_command.test.cc
 	src/step/command/state_change_steps.test.cc
 	src/step/components/advanced/player/player_buff_double.test.cc
 	src/step/components/advanced/player/player_buff_no_component.test.cc
