@@ -117,7 +117,7 @@ TEST(player_buff_no_component, simple)
 	ecs.component<BuffAddComponent<BuffHp>>()
 		.member<bool>("placeholder");
 
-	/// @warning OnAdd and OnRemove should not be used for this kind of operation (component from BuffAddComponent)
+	/// @warning OnAdd and OnRemove should not be used for this kind of operation (template component of BuffAddComponent)
 	/// because it will produce inconsistent results (OnAdd will be called too many times)
 
 	ecs.observer<HitPoint, BuffHp const>()
