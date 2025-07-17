@@ -53,6 +53,7 @@ target_sources (unit_tests
 	src/step/components/basic/hitpoint_loop.test.cc
 	src/step/components/basic/hitpoint_validator_loop.test.cc
 	src/step/components/basic/move_loop.test.cc
+	src/step/components/basic/patrol_move_loop.test.cc
 	src/step/components/extended/extented_component_loop.test.cc
 	src/step/entity/entity_creation_step.test.cc
 	src/triangulation/path_finding_cache.test.cc

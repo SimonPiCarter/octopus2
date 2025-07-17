@@ -30,9 +30,17 @@ struct AttackCommand {
 	bool init = false;
 	bool forced_target = false;
 	FlockHandle flock_handle;
+	Vector source_pos;
+	bool patrol = false;
 
 	static constexpr char const * const naming()  { return "attack"; }
 	struct State {};
+
+	static AttackCommand make_patrol_command(Vector const &target) {
+		AttackCommand cmd { flecs::entity(), target, true };
+		cmd.patrol = true;
+		return cmd;
+	}
 };
 
 struct AttackCommandMemento {
@@ -80,6 +88,50 @@ struct AttackCommandInitStep {
 	void revert_step(Data &d, Memento const &memento) const
 	{
 		d.init = memento.old_init;
+	}
+};
+
+struct AttackCommandSourcePosMemento {
+	Vector old_source;
+};
+
+struct AttackCommandSourcePosStep {
+	Vector new_source;
+
+	typedef AttackCommand Data;
+	typedef AttackCommandSourcePosMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const
+	{
+		memento.old_source = d.source_pos;
+		d.source_pos = new_source;
+	}
+
+	void revert_step(Data &d, Memento const &memento) const
+	{
+		d.source_pos = memento.old_source;
+	}
+};
+
+struct AttackCommandTargetPosMemento {
+	Vector old_target;
+};
+
+struct AttackCommandTargetPosStep {
+	Vector new_target;
+
+	typedef AttackCommand Data;
+	typedef AttackCommandTargetPosMemento Memento;
+
+	void apply_step(Data &d, Memento &memento) const
+	{
+		memento.old_target = d.target_pos;
+		d.target_pos = new_target;
+	}
+
+	void revert_step(Data &d, Memento const &memento) const
+	{
+		d.target_pos = memento.old_target;
 	}
 };
 

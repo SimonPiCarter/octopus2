@@ -30,7 +30,7 @@ bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack
 bool has_reloaded(uint32_t time_p, Attack const&attack_p);
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<StepManager_t> &world_context, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
+void set_up_idle_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<StepManager_t> &world_context, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
 {
 	PositionContext &pos_context = world_context.position_context;
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
@@ -84,7 +84,12 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				END_TIME(attack_command_new_target)
 			}
 		});
+}
 
+template<class StepManager_t, class CommandQueue_t>
+void set_up_classic_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<StepManager_t> &world_context, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
+{
+	PositionContext &pos_context = world_context.position_context;
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.multi_threaded()
@@ -113,8 +118,13 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 
 					Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
 
-
 					move_p.target_move = Vector();
+
+					// if patrolling init source if not done yet
+					if(attackCommand_p.patrol && attackCommand_p.source_pos == Vector())
+					{
+						manager_p.get_last_layer()[thread_idx].template get<AttackCommandSourcePosStep>().add_step(e, {pos_p.pos});
+					}
 
 					// check if target is valid
 					HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.get<HitPoint>() : nullptr;
@@ -156,8 +166,20 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 							Logger::getDebug() << " moving "<<attackCommand_p.target_pos <<std::endl;
 							flecs::entity flock_entity = attackCommand_p.flock_handle.get();
 							Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
+							if(attackCommand_p.patrol)
+							{
+								// we reached target, switch positions of source and target
+								if(move_routine(ecs, e, pos_p, attackCommand_p.target_pos, move_p, flock, &time_stats_p))
+								{
+									Logger::getDebug() << " patroling" << std::endl;
+									// update target of this attack
+									manager_p.get_last_layer()[thread_idx].template get<AttackCommandTargetPosStep>().add_step(e, {attackCommand_p.source_pos});
+									// update source
+									manager_p.get_last_layer()[thread_idx].template get<AttackCommandSourcePosStep>().add_step(e, {attackCommand_p.target_pos});
+								}
+							}
 							// if no move we are done
-							if(!attackCommand_p.move)
+							else if(!attackCommand_p.move)
 							{
 								Logger::getDebug() << " done" <<std::endl;
 								queue_p._queuedActions.push_back(CommandQueueActionDone());
@@ -167,7 +189,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 							{
 								if(flock_entity.is_valid() && flock)
 								{
-									Logger::getDebug() << " arrived = "<<flock->arrived <<std::endl;
+									Logger::getDebug() << " arrived = "<< flock->arrived << std::endl;
 									manager_p.get_last_layer()[thread_idx].template get<FlockArrivedStep>().add_step(flock_entity, {flock->arrived + 1});
 								}
 								queue_p._queuedActions.push_back(CommandQueueActionDone());
@@ -292,6 +314,13 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 			// set up attack command as not initialized
 			manager_p.get_last_layer().back().template get<AttackCommandInitStep>().add_step(e, {false});
 		});
+}
+
+template<class StepManager_t, class CommandQueue_t>
+void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<StepManager_t> &world_context, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
+{
+	set_up_idle_attack_system<StepManager_t, CommandQueue_t>(ecs, manager_p, world_context, time_stats_p, attack_retarget_wait);
+	set_up_classic_attack_system<StepManager_t, CommandQueue_t>(ecs, manager_p, world_context, time_stats_p, attack_retarget_wait);
 }
 
 } // octopus

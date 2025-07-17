@@ -25,6 +25,8 @@ void basic_commands_support(flecs::world& ecs)
         .member("move", &AttackCommand::move)
         .member("init", &AttackCommand::init)
         .member("flock_handle", &AttackCommand::flock_handle)
+        .member("source_pos", &AttackCommand::source_pos)
+        .member("patrol", &AttackCommand::patrol)
     ;
     ecs.component<CastCommand>()
         .member("ability", &CastCommand::ability)

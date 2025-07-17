@@ -37,6 +37,8 @@ octopus::AttackWindupStep, \
 octopus::AttackReloadStep, \
 octopus::AttackBuffStep, \
 octopus::AttackCommandStep, \
+octopus::AttackCommandSourcePosStep, \
+octopus::AttackCommandTargetPosStep, \
 octopus::AttackCommandInitStep, \
 octopus::FlockArrivedStep, \
 octopus::ProductionQueueTimestampStep, \
