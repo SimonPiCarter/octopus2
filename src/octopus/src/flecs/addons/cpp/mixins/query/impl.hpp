@@ -39,12 +39,19 @@ struct query_base {
 
     query_base(const query_base& obj) {
         this->query_ = obj.query_;
-        flecs_poly_claim(this->query_);
+        if (this->query_)
+        {
+            flecs_poly_claim(this->query_);
+        }
     }
 
     query_base& operator=(const query_base& obj) {
+        this->~query_base();
         this->query_ = obj.query_;
-        flecs_poly_claim(this->query_);
+        if (this->query_)
+        {
+            flecs_poly_claim(this->query_);
+        }
         return *this; 
     }
 
@@ -207,6 +214,11 @@ public:
     query& operator=(query&& obj) noexcept {
         query_base::operator=(FLECS_FWD(obj));
         return *this;
+    }
+
+    flecs::query<> cache_query() const {
+        const flecs::query_t *q = ecs_query_get_cache_query(query_);
+        return flecs::query<>(q);
     }
 
 private:

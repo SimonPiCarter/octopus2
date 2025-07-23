@@ -4,7 +4,6 @@
  */
 
 #include "json.h"
-#include <ctype.h>
 
 #ifdef FLECS_JSON
 
@@ -489,6 +488,11 @@ void flecs_json_string_escape(
     ecs_strbuf_t *buf,
     const char *value)
 {
+    if (!value) {
+        ecs_strbuf_appendlit(buf, "null");
+        return;
+    }
+
     ecs_size_t length = flecs_stresc(NULL, 0, '"', value);
     if (length == ecs_os_strlen(value)) {
         ecs_strbuf_appendch(buf, '"');

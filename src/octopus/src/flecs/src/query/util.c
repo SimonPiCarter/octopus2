@@ -1,4 +1,4 @@
- /**
+/**
  * @file query/util.c
  * @brief Query utilities.
  */
@@ -174,15 +174,17 @@ const char* flecs_query_op_str(
     uint16_t kind)
 {
     switch(kind) {
+    case EcsQueryAll:            return "all       ";
     case EcsQueryAnd:            return "and       ";
-    case EcsQueryAndAny:         return "andany    ";
+    case EcsQueryAndAny:         return "and_any   ";
+    case EcsQueryAndWcTgt:       return "and_wct   ";
     case EcsQueryTriv:           return "triv      ";
     case EcsQueryCache:          return "cache     ";
     case EcsQueryIsCache:        return "xcache    ";
-    case EcsQueryOnlyAny:        return "any       ";
     case EcsQueryUp:             return "up        ";
     case EcsQuerySelfUp:         return "selfup    ";
     case EcsQueryWith:           return "with      ";
+    case EcsQueryWithWcTgt:      return "with_wct  ";
     case EcsQueryTrav:           return "trav      ";
     case EcsQueryAndFrom:        return "andfrom   ";
     case EcsQueryOrFrom:         return "orfrom    ";
@@ -209,11 +211,11 @@ const char* flecs_query_op_str(
     case EcsQueryMemberNeq:      return "memberneq ";
     case EcsQueryToggle:         return "toggle    ";
     case EcsQueryToggleOption:   return "togglopt  ";
-    case EcsQueryUnionEq:        return "union     ";
-    case EcsQueryUnionEqWith:    return "union_w   ";
-    case EcsQueryUnionNeq:       return "unionneq  ";
-    case EcsQueryUnionEqUp:      return "union_up  ";
-    case EcsQueryUnionEqSelfUp:  return "union_sup ";
+    case EcsQuerySparse:         return "spars     ";
+    case EcsQuerySparseWith:     return "spars_w   ";
+    case EcsQuerySparseNot:      return "spars_not ";
+    case EcsQuerySparseSelfUp:   return "spars_sup ";
+    case EcsQuerySparseUp:       return "spars_up  ";
     case EcsQueryLookup:         return "lookup    ";
     case EcsQuerySetVars:        return "setvars   ";
     case EcsQuerySetThis:        return "setthis   ";
@@ -436,11 +438,6 @@ char* ecs_query_plan_w_profile(
     ecs_strbuf_t buf = ECS_STRBUF_INIT;
 
     flecs_query_plan_w_profile(q, it, &buf);
-    // ecs_query_impl_t *impl = flecs_query_impl(q);
-    // if (impl->cache) {
-    //     ecs_strbuf_appendch(&buf, '\n');
-    //     flecs_query_plan_w_profile(impl->cache->query, it, &buf);
-    // }
 
 #ifdef FLECS_LOG
     char *str = ecs_strbuf_get(&buf);
@@ -478,7 +475,7 @@ void flecs_query_str_add_id(
     } else if (ref->name) {
         ecs_strbuf_appendstr(buf, ref->name);
     } else {
-        ecs_strbuf_appendlit(buf, "0");
+        ecs_strbuf_appendlit(buf, "#0");
     }
     is_added = true;
 
@@ -692,55 +689,6 @@ char* ecs_query_str(
     return ecs_strbuf_get(&buf);
 error:
     return NULL;
-}
-
-int32_t flecs_query_pivot_term(
-    const ecs_world_t *world,
-    const ecs_query_t *query)
-{
-    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
-    ecs_check(query != NULL, ECS_INVALID_PARAMETER, NULL);
-
-    const ecs_term_t *terms = query->terms;
-    int32_t i, term_count = query->term_count;
-    int32_t pivot_term = -1, min_count = -1, self_pivot_term = -1;
-
-    for (i = 0; i < term_count; i ++) {
-        const ecs_term_t *term = &terms[i];
-        ecs_id_t id = term->id;
-
-        if ((term->oper != EcsAnd) || (i && (term[-1].oper == EcsOr))) {
-            continue;
-        }
-
-        if (!ecs_term_match_this(term)) {
-            continue;
-        }
-
-        ecs_id_record_t *idr = flecs_id_record_get(world, id);
-        if (!idr) {
-            /* If one of the terms does not match with any data, iterator 
-             * should not return anything */
-            return -2; /* -2 indicates query doesn't match anything */
-        }
-
-        int32_t table_count = flecs_table_cache_count(&idr->cache);
-        if (min_count == -1 || table_count < min_count) {
-            min_count = table_count;
-            pivot_term = i;
-            if ((term->src.id & EcsTraverseFlags) == EcsSelf) {
-                self_pivot_term = i;
-            }
-        }
-    }
-
-    if (self_pivot_term != -1) {
-        pivot_term = self_pivot_term;
-    }
-
-    return pivot_term;
-error:
-    return -2;
 }
 
 void flecs_query_apply_iter_flags(

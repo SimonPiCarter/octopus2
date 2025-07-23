@@ -3,9 +3,6 @@
  * @brief Query engine functions.
  */
 
-#include "cache.h"
-#include "cache_iter.h"
-#include "change_detection.h"
 #include "trav_cache.h"
 #include "trivial_iter.h"
 
@@ -184,35 +181,31 @@ bool flecs_query_select_w_id(
     ecs_flags32_t filter_mask);
 
 
-/* Union evaluation */
+/* Sparse evaluation */
 
-bool flecs_query_union_select(
+bool flecs_query_sparse(
     const ecs_query_op_t *op,
     bool redo,
     const ecs_query_run_ctx_t *ctx);
 
-bool flecs_query_union(
-    const ecs_query_op_t *op,
-    bool redo,
-    const ecs_query_run_ctx_t *ctx);
-
-bool flecs_query_union_neq(
-    const ecs_query_op_t *op,
-    bool redo,
-    const ecs_query_run_ctx_t *ctx);
-
-bool flecs_query_union_with(
+bool flecs_query_sparse_select(
     const ecs_query_op_t *op,
     bool redo,
     const ecs_query_run_ctx_t *ctx,
-    bool neq);
+    ecs_flags32_t table_mask);
 
-bool flecs_query_union_up(
+bool flecs_query_sparse_with(
+    const ecs_query_op_t *op,
+    bool redo,
+    const ecs_query_run_ctx_t *ctx,
+    bool not);
+
+bool flecs_query_sparse_up(
     const ecs_query_op_t *op,
     bool redo,
     const ecs_query_run_ctx_t *ctx);
 
-bool flecs_query_union_self_up(
+bool flecs_query_sparse_self_up(
     const ecs_query_op_t *op,
     bool redo,
     const ecs_query_run_ctx_t *ctx);
@@ -293,7 +286,7 @@ typedef enum ecs_query_up_select_trav_kind_t {
 typedef enum ecs_query_up_select_kind_t {
     FlecsQueryUpSelectDefault,
     FlecsQueryUpSelectId,
-    FlecsQueryUpSelectUnion
+    FlecsQueryUpSelectSparse
 } ecs_query_up_select_kind_t;
 
 bool flecs_query_up_select(

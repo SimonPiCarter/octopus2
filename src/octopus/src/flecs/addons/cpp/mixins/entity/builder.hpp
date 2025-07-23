@@ -100,7 +100,7 @@ struct entity_builder : entity_view {
      * @tparam First The first element of the pair
      * @param constant the enum constant.
      */
-    template<typename First, typename Second, if_t< is_enum<Second>::value > = 0>
+    template<typename First, typename Second, if_t< is_enum<Second>::value && !std::is_same<First, Second>::value > = 0>
     const Self& add(Second constant) const  {
         flecs_static_assert(is_flecs_constructible<First>::value,
             "cannot default construct type: add T::T() or use emplace<T>()");
@@ -299,21 +299,10 @@ struct entity_builder : entity_view {
      *
      * @tparam T the type of the component to remove.
      */
-    template <typename T, if_not_t< is_enum<T>::value > = 0>
+    template <typename T>
     const Self& remove() const {
         ecs_remove_id(this->world_, this->id_, _::type<T>::id(this->world_));
         return to_base();
-    }
-
-     /** Remove pair for enum.
-     * This operation will remove any `(Enum, *)` pair from the entity.
-     * 
-     * @tparam E The enumeration type.
-     */
-    template <typename E, if_t< is_enum<E>::value > = 0>
-    const Self& remove() const  {
-        flecs::entity_t first = _::type<E>::id(this->world_);
-        return this->remove(first, flecs::Wildcard);
     }
 
     /** Remove an entity from an entity.
@@ -694,18 +683,39 @@ struct entity_builder : entity_view {
         return set_ptr(comp, cptr->size, ptr);
     }
 
+    /** Set a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component it will be added.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
     template<typename T, if_t<is_actual<T>::value> = 0 >
     const Self& set(T&& value) const  {
         flecs::set<T>(this->world_, this->id_, FLECS_FWD(value));
         return to_base();
     }
 
+    /** Set a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component it will be added.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
     template<typename T, if_t<is_actual<T>::value > = 0>
     const Self& set(const T& value) const  {
         flecs::set<T>(this->world_, this->id_, value);
         return to_base();
     }
 
+    /** Set a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component it will be added.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
     template<typename T, typename A = actual_type_t<T>, if_not_t< 
         is_actual<T>::value > = 0>
     const Self& set(A&& value) const  {
@@ -713,6 +723,13 @@ struct entity_builder : entity_view {
         return to_base();
     }
 
+    /** Set a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component it will be added.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
     template<typename T, typename A = actual_type_t<T>, if_not_t<
         is_actual<T>::value > = 0>
     const Self& set(const A& value) const  {
@@ -837,11 +854,198 @@ struct entity_builder : entity_view {
         return to_base();
     }
 
+    /** Set a pair for an entity.
+     * This operation sets the pair value, and uses Second as type. If the
+     * entity did not yet have the pair, it will be added.
+     *
+     * @tparam First The first element of the pair.
+     * @tparam Second The second element of the pair
+     * @param value The value to set.
+     */
     template <typename First, typename Second>
     const Self& set_second(const Second& value) const  {
         flecs::set<pair_object<First, Second>>(this->world_, this->id_, value);
         return to_base();
+    }
+
+
+    /** Assign a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component the operation will panic.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
+    template<typename T, if_t<is_actual<T>::value> = 0 >
+    const Self& assign(T&& value) const  {
+        flecs::assign<T>(this->world_, this->id_, FLECS_FWD(value));
+        return to_base();
+    }
+
+    /** Assign a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component the operation will panic.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
+    template<typename T, if_t<is_actual<T>::value > = 0>
+    const Self& assign(const T& value) const  {
+        flecs::assign<T>(this->world_, this->id_, value);
+        return to_base();
+    }
+
+    /** Assign a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component the operation will panic.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
+    template<typename T, typename A = actual_type_t<T>, if_not_t< 
+        is_actual<T>::value > = 0>
+    const Self& assign(A&& value) const  {
+        flecs::assign<T>(this->world_, this->id_, FLECS_FWD(value));
+        return to_base();
+    }
+
+    /** Assign a component for an entity.
+     * This operation sets the component value. If the entity did not yet have 
+     * the component the operation will panic.
+     *
+     * @tparam T The component.
+     * @param value The value to set.
+     */
+    template<typename T, typename A = actual_type_t<T>, if_not_t<
+        is_actual<T>::value > = 0>
+    const Self& assign(const A& value) const  {
+        flecs::assign<T>(this->world_, this->id_, value);
+        return to_base();
+    }
+
+    /** Assign a pair for an entity.
+     * This operation sets the pair value, and uses First as type. If the
+     * entity did not yet have the component the operation will panic.
+     *
+     * @tparam First The first element of the pair.
+     * @tparam Second The second element of the pair
+     * @param value The value to set.
+     */
+    template <typename First, typename Second, typename P = pair<First, Second>, 
+        typename A = actual_type_t<P>, if_not_t< flecs::is_pair<First>::value> = 0>
+    const Self& assign(A&& value) const  {
+        flecs::assign<P>(this->world_, this->id_, FLECS_FWD(value));
+        return to_base();
+    }
+
+    /** Assign a pair for an entity.
+     * This operation sets the pair value, and uses First as type. If the
+     * entity did not yet have the component the operation will panic.
+     *
+     * @tparam First The first element of the pair.
+     * @tparam Second The second element of the pair
+     * @param value The value to set.
+     */
+    template <typename First, typename Second, typename P = pair<First, Second>, 
+        typename A = actual_type_t<P>, if_not_t< flecs::is_pair<First>::value> = 0>
+    const Self& assign(const A& value) const  {
+        flecs::assign<P>(this->world_, this->id_, value);
+        return to_base();
+    }
+
+    /** Assign a pair for an entity.
+     * This operation sets the pair value, and uses First as type. If the
+     * entity did not yet have the component the operation will panic.
+     *
+     * @tparam First The first element of the pair.
+     * @param second The second element of the pair.
+     * @param value The value to set.
+     */
+    template <typename First, typename Second, if_not_t< is_enum<Second>::value > = 0>
+    const Self& assign(Second second, const First& value) const  {
+        auto first = _::type<First>::id(this->world_);
+        flecs::assign(this->world_, this->id_, value, 
+            ecs_pair(first, second));
+        return to_base();
+    }
+
+    /** Assign a pair for an entity.
+     * This operation sets the pair value, and uses First as type. If the
+     * entity did not yet have the component the operation will panic.
+     *
+     * @tparam First The first element of the pair.
+     * @param second The second element of the pair.
+     * @param value The value to set.
+     */
+    template <typename First, typename Second, if_not_t< is_enum<Second>::value > = 0>
+    const Self& assign(Second second, First&& value) const  {
+        auto first = _::type<First>::id(this->world_);
+        flecs::assign(this->world_, this->id_, FLECS_FWD(value), 
+            ecs_pair(first, second));
+        return to_base();
+    }
+
+    /** Assign a pair for an entity.
+     * This operation sets the pair value, and uses First as type. If the
+     * entity did not yet have the component the operation will panic.
+     *
+     * @tparam First The first element of the pair.
+     * @param constant The enum constant.
+     * @param value The value to set.
+     */
+    template <typename First, typename Second, if_t< is_enum<Second>::value > = 0>
+    const Self& assign(Second constant, const First& value) const  {
+        const auto& et = enum_type<Second>(this->world_);
+        flecs::entity_t second = et.entity(constant);
+        return assign<First>(second, value);
+    }
+
+    /** Assign a pair for an entity.
+     * This operation sets the pair value, and uses Second as type. If the
+     * entity did not yet have the component the operation will panic.
+     *
+     * @tparam Second The second element of the pair
+     * @param first The first element of the pair.
+     * @param value The value to set.
+     */
+    template <typename Second>
+    const Self& assign_second(entity_t first, const Second& value) const  {
+        auto second = _::type<Second>::id(this->world_);
+        ecs_assert( ecs_get_type_info(world_, ecs_pair(first, second)) != NULL,
+            ECS_INVALID_PARAMETER, "pair is not a component");
+        ecs_assert( ecs_get_type_info(world_, ecs_pair(first, second))->component == second,
+            ECS_INVALID_PARAMETER, "type of pair is not Second");
+        flecs::assign(this->world_, this->id_, value, 
+            ecs_pair(first, second));
+        return to_base();
+    }
+
+    /** Assign a pair for an entity.
+     * This operation sets the pair value, and uses Second as type. If the
+     * entity did not yet have the component the operation will panic.
+     *
+     * @tparam Second The second element of the pair
+     * @param first The first element of the pair.
+     * @param value The value to set.
+     */
+    template <typename Second>
+    const Self& assign_second(entity_t first, Second&& value) const  {
+        auto second = _::type<Second>::id(this->world_);
+        ecs_assert( ecs_get_type_info(world_, ecs_pair(first, second)) != NULL,
+            ECS_INVALID_PARAMETER, "pair is not a component");
+        ecs_assert( ecs_get_type_info(world_, ecs_pair(first, second))->component == second,
+            ECS_INVALID_PARAMETER, "type of pair is not Second");
+        flecs::assign(this->world_, this->id_, FLECS_FWD(value), 
+            ecs_pair(first, second));
+        return to_base();
+    }
+
+    template <typename First, typename Second>
+    const Self& assign_second(const Second& value) const  {
+        flecs::assign<pair_object<First, Second>>(this->world_, this->id_, value);
+        return to_base();
     }    
+
 
     /** Set 1..N components.
      * This operation accepts a callback with as arguments the components to
@@ -864,20 +1068,6 @@ struct entity_builder : entity_view {
     /** Emplace component.
      * Emplace constructs a component in the storage, which prevents calling the
      * destructor on the value passed into the function.
-     *
-     * Emplace attempts the following signatures to construct the component:
-     *
-     * @code
-     * T{Args...}
-     * T{flecs::entity, Args...}
-     * @endcode
-     *
-     * If the second signature matches, emplace will pass in the current entity 
-     * as argument to the constructor, which is useful if the component needs
-     * to be aware of the entity to which it has been added.
-     *
-     * Emplace may only be called for components that have not yet been added
-     * to the entity.
      *
      * @tparam T the component to emplace
      * @param args The arguments to pass to the constructor of T

@@ -7,8 +7,6 @@
 
 #ifdef FLECS_META
 
-#include <ctype.h>
-
 #define ECS_META_IDENTIFIER_LENGTH (256)
 
 #define ecs_meta_error(ctx, ptr, ...)\
@@ -800,7 +798,12 @@ int flecs_meta_utils_parse_enum(
     ecs_entity_t t,
     const char *desc)
 {
-    ecs_set(world, t, EcsEnum, { .underlying_type = ecs_id(ecs_i32_t) });
+    ecs_vec_t ordered_constants;
+    ecs_vec_init_t(NULL, &ordered_constants, ecs_enum_constant_t, 0);
+    ecs_set(world, t, EcsEnum, { 
+        .underlying_type = ecs_id(ecs_i32_t),
+        .ordered_constants = ordered_constants
+    });
     return flecs_meta_utils_parse_constants(world, t, desc, false);
 }
 

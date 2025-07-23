@@ -5,11 +5,10 @@
 
 #include "meta.h"
 #include <inttypes.h>
-#include <ctype.h>
 
 #ifdef FLECS_META
-#ifdef FLECS_SCRIPT
-#include "../script/script.h"
+#ifdef FLECS_QUERY_DSL
+#include "../query_dsl/query_dsl.h"
 #endif
 
 static
@@ -251,7 +250,9 @@ int ecs_meta_next(
     scope->op_cur += op->op_count;
 
     if (scope->op_cur >= scope->op_count) {
-        ecs_err("out of bounds");
+        char *str = ecs_get_path(cursor->world, scope->type);
+        ecs_err("too many elements for scope for type %s", str);
+        ecs_os_free(str);
         return -1;
     }
 
@@ -1470,7 +1471,7 @@ int ecs_meta_set_string(
         break;
     }
     case EcsOpId: {
-    #ifdef FLECS_SCRIPT
+    #ifdef FLECS_QUERY_DSL
         ecs_id_t id = 0;
         if (flecs_id_parse(cursor->world, NULL, value, &id) == NULL) {
             goto error;

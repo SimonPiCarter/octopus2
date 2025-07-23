@@ -17,6 +17,14 @@ int64_t ecs_block_allocator_free_count = 0;
 
 #ifndef FLECS_USE_OS_ALLOC
 
+/* Bypass block allocator if chunks per block is lower than the configured 
+ * value. This prevents holding on to large memory chunks when they're freed,
+ * which can add up especially in scenarios where an array is reallocated 
+ * several times to a large size. 
+ * A value of 1 seems to yield the best results. Higher values only impact lower
+ * allocation sizes, which are more likely to be reused. */
+#define FLECS_MIN_CHUNKS_PER_BLOCK 1
+
 static
 ecs_block_allocator_chunk_header_t* flecs_balloc_block(
     ecs_block_allocator_t *allocator)
@@ -32,16 +40,13 @@ ecs_block_allocator_chunk_header_t* flecs_balloc_block(
         ECS_SIZEOF(ecs_block_allocator_block_t));
 
     block->memory = first_chunk;
-    if (!allocator->block_tail) {
-        ecs_assert(!allocator->block_head, ECS_INTERNAL_ERROR, 0);
-        block->next = NULL;
-        allocator->block_head = block;
-        allocator->block_tail = block;
-    } else {
-        block->next = NULL;
-        allocator->block_tail->next = block;
-        allocator->block_tail = block;
+    block->next = NULL;
+
+    if (allocator->block_head) {
+        block->next = allocator->block_head;
     }
+
+    allocator->block_head = block;
 
     ecs_block_allocator_chunk_header_t *chunk = first_chunk;
     int32_t i, end;
@@ -65,20 +70,21 @@ void flecs_ballocator_init(
     ecs_assert(ba != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(size != 0, ECS_INTERNAL_ERROR, NULL);
     ba->data_size = size;
+#ifndef FLECS_USE_OS_ALLOC
 #ifdef FLECS_SANITIZE
     ba->alloc_count = 0;
     if (size != 24) { /* Prevent stack overflow as map uses block allocator */
         ba->outstanding = ecs_os_malloc_t(ecs_map_t);
         ecs_map_init(ba->outstanding, NULL);
     }
-    size += ECS_SIZEOF(int64_t);
+    size += ECS_SIZEOF(int64_t) * 2; /* 16 byte aligned */
 #endif
     ba->chunk_size = ECS_ALIGN(size, 16);
     ba->chunks_per_block = ECS_MAX(4096 / ba->chunk_size, 1);
     ba->block_size = ba->chunks_per_block * ba->chunk_size;
     ba->head = NULL;
     ba->block_head = NULL;
-    ba->block_tail = NULL;
+#endif
 }
 
 ecs_block_allocator_t* flecs_ballocator_new(
@@ -93,7 +99,9 @@ void flecs_ballocator_fini(
     ecs_block_allocator_t *ba)
 {
     ecs_assert(ba != NULL, ECS_INTERNAL_ERROR, NULL);
+    (void)ba;
 
+#ifndef FLECS_USE_OS_ALLOC
 #ifdef FLECS_SANITIZE
     if (ba->alloc_count != 0) {
         ecs_err("Leak detected! (size %u, remaining = %d)",
@@ -127,6 +135,7 @@ void flecs_ballocator_fini(
     }
 
     ba->block_head = NULL;
+#endif
 }
 
 void flecs_ballocator_free(
@@ -148,11 +157,16 @@ void* flecs_balloc_w_dbg_info(
 {
     (void)type_name;
     void *result;
+
+    if (!ba) return NULL;
+
 #ifdef FLECS_USE_OS_ALLOC
     result = ecs_os_malloc(ba->data_size);
 #else
 
-    if (!ba) return NULL;
+    if (ba->chunks_per_block <= FLECS_MIN_CHUNKS_PER_BLOCK) {
+        return ecs_os_malloc(ba->data_size);
+    }
 
     if (!ba->head) {
         ba->head = flecs_balloc_block(ba);
@@ -170,7 +184,7 @@ void* flecs_balloc_w_dbg_info(
     }
     ba->alloc_count ++;
     *(int64_t*)result = (uintptr_t)ba;
-    result = ECS_OFFSET(result, ECS_SIZEOF(int64_t));
+    result = ECS_OFFSET(result, ECS_SIZEOF(int64_t) * 2);
 #endif
 #endif
 
@@ -228,12 +242,18 @@ void flecs_bfree_w_dbg_info(
         ecs_assert(memory == NULL, ECS_INTERNAL_ERROR, NULL);
         return;
     }
+
     if (memory == NULL) {
         return;
     }
 
+    if (ba->chunks_per_block <= FLECS_MIN_CHUNKS_PER_BLOCK) {
+        ecs_os_free(memory);
+        return;
+    }
+
 #ifdef FLECS_SANITIZE
-    memory = ECS_OFFSET(memory, -ECS_SIZEOF(int64_t));
+    memory = ECS_OFFSET(memory, -ECS_SIZEOF(int64_t) * 2);
     ecs_block_allocator_t *actual = *(ecs_block_allocator_t**)memory;
     if (actual != ba) {
         if (type_name) {
@@ -311,11 +331,11 @@ void* flecs_brealloc_w_dbg_info(
 }
 
 void* flecs_bdup(
-    ecs_block_allocator_t *ba, 
+    ecs_block_allocator_t *ba,
     void *memory)
 {
 #ifdef FLECS_USE_OS_ALLOC
-    if (memory && ba->chunk_size) {
+    if (memory && ba->data_size) {
         return ecs_os_memdup(memory, ba->data_size);
     } else {
         return NULL;

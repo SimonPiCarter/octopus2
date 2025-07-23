@@ -42,15 +42,17 @@ extern char *flecs_this_name_array;
 
 /* -- Instruction kinds -- */
 typedef enum {
+    EcsQueryAll,            /* Yield all tables */
     EcsQueryAnd,            /* And operator: find or match id against variable source */
     EcsQueryAndAny,         /* And operator with support for matching Any src/id */
-    EcsQueryOnlyAny,        /* Dedicated instruction for _ queries where the src is unknown */
+    EcsQueryAndWcTgt,       /* And operator for (*, T) queries */
     EcsQueryTriv,           /* Trivial search (batches multiple terms) */
     EcsQueryCache,          /* Cached search */
     EcsQueryIsCache,        /* Cached search for queries that are entirely cached */
     EcsQueryUp,             /* Up traversal */
     EcsQuerySelfUp,         /* Self|up traversal */
     EcsQueryWith,           /* Match id against fixed or variable source */
+    EcsQueryWithWcTgt,      /* Match (*, T) id against fixed or variable source */
     EcsQueryTrav,           /* Support for transitive/reflexive queries */
     EcsQueryAndFrom,        /* AndFrom operator */
     EcsQueryOrFrom,         /* OrFrom operator */
@@ -77,11 +79,11 @@ typedef enum {
     EcsQueryMemberNeq,      /* Compare member value */
     EcsQueryToggle,         /* Evaluate toggle bitset, if present */
     EcsQueryToggleOption,   /* Toggle for optional terms */
-    EcsQueryUnionEq,        /* Evaluate union relationship */
-    EcsQueryUnionEqWith,    /* Evaluate union relationship against fixed or variable source */
-    EcsQueryUnionNeq,       /* Evaluate union relationship */
-    EcsQueryUnionEqUp,      /* Evaluate union relationship w/up traversal */
-    EcsQueryUnionEqSelfUp,  /* Evaluate union relationship w/self|up traversal */
+    EcsQuerySparse,         /* Evaluate sparse component */
+    EcsQuerySparseNot,      /* Evaluate sparse component with not operator */
+    EcsQuerySparseSelfUp,
+    EcsQuerySparseUp,
+    EcsQuerySparseWith,     /* Evaluate sparse component against fixed or variable source */
     EcsQueryLookup,         /* Lookup relative to variable */
     EcsQuerySetVars,        /* Populate it.sources from variables */
     EcsQuerySetThis,        /* Populate This entity variable */
@@ -126,23 +128,35 @@ typedef struct ecs_query_op_t {
     ecs_flags64_t written;     /* Bitset with variables written by op */
 } ecs_query_op_t;
 
- /* And context */
+/* All context */
 typedef struct {
-    ecs_id_record_t *idr;
+    int32_t cur;
+    ecs_table_record_t dummy_tr;
+} ecs_query_all_ctx_t;
+
+/* And context */
+typedef struct {
+    ecs_component_record_t *cr;
     ecs_table_cache_iter_t it;
     int16_t column;
     int16_t remaining;
+    bool non_fragmenting;
 } ecs_query_and_ctx_t;
 
-/* Union context */
+/* Sparse context */
 typedef struct {
-    ecs_id_record_t *idr;
+    ecs_query_and_ctx_t and_; /* For mixed sparse/non-sparse results */
+
+    ecs_sparse_t *sparse;
     ecs_table_range_t range;
-    ecs_map_iter_t tgt_iter;
-    ecs_entity_t cur;
-    ecs_entity_t tgt;
-    int32_t row;
-} ecs_query_union_ctx_t;
+    int32_t cur;
+    bool self;
+    bool exclusive;
+
+    ecs_component_record_t *cr;
+    ecs_table_range_t prev_range;
+    int32_t prev_cur;
+} ecs_query_sparse_ctx_t;
 
 /* Down traversal cache (for resolving up queries w/unknown source) */
 typedef struct {
@@ -175,34 +189,40 @@ typedef struct {
 
 /* And up context */
 typedef struct {
-    union {
-        ecs_query_and_ctx_t and;
-        ecs_query_union_ctx_t union_;
-    } is;
     ecs_table_t *table;
     int32_t row;
     int32_t end;
     ecs_entity_t trav;
     ecs_id_t with;
     ecs_id_t matched;
-    ecs_id_record_t *idr_with;
-    ecs_id_record_t *idr_trav;
+    ecs_component_record_t *cr_with;
+    ecs_component_record_t *cr_trav;
     ecs_trav_down_t *down;
     int32_t cache_elem;
     ecs_trav_up_cache_t cache;
+} ecs_query_up_impl_t;
+
+typedef struct {
+    union {
+        ecs_query_and_ctx_t and;
+        ecs_query_sparse_ctx_t sparse_;
+    } is;
+
+    /* Indirection because otherwise the ctx struct gets too large */
+    ecs_query_up_impl_t *impl;
 } ecs_query_up_ctx_t;
 
 /* Cache for storing results of upward/downward "all" traversal. This type of 
  * traversal iterates and caches the entire tree. */
 typedef struct {
     ecs_entity_t entity;
-    ecs_id_record_t *idr;
+    ecs_component_record_t *cr;
     const ecs_table_record_t *tr;
 } ecs_trav_elem_t;
 
 typedef struct {
     ecs_id_t id;
-    ecs_id_record_t *idr;
+    ecs_component_record_t *cr;
     ecs_vec_t entities;
     bool up;
 } ecs_trav_cache_t;
@@ -237,7 +257,7 @@ typedef struct {
 
 /* Ids context */
 typedef struct {
-    ecs_id_record_t *cur;
+    ecs_component_record_t *cur;
 } ecs_query_ids_ctx_t;
 
 /* Control flow context */
@@ -283,6 +303,7 @@ typedef struct {
 
 typedef struct ecs_query_op_ctx_t {
     union {
+        ecs_query_all_ctx_t all;
         ecs_query_and_ctx_t and;
         ecs_query_xfrom_ctx_t xfrom;
         ecs_query_up_ctx_t up;
@@ -295,7 +316,7 @@ typedef struct ecs_query_op_ctx_t {
         ecs_query_trivial_ctx_t trivial;
         ecs_query_membereq_ctx_t membereq;
         ecs_query_toggle_ctx_t toggle;
-        ecs_query_union_ctx_t union_;
+        ecs_query_sparse_ctx_t sparse;
     } is;
 } ecs_query_op_ctx_t;
 
@@ -362,6 +383,10 @@ struct ecs_query_impl_t {
     char *tokens;                 /* Buffer with string tokens used by terms */
     int32_t *monitor;             /* Change monitor for fields with fixed src */
 
+#ifdef FLECS_DEBUG
+    ecs_termset_t final_terms;    /* Terms that don't use component inheritance */
+#endif
+
     /* Query cache */
     struct ecs_query_cache_t *cache; /* Cache, if query contains cached terms */
 
@@ -372,118 +397,5 @@ struct ecs_query_impl_t {
     /* Mixins */
     flecs_poly_dtor_t dtor;
 };
-
-
-/* Query cache types */
-
-/** Table match data.
- * Each table matched by the query is represented by an ecs_query_cache_table_match_t
- * instance, which are linked together in a list. A table may match a query
- * multiple times (due to wildcard queries) with different columns being matched
- * by the query. */
-struct ecs_query_cache_table_match_t {
-    ecs_query_cache_table_match_t *next, *prev;
-    ecs_table_t *table;              /* The current table. */
-    int32_t offset;                  /* Starting point in table  */
-    int32_t count;                   /* Number of entities to iterate in table */
-    const ecs_table_record_t **trs;  /* Information about where to find field in table */
-    ecs_id_t *ids;                   /* Resolved (component) ids for current table */
-    ecs_entity_t *sources;           /* Subjects (sources) of ids */
-    ecs_termset_t set_fields;        /* Fields that are set */
-    ecs_termset_t up_fields;         /* Fields that are matched through traversal */
-    uint64_t group_id;               /* Value used to organize tables in groups */
-    int32_t *monitor;                /* Used to monitor table for changes */
-
-    /* Next match in cache for same table (includes empty tables) */
-    ecs_query_cache_table_match_t *next_match;
-};
-
-/** Table record type for query table cache. A query only has one per table. */
-typedef struct ecs_query_cache_table_t {
-    ecs_table_cache_hdr_t hdr;       /* Header for ecs_table_cache_t */
-    ecs_query_cache_table_match_t *first;  /* List with matches for table */
-    ecs_query_cache_table_match_t *last;   /* Last discovered match for table */
-    uint64_t table_id;
-    int32_t rematch_count;           /* Track whether table was rematched */
-} ecs_query_cache_table_t;
-
-/** Points to the beginning & ending of a query group */
-typedef struct ecs_query_cache_table_list_t {
-    ecs_query_cache_table_match_t *first;
-    ecs_query_cache_table_match_t *last;
-    ecs_query_group_info_t info;
-} ecs_query_cache_table_list_t;
-
-/* Query event type for notifying queries of world events */
-typedef enum ecs_query_cache_eventkind_t {
-    EcsQueryTableMatch,
-    EcsQueryTableRematch,
-    EcsQueryTableUnmatch,
-} ecs_query_cache_eventkind_t;
-
-typedef struct ecs_query_cache_event_t {
-    ecs_query_cache_eventkind_t kind;
-    ecs_table_t *table;
-} ecs_query_cache_event_t;
-
-/* Query level block allocators have sizes that depend on query field count */
-typedef struct ecs_query_cache_allocators_t {
-    ecs_block_allocator_t trs;
-    ecs_block_allocator_t ids;
-    ecs_block_allocator_t sources;
-    ecs_block_allocator_t monitors;
-} ecs_query_cache_allocators_t;
-
-/** Query that is automatically matched against tables */
-typedef struct ecs_query_cache_t {
-    /* Uncached query used to populate the cache */
-    ecs_query_t *query;
-
-    /* Observer to keep the cache in sync */
-    ecs_observer_t *observer;
-
-    /* Tables matched with query */
-    ecs_table_cache_t cache;
-
-    /* Linked list with all matched non-empty tables, in iteration order */
-    ecs_query_cache_table_list_t list;
-
-    /* Contains head/tail to nodes of query groups (if group_by is used) */
-    ecs_map_t groups;
-
-    /* Table sorting */
-    ecs_entity_t order_by;
-    ecs_order_by_action_t order_by_callback;
-    ecs_sort_table_action_t order_by_table_callback;
-    ecs_vec_t table_slices;
-    int32_t order_by_term;
-
-    /* Table grouping */
-    ecs_entity_t group_by;
-    ecs_group_by_action_t group_by_callback;
-    ecs_group_create_action_t on_group_create;
-    ecs_group_delete_action_t on_group_delete;
-    void *group_by_ctx;
-    ecs_ctx_free_t group_by_ctx_free;
-
-    /* Monitor generation */
-    int32_t monitor_generation;
-
-    int32_t cascade_by;              /* Identify cascade term */
-    int32_t match_count;             /* How often have tables been (un)matched */
-    int32_t prev_match_count;        /* Track if sorting is needed */
-    int32_t rematch_count;           /* Track which tables were added during rematch */
-    
-    ecs_entity_t entity;
-
-    /* Zero'd out sources array, used for results that only match on $this */
-    ecs_entity_t *sources;
-
-    /* Map field indices from cache to query */
-    int8_t *field_map;
-
-    /* Query-level allocators */
-    ecs_query_cache_allocators_t allocators;
-} ecs_query_cache_t;
 
 #endif

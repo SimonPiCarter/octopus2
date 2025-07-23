@@ -57,6 +57,17 @@ void flecs_meta_import_core_definitions(
         }
     });
 
+    ecs_struct(world, {
+        .entity = ecs_id(EcsIdentifier),
+        .members = {
+            {
+                .name = "value", 
+                .type = ecs_id(ecs_string_t), 
+                .offset = offsetof(EcsIdentifier, value) 
+            }
+        }
+    });
+
     /* Define const string as an opaque type that maps to string
        This enables reflection for strings that are in .rodata,
        (read-only) so that the meta add-on does not try to free them.
@@ -71,7 +82,11 @@ void flecs_meta_import_core_definitions(
             }),
             .type = {
                 .size = ECS_SIZEOF(const char*),
-                .alignment = ECS_ALIGNOF(const char*)
+                .alignment = ECS_ALIGNOF(const char*),
+                .hooks = {
+                    .cmp = ecs_compare_string,
+                    .equals = ecs_equals_string
+                }
             }          
         }),
         .type = {

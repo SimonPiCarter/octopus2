@@ -7,7 +7,7 @@
 
 #ifdef FLECS_SCRIPT
 #include "../script.h"
-#include "../parser.h"
+#include "../../parser/grammar.h"
 
 /* From https://en.cppreference.com/w/c/language/operator_precedence */
 
@@ -37,15 +37,15 @@ static int flecs_expr_precedence[] = {
 
 static
 const char* flecs_script_parse_lhs(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     const char *pos,
-    ecs_script_tokenizer_t *tokenizer,
-    ecs_script_token_kind_t left_oper,
+    ecs_tokenizer_t *tokenizer,
+    ecs_token_kind_t left_oper,
     ecs_expr_node_t **out);
 
 static
 void flecs_script_parser_expr_free(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     ecs_expr_node_t *node)
 {
     flecs_expr_visit_free(&parser->script->pub, node);
@@ -53,8 +53,8 @@ void flecs_script_parser_expr_free(
 
 static
 bool flecs_has_precedence(
-    ecs_script_token_kind_t first,
-    ecs_script_token_kind_t second)
+    ecs_token_kind_t first,
+    ecs_token_kind_t second)
 {
     if (!flecs_expr_precedence[first]) {
         return false;
@@ -74,7 +74,7 @@ ecs_entity_t flecs_script_default_lookup(
 
 static
 const char* flecs_script_parse_match_elems(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     const char *pos,
     ecs_expr_match_t *node)
 {
@@ -132,7 +132,7 @@ const char* flecs_script_parse_match_elems(
 }
 
 const char* flecs_script_parse_initializer(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     const char *pos,
     char until,
     ecs_expr_initializer_t **node_out)
@@ -226,7 +226,7 @@ const char* flecs_script_parse_initializer(
 
 static
 const char* flecs_script_parse_collection_initializer(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     const char *pos,
     ecs_expr_initializer_t **node_out)
 {
@@ -277,10 +277,10 @@ const char* flecs_script_parse_collection_initializer(
 
 static
 const char* flecs_script_parse_rhs(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     const char *pos,
-    ecs_script_tokenizer_t *tokenizer,
-    ecs_script_token_kind_t left_oper,
+    ecs_tokenizer_t *tokenizer,
+    ecs_token_kind_t left_oper,
     ecs_expr_node_t **out)
 {
     const char *last_pos = pos;
@@ -319,7 +319,7 @@ const char* flecs_script_parse_rhs(
             case EcsTokMember:
             case EcsTokParenOpen:
             {
-                ecs_script_token_kind_t oper = lookahead_token.kind;
+                ecs_token_kind_t oper = lookahead_token.kind;
 
                 /* Only consume more tokens if operator has precedence */
                 if (flecs_has_precedence(left_oper, oper)) {
@@ -414,10 +414,10 @@ error:
 
 static
 const char* flecs_script_parse_lhs(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     const char *pos,
-    ecs_script_tokenizer_t *tokenizer,
-    ecs_script_token_kind_t left_oper,
+    ecs_tokenizer_t *tokenizer,
+    ecs_token_kind_t left_oper,
     ecs_expr_node_t **out)
 {
     TokenFramePush();
@@ -429,14 +429,24 @@ const char* flecs_script_parse_lhs(
             const char *expr = Token(0);
             if (strchr(expr, '.') || strchr(expr, 'e')) {
                 *out = (ecs_expr_node_t*)flecs_expr_float(parser, atof(expr));
-            } else if (expr[0] == '-') {
+                break;
+            }
+            int base = 10;
+            if (expr[0] == '0' && (expr[1] == 'x' || expr[1] == 'X')) {
+                base = 16;
+                expr += 2;
+            } else if (expr[0] == '0' && (expr[1] == 'b' || expr[1] == 'B')) {
+                base = 2;
+                expr += 2;
+            }
+            if (expr[0] == '-') {
                 char *end;
                 *out = (ecs_expr_node_t*)flecs_expr_int(parser, 
-                    strtoll(expr, &end, 10));
+                    strtoll(expr, &end, base));
             } else {
                 char *end;
                 *out = (ecs_expr_node_t*)flecs_expr_uint(parser, 
-                    strtoull(expr, &end, 10));
+                    strtoull(expr, &end, base));
             }
             break;
         }
@@ -601,9 +611,9 @@ error:
 }
 
 const char* flecs_script_parse_expr(
-    ecs_script_parser_t *parser,
+    ecs_parser_t *parser,
     const char *pos,
-    ecs_script_token_kind_t left_oper,
+    ecs_token_kind_t left_oper,
     ecs_expr_node_t **out)
 {
     ParserBegin;
@@ -632,7 +642,9 @@ ecs_script_t* ecs_expr_parse(
     ecs_script_t *script = flecs_script_new(world);
     ecs_script_impl_t *impl = flecs_script_impl(script);
 
-    ecs_script_parser_t parser = {
+    ecs_parser_t parser = {
+        .name = script->name,
+        .code = script->code,
         .script = impl,
         .scope = impl->root,
         .significant_newline = false
@@ -700,7 +712,6 @@ error:
     return -1;
 }
 
-FLECS_API
 const char* ecs_expr_run(
     ecs_world_t *world,
     const char *expr,
@@ -738,7 +749,6 @@ error:
     return NULL;
 }
 
-FLECS_API
 char* ecs_script_string_interpolate(
     ecs_world_t *world,
     const char *str,

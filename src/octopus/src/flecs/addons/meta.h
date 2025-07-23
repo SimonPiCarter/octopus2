@@ -64,8 +64,6 @@
  * @{
  */
 
-#include <stddef.h>
-
 #ifndef FLECS_MODULE
 #define FLECS_MODULE
 #endif
@@ -125,7 +123,6 @@ FLECS_API extern const ecs_entity_t ecs_id(EcsVector);          /**< Id for comp
 FLECS_API extern const ecs_entity_t ecs_id(EcsOpaque);          /**< Id for component that stores reflection data for an opaque type. */
 FLECS_API extern const ecs_entity_t ecs_id(EcsUnit);            /**< Id for component that stores unit data. */
 FLECS_API extern const ecs_entity_t ecs_id(EcsUnitPrefix);      /**< Id for component that stores unit prefix data. */
-FLECS_API extern const ecs_entity_t EcsConstant;                /**< Tag added to enum/bitmask constants. */
 FLECS_API extern const ecs_entity_t EcsQuantity;                /**< Tag added to unit quantities. */
 
 /* Primitive type component ids */
@@ -288,6 +285,9 @@ typedef struct EcsEnum {
 
     /** Populated from child entities with Constant component */
     ecs_map_t constants; /**< map<i32_t, ecs_enum_constant_t> */
+
+    /** Stores the constants in registration order */
+    ecs_vec_t ordered_constants; /**< vector<ecs_enum_constants_t> */
 } EcsEnum;
 
 /** Type that describes an bitmask constant */
@@ -309,6 +309,8 @@ typedef struct ecs_bitmask_constant_t {
 typedef struct EcsBitmask {
     /* Populated from child entities with Constant component */
     ecs_map_t constants; /**< map<u32_t, ecs_bitmask_constant_t> */
+    /** Stores the constants in registration order */
+    ecs_vec_t ordered_constants; /**< vector<ecs_bitmask_constants_t>  */
 } EcsBitmask;
 
 /** Component added to array type entities */
@@ -383,6 +385,19 @@ typedef int (*ecs_meta_serialize_t)(
     const ecs_serializer_t *ser,
     const void *src);                  /**< Pointer to value to serialize */
 
+
+/** Callback invoked to serialize an opaque struct member */
+typedef int (*ecs_meta_serialize_member_t)(
+    const ecs_serializer_t *ser,
+    const void *src,                   /**< Pointer to value to serialize */
+    const char* name);                 /**< Name of member to serialize */
+    
+/** Callback invoked to serialize an opaque vector/array element */
+typedef int (*ecs_meta_serialize_element_t)(
+    const ecs_serializer_t *ser,
+    const void *src,                   /**< Pointer to value to serialize */
+    size_t elem);                      /**< Element index to serialize */
+    
 /** Opaque type reflection data. 
  * An opaque type is a type with an unknown layout that can be mapped to a type
  * known to the reflection framework. See the opaque type reflection examples.
@@ -390,6 +405,8 @@ typedef int (*ecs_meta_serialize_t)(
 typedef struct EcsOpaque {
     ecs_entity_t as_type;              /**< Type that describes the serialized output */
     ecs_meta_serialize_t serialize;    /**< Serialize action */
+    ecs_meta_serialize_member_t serialize_member; /**< Serialize member action */
+    ecs_meta_serialize_element_t serialize_element; /**< Serialize element action */
 
     /* Deserializer interface
      * Only override the callbacks that are valid for the opaque type. If a

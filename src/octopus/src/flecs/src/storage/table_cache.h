@@ -6,6 +6,19 @@
 #ifndef FLECS_TABLE_CACHE_H_
 #define FLECS_TABLE_CACHE_H_
 
+/** Linked list of tables in table cache */
+typedef struct ecs_table_cache_list_t {
+    ecs_table_cache_hdr_t *first;
+    ecs_table_cache_hdr_t *last;
+    int32_t count;
+} ecs_table_cache_list_t;
+
+/** Table cache */
+typedef struct ecs_table_cache_t {
+    ecs_map_t index; /* <table_id, T*> */
+    ecs_table_cache_list_t tables;
+} ecs_table_cache_t;
+
 void ecs_table_cache_init(
     ecs_world_t *world,
     ecs_table_cache_t *cache);
@@ -35,21 +48,21 @@ void* ecs_table_cache_get(
 #define flecs_table_cache_count(cache) (cache)->tables.count
 
 bool flecs_table_cache_iter(
-    ecs_table_cache_t *cache,
+    const ecs_table_cache_t *cache,
     ecs_table_cache_iter_t *out);
 
 bool flecs_table_cache_empty_iter(
-    ecs_table_cache_t *cache,
+    const ecs_table_cache_t *cache,
     ecs_table_cache_iter_t *out);
 
 bool flecs_table_cache_all_iter(
-    ecs_table_cache_t *cache,
+    const ecs_table_cache_t *cache,
     ecs_table_cache_iter_t *out);
 
-ecs_table_cache_hdr_t* flecs_table_cache_next_(
+const ecs_table_cache_hdr_t* flecs_table_cache_next_(
     ecs_table_cache_iter_t *it);
 
 #define flecs_table_cache_next(it, T)\
-    (ECS_CAST(T*, flecs_table_cache_next_(it)))
+    (ECS_CONST_CAST(T*, flecs_table_cache_next_(it)))
 
 #endif

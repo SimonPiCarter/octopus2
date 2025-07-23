@@ -211,7 +211,7 @@ static
 bool flecs_expr_oper_valid_for_type(
     ecs_world_t *world,
     ecs_entity_t type,
-    ecs_script_token_kind_t op)
+    ecs_token_kind_t op)
 {
     switch(op) {
     case EcsTokAdd:
@@ -289,7 +289,7 @@ int flecs_expr_type_for_operator(
     ecs_entity_t node_type,
     ecs_expr_node_t *left,
     ecs_expr_node_t *right,
-    ecs_script_token_kind_t operator,
+    ecs_token_kind_t operator,
     ecs_entity_t *operand_type,
     ecs_entity_t *result_type)
 {
@@ -401,12 +401,14 @@ int flecs_expr_type_for_operator(
     const EcsPrimitive *ltype_ptr = ecs_get(world, left->type, EcsPrimitive);
     const EcsPrimitive *rtype_ptr = ecs_get(world, right->type, EcsPrimitive);
     if (!ltype_ptr || !rtype_ptr) {
-        /* Only primitives, bitmask constants and enums are allowed */
-        if (left->type == right->type) {
-            if (ecs_get(world, left->type, EcsBitmask) != NULL) {
-                *operand_type = left->type;
-                goto done;
-            }
+        if (ecs_get(world, left->type, EcsBitmask) != NULL) {
+            *operand_type = ecs_id(ecs_u32_t);
+            goto done;
+        }
+
+        if (ecs_get(world, right->type, EcsBitmask) != NULL) {
+            *operand_type = ecs_id(ecs_u32_t);
+            goto done;
         }
 
         {
@@ -597,7 +599,7 @@ int flecs_expr_interpolated_string_visit_type(
 
             if (ch == '$') {
                 char *var_name = ++ ptr;
-                ptr = ECS_CONST_CAST(char*, flecs_script_identifier(
+                ptr = ECS_CONST_CAST(char*, flecs_tokenizer_identifier(
                     NULL, ptr, NULL));
                 if (!ptr) {
                     goto error;
@@ -619,7 +621,7 @@ int flecs_expr_interpolated_string_visit_type(
             } else {
                 ecs_script_impl_t *impl = flecs_script_impl(script);
 
-                ecs_script_parser_t parser = {
+                ecs_parser_t parser = {
                     .script = impl,
                     .scope = impl->root,
                     .significant_newline = false,
@@ -631,6 +633,8 @@ int flecs_expr_interpolated_string_visit_type(
                 if (!ptr) {
                     goto error;
                 }
+
+                impl->token_remaining = parser.token_cur;
 
                 if (ptr[0] != '}') {
                     flecs_expr_visit_error(script, node,
@@ -969,7 +973,7 @@ int flecs_expr_binary_visit_type(
     {
         char *type_str = ecs_get_path(script->world, result_type);
         flecs_expr_visit_error(script, node, "invalid operator %s for type '%s'",
-            flecs_script_token_str(node->operator), type_str);
+            flecs_token_str(node->operator), type_str);
         ecs_os_free(type_str);
         goto error;
     }
@@ -1044,8 +1048,8 @@ int flecs_expr_identifier_visit_type(
        (type_ptr->kind == EcsEnumType || type_ptr->kind == EcsBitmaskType)) 
     {
         /* If the requested type is an enum or bitmask, use cursor to resolve 
-        * identifier to correct type constant. This lets us type 'Red' in places
-        * where we expect a value of type Color, instead of Color.Red. */
+         * identifier to correct type constant. This lets us type 'Red' in places
+         * where we expect a value of type Color, instead of Color.Red. */
         node->node.type = type;
         if (flecs_expr_constant_identifier_visit_type(script, node)) {
             goto error;
@@ -1056,12 +1060,23 @@ int flecs_expr_identifier_visit_type(
         /* If not, try to resolve the identifier as entity */
         ecs_entity_t e = desc->lookup_action(
             script->world, node->value, desc->lookup_ctx);
-        if (e) {
-            const EcsScriptConstVar *global = ecs_get(
-                script->world, e, EcsScriptConstVar);
+        if (e || !ecs_os_strcmp(node->value, "#0")) {
+            const EcsScriptConstVar *global = NULL;
+            if (e) {
+                global = ecs_get(script->world, e, EcsScriptConstVar);
+            }
             if (!global) {
                 if (!type) {
                     type = ecs_id(ecs_entity_t);
+                } else if (type != ecs_id(ecs_id_t) && 
+                           type != ecs_id(ecs_entity_t)) 
+                {
+                    char *type_str = ecs_get_path(script->world, type);
+                    flecs_expr_visit_error(script, node,
+                        "cannot cast identifier '%s' to %s",
+                        node->value, type_str);
+                    ecs_os_free(type_str);
+                    goto error;
                 }
 
                 ecs_expr_value_node_t *result = flecs_expr_value_from(
@@ -1625,10 +1640,22 @@ int flecs_expr_match_visit_type(
      * because the compare operation executed by the match evaluation code isn't
      * implemented for enums. */
     ecs_entity_t expr_type = node->expr->type;
-    const EcsEnum *ptr = ecs_get(script->world, expr_type, EcsEnum);
-    if (ptr) {
-        node->expr = (ecs_expr_node_t*)
-            flecs_expr_cast(script, node->expr, ptr->underlying_type);
+    {
+        const EcsEnum *ptr = ecs_get(script->world, expr_type, EcsEnum);
+        if (ptr) {
+            node->expr = (ecs_expr_node_t*)
+                flecs_expr_cast(script, node->expr, ptr->underlying_type);
+        }
+    }
+
+    /* Do the same for bitmasks */
+    {
+        const EcsBitmask *ptr = ecs_get(script->world, expr_type, EcsBitmask);
+        if (ptr) {
+            /* For now bitmasks are always u32s */
+            node->expr = (ecs_expr_node_t*)
+                flecs_expr_cast(script, node->expr, ecs_id(ecs_u32_t));
+        }
     }
 
     /* Make sure that case values match the input type */
