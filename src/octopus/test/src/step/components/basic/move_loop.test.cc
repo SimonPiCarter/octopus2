@@ -65,12 +65,12 @@ TEST(move_loop, simple)
 		if(i == 2)
 		{
 			MoveCommand move_l {{10,5}};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {move_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {move_l});
 		}
 		// stream_ent<Position, MoveCommand, CustomCommandQueue>(std::cout, ecs, e1); std::cout<<std::endl;
 		// std::cout<<std::endl;
 	}
 
-	EXPECT_EQ(Fixed(10), e1.get<Position>()->pos.x);
-	EXPECT_EQ(Fixed(5), e1.get<Position>()->pos.y);
+	EXPECT_EQ(Fixed(10), e1.try_get<Position>()->pos.x);
+	EXPECT_EQ(Fixed(5), e1.try_get<Position>()->pos.y);
 }

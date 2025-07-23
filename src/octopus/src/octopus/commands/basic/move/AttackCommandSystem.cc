@@ -5,13 +5,13 @@ namespace octopus
 
 flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p)
 {
-	Team const *team_l = e.get<Team>();
+	Team const *team_l = e.try_get<Team>();
 	// get enemy closest entities
 	std::vector<flecs::entity> new_candidates_l;
 	if(team_l && team_l->team < context_p.trees_team_hp.size())
 	{
 		new_candidates_l = get_closest_entities(1, context_p.trees_team_hp[team_l->team], range_p, context_p, pos_p, [](flecs::entity const &other_p) -> bool {
-			if(other_p.get<HitPoint>() && other_p.get<HitPoint>()->qty > Fixed::Zero())
+			if(other_p.try_get<HitPoint>() && other_p.try_get<HitPoint>()->qty > Fixed::Zero())
 			{
 				return true;
 			}
@@ -22,9 +22,9 @@ flecs::entity get_new_target(flecs::entity const &e, PositionContext const &cont
 	else if(team_l)
 	{
 		new_candidates_l = get_closest_entities(1, 0, range_p, context_p, pos_p, [team_l](flecs::entity const &other_p) -> bool {
-			if(other_p.get<Team>() && other_p.get<HitPoint>() && other_p.get<HitPoint>()->qty > Fixed::Zero())
+			if(other_p.try_get<Team>() && other_p.try_get<HitPoint>() && other_p.try_get<HitPoint>()->qty > Fixed::Zero())
 			{
-				return team_l->team != other_p.get<Team>()->team;
+				return team_l->team != other_p.try_get<Team>()->team;
 			}
 			return false;
 		});

@@ -56,7 +56,7 @@ TEST(input_move, simple)
 	auto flock_manager = ecs.entity("flock_manager")
 							.add<FlockManager>();
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
-	ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->flock_manager = flock_manager;
+	ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->flock_manager = flock_manager;
 
 	auto step_context = makeDefaultStepContext<custom_variant>();
 
@@ -111,7 +111,7 @@ TEST(input_move, simple)
 		if(i == 2)
 		{
 			MoveCommand move_l {{10,5}};
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand({e0, e1, e2}, move_l);
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand({e0, e1, e2}, move_l);
 		}
 
 		revert_test.add_record(ecs);
@@ -124,7 +124,7 @@ TEST(input_move, simple)
 		// std::cout<<std::endl;
 		// stream_ent<FlockManager>(std::cout, ecs, flock_manager);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_y_l.at(i), e2.get<Position>()->pos.y) << expected_y_l.at(i) << " != "<<e2.get<Position>()->pos.y.to_double();
+		EXPECT_EQ(expected_y_l.at(i), e2.try_get<Position>()->pos.y) << expected_y_l.at(i) << " != "<<e2.try_get<Position>()->pos.y.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

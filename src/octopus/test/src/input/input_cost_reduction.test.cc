@@ -55,7 +55,7 @@ struct ProdA : ProductionTemplate<DefaultStepManager>
 	{
     	flecs::query<PlayerInfo> query_player = ecs.query<PlayerInfo>();
 		flecs::entity player = query_player.find([producer_p](PlayerInfo& p) {
-			return p.idx == producer_p.get<PlayerAppartenance>()->idx;
+			return p.idx == producer_p.try_get<PlayerAppartenance>()->idx;
 		});
 		manager_p.get_last_layer().back().template get<ReductionLibraryStep>().add_step(player, {5, "food", "b"});
 	}
@@ -141,20 +141,20 @@ TEST(input_cost_reduction, simple)
 
 		if(i == 1)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 		if(i == 2)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 		if(i == 5)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double() << " at step "<<i;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double() << " at step "<<i;
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

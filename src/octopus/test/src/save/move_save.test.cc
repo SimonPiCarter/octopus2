@@ -54,7 +54,7 @@ void set_up_move_save(WorldContext<DefaultStepManager> &world, StepContext_t &st
 	auto flock_manager = ecs.entity("flock_manager")
 							.add<FlockManager>();
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
-	ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->flock_manager = flock_manager;
+	ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->flock_manager = flock_manager;
 
 	set_up_systems(world, step_context);
 }
@@ -109,7 +109,7 @@ TEST(move_save, simple)
 		if(i == 2)
 		{
 			MoveCommand move_l {{10,5}};
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand({e0, e1, e2}, move_l);
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand({e0, e1, e2}, move_l);
 		}
 
 		if(i == save_point)

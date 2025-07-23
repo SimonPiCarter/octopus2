@@ -49,7 +49,7 @@ TEST(path_finding_cache, basic_query_system)
     ecs.add<PathFindingCache>();
     ecs.set<TimeStatsPtr>(TimeStatsPtr {&stats});
 
-    PathFindingCache * cache = ecs.get_mut<PathFindingCache>();
+    PathFindingCache * cache = ecs.try_get_mut<PathFindingCache>();
 
     TestGrid grid;
     grid.free.resize(grid.nb_tiles, true);
@@ -76,7 +76,7 @@ TEST(path_finding_cache, basic_query_system)
     ecs.progress();
 
     /// query 30,30 -> 50,50 (in coord ths means ~ 7,7 -> 12,12)
-    PathQuery query = ecs.get<PathFindingCache>()->query_path(pos, target);
+    PathQuery query = ecs.try_get<PathFindingCache>()->query_path(pos, target);
 
     EXPECT_FALSE(query.is_valid());
 

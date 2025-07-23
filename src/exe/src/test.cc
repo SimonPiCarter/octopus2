@@ -64,7 +64,7 @@
 //     .each([target](flecs::entity e, Position const& p, Velocity &v, Attacker &a) {
 // 		if(a.target != flecs::entity::null())
 // 		{
-// 			Position const *other = a.target.get<Position>();
+// 			Position const *other = a.target.try_get<Position>();
 // 			v.x = other->x - p.x;
 // 			v.y = other->y - p.y;
 // 		}

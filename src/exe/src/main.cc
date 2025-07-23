@@ -53,7 +53,7 @@
 
 //     if(target.data.target)
 //     {
-//         Position const *target_pos = target.data.target.get<Position>();
+//         Position const *target_pos = target.data.target.try_get<Position>();
 //         if(target_pos)
 //         {
 //             Vector diff = target_pos->vec - p.vec;
@@ -70,7 +70,7 @@
 //             if(timestamp_p == a.data.winddown_timestamp+1)
 //             {
 //                 // deal damage
-//                 HitPoint const *hp_target = target.data.target.get<HitPoint>();
+//                 HitPoint const *hp_target = target.data.target.try_get<HitPoint>();
 // 				step.hitpoints.add_step(e, HitPointStep {-10});
 //             }
 
@@ -125,7 +125,7 @@
 //                 // free grid if necessary
 //                 if(e.has<Position>())
 //                 {
-//                     const Position * pos_l = e.get<Position const>();
+//                     const Position * pos_l = e.try_get<Position const>();
 //                     size_t x = size_t(pos_l->vec.x.to_int());
 //                     size_t y = size_t(pos_l->vec.y.to_int());
 //                     set(grid_l, x, y, flecs::entity());

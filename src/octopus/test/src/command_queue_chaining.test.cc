@@ -106,7 +106,7 @@ TEST(command_queue_chaining, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(2)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(2)});
 		}
 		ecs.progress();
 		res<<"\n";

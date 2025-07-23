@@ -27,8 +27,8 @@ void handle_add_production(
 	StepManager_t &manager
 )
 {
-	if(!input.producer.get<PlayerAppartenance>()
-	|| !input.producer.get<ProductionQueue>())
+	if(!input.producer.try_get<PlayerAppartenance>()
+	|| !input.producer.try_get<ProductionQueue>())
 	{
 		return;
 	}
@@ -37,13 +37,13 @@ void handle_add_production(
 
 	// get player info
 	flecs::entity player = query_player.find([&input](PlayerInfo& p) {
-		return p.idx == input.producer.get<PlayerAppartenance>()->idx;
+		return p.idx == input.producer.try_get<PlayerAppartenance>()->idx;
 	});
 	if(!player.is_valid() || !prod) { return; }
-	PlayerInfo const * player_info = player.get<PlayerInfo>();
-	ResourceStock const * resource_stock = player.get<ResourceStock>();
-	ReductionLibrary const * reductionibrary = player.get<ReductionLibrary>();
-	ResourceSpent * resource_spent = player.get_mut<ResourceSpent>();
+	PlayerInfo const * player_info = player.try_get<PlayerInfo>();
+	ResourceStock const * resource_stock = player.try_get<ResourceStock>();
+	ReductionLibrary const * reductionibrary = player.try_get<ReductionLibrary>();
+	ResourceSpent * resource_spent = player.try_get_mut<ResourceSpent>();
 
 	auto resource_cost = prod->resource_consumption();
 	if(reductionibrary && reductionibrary->reductions.has(prod->name()))
@@ -79,8 +79,8 @@ void handle_cancel_production(
 	StepManager_t &manager
 )
 {
-	ProductionQueue const * prod_queue = input.producer.get<ProductionQueue>();
-	if(!input.producer.get<PlayerAppartenance>()
+	ProductionQueue const * prod_queue = input.producer.try_get<ProductionQueue>();
+	if(!input.producer.try_get<PlayerAppartenance>()
 	|| !prod_queue
 	|| long(input.idx) >= long(prod_queue->queue.size()))
 	{
@@ -89,7 +89,7 @@ void handle_cancel_production(
 
 	// get player info
 	flecs::entity player = query_player.find([&input](PlayerInfo& p) {
-		return p.idx == input.producer.get<PlayerAppartenance>()->idx;
+		return p.idx == input.producer.try_get<PlayerAppartenance>()->idx;
 	});
 	if(!player.is_valid()) { return; }
 

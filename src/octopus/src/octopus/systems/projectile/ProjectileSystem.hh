@@ -24,8 +24,8 @@ void set_up_projectile_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
 			// update position
 			if((get_time_stamp(ecs) + e.id()) % proj_retarget_wait == 0)
 			{
-				HitPoint const * hp = proj.target ? proj.target.get<HitPoint>() : nullptr;
-				Position const * pos = proj.target ? proj.target.get<Position>() : nullptr;
+				HitPoint const * hp = proj.target ? proj.target.try_get<HitPoint>() : nullptr;
+				Position const * pos = proj.target ? proj.target.try_get<Position>() : nullptr;
 				if(proj.target && hp && hp->qty > Fixed::Zero() && pos)
 				{
 					manager_p.get_last_layer().back().template get<ProjectileStep>().add_step(e, ProjectileStep{pos->pos});

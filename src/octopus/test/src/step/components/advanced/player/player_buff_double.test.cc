@@ -168,10 +168,10 @@ TEST(player_buff_double, double)
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(octopus::Fixed(10), e2.get<HitPoint>()->qty) << "10 != "<<e2.get<HitPoint>()->qty.to_double();
-		EXPECT_EQ(octopus::Fixed(10), e3.get<HitPoint>()->qty) << "10 != "<<e3.get<HitPoint>()->qty.to_double();
-		EXPECT_EQ(expected_hp_l.at(i), e4.get<HitPoint>()->qty) << expected_hp_l.at(i) << " != "<<e4.get<HitPoint>()->qty.to_double();
-		EXPECT_EQ(expected_hp_max_l.at(i), e4.get<HitPointMax>()->qty) << expected_hp_max_l.at(i) << " != "<<e4.get<HitPointMax>()->qty.to_double();
+		EXPECT_EQ(octopus::Fixed(10), e2.try_get<HitPoint>()->qty) << "10 != "<<e2.try_get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(octopus::Fixed(10), e3.try_get<HitPoint>()->qty) << "10 != "<<e3.try_get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e4.try_get<HitPoint>()->qty) << expected_hp_l.at(i) << " != "<<e4.try_get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_max_l.at(i), e4.try_get<HitPointMax>()->qty) << expected_hp_max_l.at(i) << " != "<<e4.try_get<HitPointMax>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

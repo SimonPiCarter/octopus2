@@ -126,7 +126,7 @@ TEST(ability_save, save_during_windup)
 		if(i == 2)
 		{
 			CastCommand cast_l {"heal"};
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
 		}
 		if(i == save_point)
 		{
@@ -220,8 +220,8 @@ TEST(ability_save, save_during_reload)
 		if(i == 2)
 		{
 			CastCommand cast_l {"heal"};
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
 		}
 		if(i == save_point)
 		{
@@ -316,8 +316,8 @@ TEST(ability_save, save_during_move)
 		if(i == 2)
 		{
 			CastCommand cast_l {"heal", flecs::entity(), {10,15}};
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
 		}
 		if(i == save_point)
 		{

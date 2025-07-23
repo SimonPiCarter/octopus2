@@ -53,7 +53,7 @@ struct AddComponentStep : BaseComponentStep
 
 	void apply_step(flecs::entity e) override
 	{
-		component_t const * const ptr = e.get<component_t>();
+		component_t const * const ptr = e.try_get<component_t>();
 		was_present = nullptr != ptr;
 		if(was_present)
 		{
@@ -83,7 +83,7 @@ struct RemoveComponentStep : BaseComponentStep
 
 	void apply_step(flecs::entity e) override
 	{
-		component_t const * const ptr = e.get<component_t>();
+		component_t const * const ptr = e.try_get<component_t>();
 		was_present = nullptr != ptr;
 		if(was_present)
 		{

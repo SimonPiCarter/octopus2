@@ -77,14 +77,14 @@ TEST(attack_loop, simple)
 		if(i == 2)
 		{
 			AttackCommand atk_l {{e2}};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 		}
 
 		// stream_ent<Position, Attack, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
 	}
 
-	EXPECT_EQ(Fixed(10), e1.get<Position>()->pos.x) << "10 != "<<e1.get<Position>()->pos.x;
-	EXPECT_EQ(Fixed(7), e1.get<Position>()->pos.y) << "7 != "<<e1.get<Position>()->pos.y;
-	EXPECT_EQ(Fixed(6), e2.get<HitPoint>()->qty) << "6 != "<<e2.get<HitPoint>()->qty;
+	EXPECT_EQ(Fixed(10), e1.try_get<Position>()->pos.x) << "10 != "<<e1.try_get<Position>()->pos.x;
+	EXPECT_EQ(Fixed(7), e1.try_get<Position>()->pos.y) << "7 != "<<e1.try_get<Position>()->pos.y;
+	EXPECT_EQ(Fixed(6), e2.try_get<HitPoint>()->qty) << "6 != "<<e2.try_get<HitPoint>()->qty;
 }

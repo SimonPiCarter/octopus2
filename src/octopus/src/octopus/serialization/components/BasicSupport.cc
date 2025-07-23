@@ -19,6 +19,7 @@
 #include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/systems/input/Input.hh"
+#include "octopus/world/path/PathFindingCache.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/CostReduction.hh"
 #include "octopus/world/resources/ResourceStock.hh"
@@ -35,6 +36,8 @@ namespace octopus
 void basic_components_support(flecs::world& ecs)
 {
 	utils_support(ecs);
+
+    ecs.component<PathFindingCache>();
 
     ecs.component<HitPoint>()
         .member("qty", &HitPoint::qty);

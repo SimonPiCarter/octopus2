@@ -53,10 +53,10 @@ TEST(sandbox, test)
     flecs::query<PlayerId> q = ecs.query<PlayerId>();
 
     flecs::entity e = q.find([production_l](PlayerId& p) {
-        return p.idx == production_l.get<PlayerAppartenance>()->idx;
+        return p.idx == production_l.try_get<PlayerAppartenance>()->idx;
     });
 
-    std::cout<<e.name()<<" : "<<e.get<Stock, Wood>()->quantity<<std::endl;
+    std::cout<<e.name()<<" : "<<e.try_get<Stock, Wood>()->quantity<<std::endl;
 
     flecs::query<Stock> q2 = ecs.query_builder<Stock>()
         .term_at(0).second(flecs::Wildcard)
@@ -69,12 +69,12 @@ TEST(sandbox, test)
     // // When one element of a pair is a component and the other element is a tag,
     // // the pair assumes the type of the component.
     // flecs::entity e1 = ecs.entity().set<Requires, Gigawatts>({1.21});
-    // const Requires *r = e1.get<Requires, Gigawatts>();
+    // const Requires *r = e1.try_get<Requires, Gigawatts>();
     // std::cout << "requires: " << r->amount << std::endl;
 
     // // The component can be either the first or second part of a pair:
     // flecs::entity e2 = ecs.entity().set<Gigawatts, Requires>({1.21});
-    // r = e2.get<Gigawatts, Requires>();
+    // r = e2.try_get<Gigawatts, Requires>();
     // std::cout << "requires: " << r->amount << std::endl;
 
     // // Note that <Requires, Gigawatts> and <Gigawatts, Requires> are two
@@ -83,7 +83,7 @@ TEST(sandbox, test)
     // // If both parts of a pair are components, the pair assumes the type of
     // // the first element:
     // flecs::entity e3 = ecs.entity().set<Expires, Pos>({0.5});
-    // const Expires *e = e3.get<Expires, Pos>();
+    // const Expires *e = e3.try_get<Expires, Pos>();
     // std::cout << "expires: " << e->timeout << std::endl;
 
     // // You can prevent a pair from assuming the type of a component by adding

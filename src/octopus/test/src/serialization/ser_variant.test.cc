@@ -87,7 +87,7 @@ TEST(ser_variant, test)
         .set<Line>({{10, 20}, {30, 40}});
 
     // Convert Line component to flecs expression string
-    const Line *ptr = e.get<Line>();
+    const Line *ptr = e.try_get<Line>();
 
 	variant_support<Line, Sum, Point>(ecs);
 

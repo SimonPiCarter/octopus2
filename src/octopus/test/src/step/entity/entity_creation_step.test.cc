@@ -58,7 +58,7 @@ struct ProdEntity : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 				.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::One(), false});
 
 		};
-		ecs.get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);
+		ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);
 	}
 
     virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
@@ -104,6 +104,6 @@ TEST(entity_creation_step, simple)
 	}
 
 	ASSERT_TRUE(new_ent.is_valid());
-	EXPECT_EQ(Fixed(10), new_ent.get<Position>()->pos.x);
-	EXPECT_EQ(Fixed(5), new_ent.get<Position>()->pos.y);
+	EXPECT_EQ(Fixed(10), new_ent.try_get<Position>()->pos.x);
+	EXPECT_EQ(Fixed(5), new_ent.try_get<Position>()->pos.y);
 }

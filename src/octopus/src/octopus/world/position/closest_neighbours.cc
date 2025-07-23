@@ -33,7 +33,7 @@ std::vector<flecs::entity> get_closest_entities(
 
 
 	std::function<bool(int32_t, flecs::entity)> func_l = [&](int32_t idx_l, flecs::entity e) -> bool {
-		Position const *other_p = e.get<Position>();
+		Position const *other_p = e.try_get<Position>();
 		assert(other_p);
 		Fixed distance_sq = square_length(pos_p.pos - other_p->pos);
 		Fixed max_range_sq = (max_range+other_p->ray)*(max_range+other_p->ray);

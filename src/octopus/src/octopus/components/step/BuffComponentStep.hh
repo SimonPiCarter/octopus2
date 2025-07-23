@@ -22,7 +22,7 @@ struct BuffComponentInitStep : BaseComponentStep
 
 	void apply_step(flecs::entity e) override
 	{
-        BuffComponent<component_t> * val = e.get_mut<BuffComponent<component_t>>();
+        BuffComponent<component_t> * val = e.try_get_mut<BuffComponent<component_t>>();
         if(val)
         {
             init = val->init;
@@ -32,7 +32,7 @@ struct BuffComponentInitStep : BaseComponentStep
 
 	void revert_step(flecs::entity e) override
 	{
-        BuffComponent<component_t> * val = e.get_mut<BuffComponent<component_t>>();
+        BuffComponent<component_t> * val = e.try_get_mut<BuffComponent<component_t>>();
         if(val)
         {
             val->init = init;
@@ -51,7 +51,7 @@ struct AddBuffComponentStep : BaseComponentStep
 
 	void apply_step(flecs::entity e) override
 	{
-		BuffComponent<component_t> const * const ptr = e.get<BuffComponent<component_t>>();
+		BuffComponent<component_t> const * const ptr = e.try_get<BuffComponent<component_t>>();
 		was_present = nullptr != ptr;
 		if(was_present)
 		{

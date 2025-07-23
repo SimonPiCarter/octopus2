@@ -6,9 +6,9 @@ namespace octopus
 FlockHandle register_flock(flecs::entity flock_manager)
 {
 	uint32_t idx = 0;
-	if(flock_manager && flock_manager.get<FlockManager>())
+	if(flock_manager && flock_manager.try_get<FlockManager>())
 	{
-		idx = flock_manager.get_mut<FlockManager>()->register_flock();
+		idx = flock_manager.try_get_mut<FlockManager>()->register_flock();
 	}
 	return {flock_manager, idx};
 }

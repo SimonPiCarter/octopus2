@@ -26,7 +26,7 @@ Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos
 	Fixed force_factor = 500;
 
 	std::function<bool(int32_t, flecs::entity)> func_l = [&](int32_t idx_l, flecs::entity e) -> bool {
-		Position const *pos_l = e.get<Position>();
+		Position const *pos_l = e.try_get<Position>();
 		Logger::getDebug() << "separation_force :: with name=" << e.name()<<" id="<<e.id()<<std::endl;
 		assert(pos_l);
 		if(!pos_l->collision || pos_l->mass == Fixed::Zero() || e.id() == ref_ent.id())

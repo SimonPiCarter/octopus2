@@ -128,14 +128,14 @@ TEST(component_loop, simple)
 		if(i == 2)
 		{
 			CastCommand cast_l {"buff"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		revert_test.add_record(ecs);
 
 		// stream_ent<custom_variant, HitPoint, HpRegenBuff>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

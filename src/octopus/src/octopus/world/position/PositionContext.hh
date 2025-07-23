@@ -17,7 +17,7 @@ namespace octopus
 template<uint16_t team_idx>
 bool check_team(flecs::entity e)
 {
-	Team const *team = e.get<Team>();
+	Team const *team = e.try_get<Team>();
 	return team && team->team != team_idx;
 }
 
@@ -30,8 +30,8 @@ struct PositionContext
 		tree_filters[0] = [] (flecs::entity e) -> bool { return true; };
 
 		// trees_team_hp for quick access
-		tree_filters[1] = [] (flecs::entity e) -> bool { return check_team<0>(e) && e.get<HitPoint>(); };
-		tree_filters[2] = [] (flecs::entity e) -> bool { return check_team<1>(e) && e.get<HitPoint>(); };
+		tree_filters[1] = [] (flecs::entity e) -> bool { return check_team<0>(e) && e.try_get<HitPoint>(); };
+		tree_filters[2] = [] (flecs::entity e) -> bool { return check_team<1>(e) && e.try_get<HitPoint>(); };
 		trees_team_hp[0] = 1;
 		trees_team_hp[1] = 2;
 	}

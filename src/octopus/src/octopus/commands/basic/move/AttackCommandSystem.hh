@@ -117,8 +117,8 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					move_p.target_move = Vector();
 
 					// check if target is valid
-					HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.get<HitPoint>() : nullptr;
-					Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.get<Position>() : nullptr;
+					HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.try_get<HitPoint>() : nullptr;
+					Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.try_get<Position>() : nullptr;
 					if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 					{
 						// override retaget wait in certain case
@@ -155,7 +155,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						{
 							Logger::getDebug() << " moving "<<attackCommand_p.target_pos <<std::endl;
 							flecs::entity flock_entity = attackCommand_p.flock_handle.get();
-							Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
+							Flock const * flock = flock_entity.is_valid() ? flock_entity.try_get<Flock>() : nullptr;
 							// if no move we are done
 							if(!attackCommand_p.move)
 							{
@@ -229,7 +229,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						}
 
 						if(new_target
-						&& in_attack_range(new_target.get<Position>(), pos_p, attack_p))
+						&& in_attack_range(new_target.try_get<Position>(), pos_p, attack_p))
 						{
 							Logger::getDebug() << "   found" <<std::endl;
 							// update target

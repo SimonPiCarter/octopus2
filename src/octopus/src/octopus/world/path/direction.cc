@@ -13,7 +13,7 @@ Vector get_direction(flecs::world &ecs, Position const &pos_p, Vector const &tar
 Vector get_speed_direction(flecs::world &ecs, Position const &pos_p, Vector const &target_p, Fixed const &speed_p)
 {
 	// Query path finding
-	PathFindingCache const * cache = ecs.get<PathFindingCache>();
+	PathFindingCache const * cache = ecs.try_get<PathFindingCache>();
 	// if not found -> direct path
 	Vector dir_l = target_p - pos_p.pos;
 	// if found -> use 'quick' funnel

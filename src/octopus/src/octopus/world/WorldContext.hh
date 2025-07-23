@@ -24,13 +24,13 @@ struct WorldContext
 	}
 	~WorldContext()
 	{
-		if(ecs.get<AbilityTemplateLibrary<StepManager_t>>())
+		if(ecs.try_get<AbilityTemplateLibrary<StepManager_t>>())
 		{
-			ecs.get_mut<AbilityTemplateLibrary<StepManager_t>>()->clean_up();
+			ecs.try_get_mut<AbilityTemplateLibrary<StepManager_t>>()->clean_up();
 		}
-		if(ecs.get<ProductionTemplateLibrary<StepManager_t>>())
+		if(ecs.try_get<ProductionTemplateLibrary<StepManager_t>>())
 		{
-			ecs.get_mut<ProductionTemplateLibrary<StepManager_t>>()->clean_up();
+			ecs.try_get_mut<ProductionTemplateLibrary<StepManager_t>>()->clean_up();
 		}
 	}
 

@@ -106,7 +106,7 @@ TEST(command_queue, simple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(2)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(2)});
 		}
 		ecs.progress();
 		res<<"\n";
@@ -137,8 +137,8 @@ TEST(command_queue, simple_multiple)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(5)});
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(5)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
 		}
 		ecs.progress();
 		res<<"\n";
@@ -169,12 +169,12 @@ TEST(command_queue, simple_multiple_queuing_front)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(4)});
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(4)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
 		}
 		if(i == 3)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {AttackTest(11)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {AttackTest(11)});
 		}
 		ecs.progress();
 		res<<"\n";
@@ -205,12 +205,12 @@ TEST(command_queue, simple_multiple_queuing_back)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(4)});
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(10)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(4)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(10)});
 		}
 		if(i == 3)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
 		}
 		ecs.progress();
 		res<<"\n";
@@ -241,14 +241,14 @@ TEST(command_queue, simple_replaced)
 		res<<" p"<<i;
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(2)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(2)});
 		}
 		if(i == 5)
 		{
 			CommandQueueActionReplace<custom_variant> action_l;
 			action_l._queued.push_back(AttackTest(1));
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionDone());
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(action_l);
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionDone());
 		}
 		ecs.progress();
 		res<<"\n";

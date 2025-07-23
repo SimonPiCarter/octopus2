@@ -118,7 +118,7 @@ TEST(production_loop, simple)
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

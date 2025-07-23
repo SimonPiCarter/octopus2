@@ -42,7 +42,7 @@ void set_up_move_system(flecs::world &ecs, StepManager_t &manager_p, TimeStats &
 			START_TIME(move_command)
 			move_p.target_move = Vector();
 			flecs::entity flock_entity = moveCommand_p.flock_handle.get();
-			Flock const * flock = flock_entity.is_valid() ? flock_entity.get<Flock>() : nullptr;
+			Flock const * flock = flock_entity.is_valid() ? flock_entity.try_get<Flock>() : nullptr;
 			if(move_routine(ecs, e, pos_p, moveCommand_p.target, move_p, flock, nullptr, moveCommand_p.extra_tolerance))
 			{
 				if(flock_entity.is_valid() && flock)

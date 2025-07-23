@@ -21,9 +21,9 @@ bool check_requirements(UpgradeRequirement const &req, PlayerUpgrade const &up)
 bool check_requirements(flecs::entity entity, flecs::world const &ecs, UpgradeRequirement const &requirements)
 {
 	flecs::entity player = get_player_from_appartenance(entity, ecs);
-	if(player.get<PlayerUpgrade>())
+	if(player.try_get<PlayerUpgrade>())
 	{
-		return check_requirements(requirements, *player.get<PlayerUpgrade>());
+		return check_requirements(requirements, *player.try_get<PlayerUpgrade>());
 	}
 	return check_requirements(requirements, PlayerUpgrade());
 }

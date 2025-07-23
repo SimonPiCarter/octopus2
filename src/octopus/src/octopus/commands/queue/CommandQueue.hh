@@ -97,7 +97,7 @@ struct CommandQueue
 	{
 		Logger::getDebug()<<"update_comp : setting comp "<<e.id()<<" "<<type_t::naming()<<std::endl;
 		variant_t old_comp;
-		type_t const * old_typped_value = e.get<type_t>();
+		type_t const * old_typped_value = e.try_get<type_t>();
 		if(old_typped_value)
 		{
 			old_comp = *old_typped_value;
@@ -151,7 +151,7 @@ CommandQueueMemento<variant_t> memento(flecs::entity const &e, CommandQueue<vari
 template<typename queue_t>
 queue_t * get_queue(flecs::entity e, queue_t const &)
 {
-	return e.get_mut<queue_t>();
+	return e.try_get_mut<queue_t>();
 }
 
 template<typename variant_t>

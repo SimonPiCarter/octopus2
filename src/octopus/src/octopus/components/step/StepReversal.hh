@@ -32,9 +32,9 @@ void revert_n_steps(flecs::world &ecs, ThreadPool &pool_p, size_t steps_p,
 	flecs::query<StepEntityManager> query_step_entity_manager_l = ecs.query<StepEntityManager>();
 	size_t entity_steps_reverted = 0;
 
-	if(ecs.get<StepEntityManager>())
+	if(ecs.try_get<StepEntityManager>())
 	{
-		StepEntityManager const &step_entity_manager_p = *ecs.get<StepEntityManager>();
+		StepEntityManager const &step_entity_manager_p = *ecs.try_get<StepEntityManager>();
 		for(auto rit_l = step_entity_manager_p.creation_steps_memento.rbegin() ; entity_steps_reverted < steps_p && rit_l != step_entity_manager_p.creation_steps_memento.rend() ; ++ rit_l)
 		{
 			std::vector<EntityCreationMemento> const &mementos_l = *rit_l;
@@ -138,11 +138,11 @@ void clear_n_steps(flecs::world &ecs, size_t steps_p, StepManager_t &step_manage
 			command_memento_p.lMementos.pop_back();
 	}
 
-	if(ecs.get<StepEntityManager>())
+	if(ecs.try_get<StepEntityManager>())
 	{
 		for(size_t i = 0 ; i < steps_p; ++i)
 		{
-			ecs.get_mut<StepEntityManager>()->pop_last_layer();
+			ecs.try_get_mut<StepEntityManager>()->pop_last_layer();
 		}
 	}
 }

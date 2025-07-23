@@ -59,7 +59,7 @@ void cancel_production(
 template<class StepManager_t>
 void set_up_production_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, TimeStats &time_stats_p)
 {
-	auto &&production_library = ecs.get<ProductionTemplateLibrary<StepManager_t> >();
+	auto &&production_library = ecs.try_get<ProductionTemplateLibrary<StepManager_t> >();
     if(!production_library) { return; }
 
 	// update position tree

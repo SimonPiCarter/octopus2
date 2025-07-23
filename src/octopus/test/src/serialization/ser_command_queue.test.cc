@@ -116,14 +116,14 @@ TEST(ser_command_queue, simple)
 
 		if(i == 1)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(4)});
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {WalkTest(4)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {AttackTest(0)});
 		}
 		if(i == 2)
 		{
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {AttackTest(10)});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddFront<custom_variant> {AttackTest(10)});
 		}
-		values_l.push_back(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
+		values_l.push_back(std::string(ecs.to_json(e1.try_get<CustomCommandQueue>())));
 
 		res<<"\n";
 	}
@@ -132,8 +132,8 @@ TEST(ser_command_queue, simple)
 
 	for(auto rit_l = memento_manager.lMementos.rbegin() ; rit_l != memento_manager.lMementos.rend() ; ++ rit_l)
 	{
-		values_reverted_l.push_front(std::string(ecs.to_json(e1.get<CustomCommandQueue>())));
-		e1.get_mut<CustomCommandQueue>()->_queuedActions.clear();
+		values_reverted_l.push_front(std::string(ecs.to_json(e1.try_get<CustomCommandQueue>())));
+		e1.try_get_mut<CustomCommandQueue>()->_queuedActions.clear();
 		std::vector<CommandQueueMemento<custom_variant> > &mementos_l = *rit_l;
 		for(CommandQueueMemento<custom_variant> const &memento_l : mementos_l)
 		{

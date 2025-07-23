@@ -129,12 +129,12 @@ TEST(input_production, simple)
 
 		if(i == 2)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);
@@ -197,12 +197,12 @@ TEST(input_production, simple_not_enough_resource)
 
 		if(i == 0 || i == 4)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);
@@ -265,16 +265,16 @@ TEST(input_production, simple_cancel)
 
 		if(i == 0 || i == 4)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 		if(i == 1)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->cancelProduction({e1, 0});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->cancelProduction({e1, 0});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);
@@ -337,13 +337,13 @@ TEST(input_production, simple_not_enough_resource_same_input)
 
 		if(i == 0)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

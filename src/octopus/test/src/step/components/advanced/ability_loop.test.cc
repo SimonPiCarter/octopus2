@@ -115,14 +115,14 @@ TEST(ability_loop, simple)
 		if(i == 2)
 		{
 			CastCommand cast_l {"heal"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		revert_test.add_record(ecs);
 
 		// stream_ent<HitPoint, Caster, ResourceStock, CastCommand, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);
@@ -181,20 +181,20 @@ TEST(ability_loop, reload)
 		if(i == 2)
 		{
 			CastCommand cast_l {"heal"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		if(i == 5)
 		{
 			CastCommand cast_l {"heal"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		revert_test.add_record(ecs);
 
 		// stream_ent<HitPoint, Caster, ResourceStock, CastCommand, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);
@@ -253,20 +253,20 @@ TEST(ability_loop, two_casts)
 		if(i == 1)
 		{
 			CastCommand cast_l {"heal"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		if(i == 6)
 		{
 			CastCommand cast_l {"heal"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		revert_test.add_record(ecs);
 
 		// stream_ent<HitPoint, Caster, ResourceStock, CastCommand, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);
@@ -325,20 +325,20 @@ TEST(ability_loop, resource_missing)
 		if(i == 1)
 		{
 			CastCommand cast_l {"heal"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		if(i == 6)
 		{
 			CastCommand cast_l {"heal"};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {cast_l});
 		}
 
 		revert_test.add_record(ecs);
 
 		// stream_ent<HitPoint, Caster, ResourceStock, CastCommand, CustomCommandQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(expected_hp_l.at(i), e1.get<HitPoint>()->qty) << "10 != "<<e1.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

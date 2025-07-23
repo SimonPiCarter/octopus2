@@ -101,7 +101,7 @@ struct ProdUnitTestSimple : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 			ref = e;
 		};
 
-		ecs.get_mut<octopus::StepEntityManager>()->get_last_layer().push_back(step_l);
+		ecs.try_get_mut<octopus::StepEntityManager>()->get_last_layer().push_back(step_l);
 	}
     virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
     virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, StepManager<DEFAULT_STEPS_T> &manager_p) const {}
@@ -177,12 +177,12 @@ TEST(player_buff_simple, simple)
 
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
-		EXPECT_EQ(octopus::Fixed(10), e2.get<HitPoint>()->qty) << "10 != "<<e2.get<HitPoint>()->qty.to_double();
-		EXPECT_EQ(expected_hp_l.at(i), e3.get<HitPoint>()->qty) << expected_hp_l.at(i) << " != "<<e3.get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(octopus::Fixed(10), e2.try_get<HitPoint>()->qty) << "10 != "<<e2.try_get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp_l.at(i), e3.try_get<HitPoint>()->qty) << expected_hp_l.at(i) << " != "<<e3.try_get<HitPoint>()->qty.to_double();
 		if(ProdUnitTestSimple::ref.is_valid())
 		{
-			EXPECT_EQ(expected_hp_l.at(i), ProdUnitTestSimple::ref.get<HitPoint>()->qty)
-				<< expected_hp_l.at(i) <<" != "<<ProdUnitTestSimple::ref.get<HitPoint>()->qty.to_double();
+			EXPECT_EQ(expected_hp_l.at(i), ProdUnitTestSimple::ref.try_get<HitPoint>()->qty)
+				<< expected_hp_l.at(i) <<" != "<<ProdUnitTestSimple::ref.try_get<HitPoint>()->qty.to_double();
 		}
 	}
 

@@ -103,7 +103,7 @@ TEST(production_save, prod_before_save)
 
 		if(i == 2)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 		if(i == save_point)
 		{
@@ -201,7 +201,7 @@ TEST(production_save, prod_after_save)
 
 		if(i == 6)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 		if(i == save_point)
 		{
@@ -243,7 +243,7 @@ TEST(production_save, prod_after_save)
 
 		if(i == 6)
 		{
-			loaded_world.ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
+			loaded_world.ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
 		}
 
 		test.record(loaded_world.ecs);
@@ -302,12 +302,12 @@ TEST(production_save, multiple_prod_after_save)
 
 		if(i == 2)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 		if(i == 6)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 		if(i == save_point)
 		{
@@ -349,7 +349,7 @@ TEST(production_save, multiple_prod_after_save)
 
 		if(i == 6)
 		{
-			loaded_world.ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
+			loaded_world.ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({loaded_world.ecs.entity("e1"), "a"});
 		}
 
 		test.record(loaded_world.ecs);

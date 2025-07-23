@@ -148,7 +148,7 @@ TEST(extended_loop, simple)
 		if(i == 1 || i == 7)
 		{
 			AttackTestComponent atk_l {0,3,5,e2};
-			e1.get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
 		}
 
 		revert_test.add_record(ecs);

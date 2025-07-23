@@ -129,12 +129,12 @@ public:
 		std::lock_guard<std::mutex> lock_l(mutex);
 
 		// declare all flocks into the ecs
-		if(flock_manager && flock_manager.get<FlockManager>())
+		if(flock_manager && flock_manager.try_get<FlockManager>())
 		{
-			flock_manager.get_mut<FlockManager>()->init_flocks(ecs);
+			flock_manager.try_get_mut<FlockManager>()->init_flocks(ecs);
 		}
 
-		ProductionTemplateLibrary<StepManager_t> const *prod_lib = ecs.get<ProductionTemplateLibrary<StepManager_t>>();
+		ProductionTemplateLibrary<StepManager_t> const *prod_lib = ecs.try_get<ProductionTemplateLibrary<StepManager_t>>();
 
 		// Filling command inputs from functors
 		for(InputCommandFunctor<command_variant_t, StepManager_t> const & input : container_command_functor.get_front_layer())
@@ -170,7 +170,7 @@ public:
 		for(InputCommand<command_variant_t> const & input : container_command.get_front_layer())
 		{
 			if(!input.entity.is_valid()) { continue; }
-			auto &&command_queue = input.entity.template get_mut<CommandQueue<command_variant_t>>();
+			auto &&command_queue = input.entity.template try_get_mut<CommandQueue<command_variant_t>>();
 			if(!command_queue) { continue; }
 			auto &&queue_l = command_queue->_queuedActions;
 			if(input.stop)

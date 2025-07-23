@@ -121,15 +121,15 @@ TEST(upgrade_save, prod_before_save)
 
 		if(i == 1)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 		if(i == 2)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
 		}
 		if(i == 5)
 		{
-			ecs.get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "b"});
 		}
 
 		if(i == save_point)
@@ -145,7 +145,7 @@ TEST(upgrade_save, prod_before_save)
 		// std::cout<<std::endl;
 	}
 
-	EXPECT_EQ(Fixed(11), e1.get<HitPoint>()->qty);
+	EXPECT_EQ(Fixed(11), e1.try_get<HitPoint>()->qty);
 	revert_test.revert_and_check_records(world, step_context);
 
 	// load

@@ -39,7 +39,7 @@ namespace octopus {
 template<class StepManager_t, class CommandQueue_t>
 void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 {
-	auto &&ability_library = ecs.get<AbilityTemplateLibrary<StepManager_t> >();
+	auto &&ability_library = ecs.try_get<AbilityTemplateLibrary<StepManager_t> >();
 	if(!ability_library) { return; }
 
 	ecs.system<Position const, CastCommand const, Move, Caster const, ResourceStock const, CommandQueue_t>()
@@ -76,9 +76,9 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 				}
 				if(ability_l->need_entity_target()
 				&& castCommand_p.entity_target
-				&& castCommand_p.entity_target.get<Position>())
+				&& castCommand_p.entity_target.try_get<Position>())
 				{
-					target_pos = castCommand_p.entity_target.get<Position>()->pos;
+					target_pos = castCommand_p.entity_target.try_get<Position>()->pos;
 				}
 				if(square_length(target_pos - pos_p.pos) <= ability_l->range()*ability_l->range())
 				{

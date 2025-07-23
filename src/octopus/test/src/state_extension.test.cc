@@ -18,8 +18,8 @@ TEST(state_extension, simple)
 	};
 
 	flecs::world ecs;
-    ecs.component<State>().add(flecs::Union);
-    ecs.component<StateExtension>().add(flecs::Union);
+    ecs.component<State>().add(flecs::DontFragment).add(flecs::Exclusive);
+    ecs.component<StateExtension>().add(flecs::DontFragment).add(flecs::Exclusive);
 
     ////// Systems //////
 
