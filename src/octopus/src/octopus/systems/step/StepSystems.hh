@@ -14,6 +14,9 @@ namespace octopus
 template<typename StepManager_t, typename StateStepManager_t>
 void set_up_step_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t &manager_p, StateStepManager_t &state_step_container_p, uint32_t step_kept_p=0)
 {
+	// setup one empty layer to avoid error on load
+	manager_p.add_layer(pool.size());
+	state_step_container_p.add_layer();
 	// new layer steps
 	ecs.system<>()
 		.kind(ecs.entity(InitializationPhase))
