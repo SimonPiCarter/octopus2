@@ -106,6 +106,8 @@ Will NOT be disabled during a pause.
 
 ## Moving (MovingPhase)
 
+Will be disabled during a pause.
+
 ### Moves and position
 
 - Collision algorithm
