@@ -88,6 +88,7 @@ void basic_components_support(flecs::world& ecs)
 		.member("idx", &FlockHandle::idx);
 
 	ecs.component<PositionInTree>();
+	ecs.component<ForcePositionInTree>();
 
 	ecs.component<Team>()
 		.member("team", &Team::team);

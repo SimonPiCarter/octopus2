@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "octopus/components/basic/position/Position.hh"
+#include "octopus/components/basic/position/PositionInTree.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/player/Team.hh"
 #include "octopus/components/basic/hitpoint/HitPoint.hh"
@@ -15,10 +16,11 @@ namespace octopus
 {
 
 template<uint16_t team_idx>
-bool check_team(flecs::entity e)
+bool check_team_and_component(flecs::entity e)
 {
+	bool check_component = e.try_get<HitPoint>() || e.try_get<ForcePositionInTree>();
 	Team const *team = e.try_get<Team>();
-	return team && team->team != team_idx;
+	return team && team->team != team_idx && check_component;
 }
 
 struct PositionContext
@@ -30,8 +32,8 @@ struct PositionContext
 		tree_filters[0] = [] (flecs::entity e) -> bool { return true; };
 
 		// trees_team_hp for quick access
-		tree_filters[1] = [] (flecs::entity e) -> bool { return check_team<0>(e) && e.try_get<HitPoint>(); };
-		tree_filters[2] = [] (flecs::entity e) -> bool { return check_team<1>(e) && e.try_get<HitPoint>(); };
+		tree_filters[1] = [] (flecs::entity e) -> bool { return check_team_and_component<0>(e); };
+		tree_filters[2] = [] (flecs::entity e) -> bool { return check_team_and_component<1>(e); };
 		trees_team_hp[0] = 1;
 		trees_team_hp[1] = 2;
 	}
