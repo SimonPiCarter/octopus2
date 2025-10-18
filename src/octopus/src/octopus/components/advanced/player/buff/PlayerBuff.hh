@@ -22,7 +22,7 @@ struct BuffAddComponent
 {
 	void apply(flecs::entity e) const
 	{
-		e.add<ComponentType>();
+		e.set<ComponentType>(placeholder);
 	}
 
 	void revert(flecs::entity e) const
@@ -30,8 +30,8 @@ struct BuffAddComponent
 		e.remove<ComponentType>();
 	}
 
-    /// @brief required for serialization
-    bool placeholder = false;
+    /// @brief component type to be set in the buffed entities
+    ComponentType placeholder;
 };
 
 /// @brief This is an event to be used before saving since all buffs will be reapplied on load

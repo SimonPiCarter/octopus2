@@ -115,7 +115,7 @@ TEST(player_buff_no_component, simple)
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>;
 
 	ecs.component<BuffAddComponent<BuffHp>>()
-		.member<bool>("placeholder");
+		.member<BuffHp>("placeholder");
 
 	/// @warning OnAdd and OnRemove should not be used for this kind of operation (template component of BuffAddComponent)
 	/// because it will produce inconsistent results (OnAdd will be called too many times)
