@@ -56,7 +56,9 @@ void set_up_projectile_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
 		.kind(ecs.entity(EndUpdatePhase))
 		.without<NoInstantDamage>()
 		.each([&manager_p](flecs::entity e, ProjectileTrigger const& trigger, Projectile const &proj) {
-			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-proj.damage});
+			if (trigger.target) {
+				manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-proj.damage});
+			}
 		});
 
 	// destruct projectile
