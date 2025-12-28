@@ -13,7 +13,7 @@ struct PositionInTree {
 	std::array<int32_t, 3> idx_leaf = {-1,-1,-1};
 };
 
-struct ForcePositionInTree {};
+struct ForcePositionInTree { bool decoy = false; };
 
 ///////////////////////////
 /// PositionInTree STEP

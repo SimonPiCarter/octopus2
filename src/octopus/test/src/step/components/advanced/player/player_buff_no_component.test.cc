@@ -49,8 +49,8 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 using CustomStepContext = StepContext<custom_variant, DEFAULT_STEPS_T>;
 using CustomStepManager = CustomStepContext::step;
 
-struct Ranger {};
-struct BuffHp {};
+struct Ranger { bool decoy = false; };
+struct BuffHp { bool decoy = false; };
 
 struct ProdPlayerBuffTestSimple : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 {
@@ -83,7 +83,7 @@ struct ProdUnitTestSimple : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 		step_l.set_up_function = [local_idx](flecs::entity e, flecs::world const &) {
 			e.set_name((std::string("c")+std::to_string(local_idx)).c_str());
 			e.set<PlayerAppartenance>({0})
-				.add<Ranger>()
+				.set<Ranger>(Ranger{})
 				.set<HitPoint>({10});
 			ref = e;
 		};
@@ -114,6 +114,7 @@ TEST(player_buff_no_component, simple)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>;
 
+	ecs.component<BuffHp>();
 	ecs.component<BuffAddComponent<BuffHp>>()
 		.member<BuffHp>("placeholder");
 
@@ -186,7 +187,7 @@ TEST(player_buff_no_component, simple)
 		if(ProdUnitTestSimple::ref.is_valid())
 		{
 			EXPECT_EQ(expected_hp_l.at(i), ProdUnitTestSimple::ref.try_get<HitPoint>()->qty)
-				<< expected_hp_l.at(i) <<" != "<<ProdUnitTestSimple::ref.try_get<HitPoint>()->qty.to_double();
+				<< i << ": " << expected_hp_l.at(i) <<" != "<<ProdUnitTestSimple::ref.try_get<HitPoint>()->qty.to_double();
 		}
 	}
 
