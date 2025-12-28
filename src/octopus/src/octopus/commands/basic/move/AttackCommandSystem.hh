@@ -19,6 +19,8 @@
 #include "octopus/world/position/closest_neighbours.hh"
 #include "octopus/world/position/PositionContext.hh"
 #include "octopus/world/stats/TimeStats.hh"
+#include "octopus/world/step/EntityCreationStep.hh"
+#include "octopus/world/step/StepEntityManager.hh"
 #include "octopus/world/WorldContext.hh"
 
 namespace octopus {
@@ -264,8 +266,31 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 	ecs.system<AttackTrigger const, Attack const>()
 		.kind(ecs.entity(EndUpdatePhase))
 		.without<NoInstantDamage>()
+		.without<BasicProjectileAttack>()
 		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
 			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.cst.damage});
+		});
+
+	ecs.system<Position const, AttackTrigger const, BasicProjectileAttack const, Attack const>()
+		.kind(ecs.entity(EndUpdatePhase))
+		.each([&ecs](flecs::entity e, Position const &pos, AttackTrigger const& trigger, BasicProjectileAttack const &basic_proj, Attack const &attack) {
+			EntityCreationStep step_l;
+			Projectile proj {trigger.target, octopus::Vector(), attack.cst.damage};
+			if(trigger.target && trigger.target.try_get<Position>())
+			{
+				proj.pos_target = trigger.target.try_get<Position>()->pos;
+			}
+
+			step_l.set_up_function = [pos, proj, basic_proj](flecs::entity new_ent, flecs::world const &world_p) {
+				Position position;
+				position.pos = pos.pos;
+				new_ent.set<Position>(position)
+					.set<Projectile>(proj)
+					.set<ProjectileConstants>({basic_proj.speed});
+				basic_proj.setup(new_ent);
+			};
+
+			ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);
 		});
 
 	ecs.system<AttackTrigger const>()

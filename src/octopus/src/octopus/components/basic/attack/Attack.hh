@@ -4,6 +4,8 @@
 #include "octopus/components/step/Step.hh"
 #include "octopus/utils/FixedPoint.hh"
 
+#include <functional>
+
 namespace octopus
 {
 
@@ -15,6 +17,12 @@ struct AttackConstants {
 };
 
 struct NoInstantDamage {};
+
+struct BasicProjectileAttack {
+	Fixed speed;
+	// setup(projectile)
+	std::function<void(flecs::entity)> setup;
+};
 
 struct Attack {
 	AttackConstants cst;
