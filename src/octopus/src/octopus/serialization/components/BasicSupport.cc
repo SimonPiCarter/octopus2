@@ -53,6 +53,7 @@ void basic_components_support(flecs::world& ecs)
         .member("collision", &Position::collision);
 
 	ecs.component<NoInstantDamage>();
+	ecs.component<BasicProjectileAttackTag>();
 
     ecs.component<AttackConstants>()
 		.member("windup_time", &AttackConstants::windup_time)

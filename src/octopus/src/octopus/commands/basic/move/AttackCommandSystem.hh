@@ -266,31 +266,9 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 	ecs.system<AttackTrigger const, Attack const>()
 		.kind(ecs.entity(EndUpdatePhase))
 		.without<NoInstantDamage>()
-		.without<BasicProjectileAttack>()
+		.without<BasicProjectileAttackTag>()
 		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
 			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.cst.damage});
-		});
-
-	ecs.system<Position const, AttackTrigger const, BasicProjectileAttack const, Attack const>()
-		.kind(ecs.entity(EndUpdatePhase))
-		.each([&ecs](flecs::entity e, Position const &pos, AttackTrigger const& trigger, BasicProjectileAttack const &basic_proj, Attack const &attack) {
-			EntityCreationStep step_l;
-			Projectile proj {trigger.target, octopus::Vector(), attack.cst.damage};
-			if(trigger.target && trigger.target.try_get<Position>())
-			{
-				proj.pos_target = trigger.target.try_get<Position>()->pos;
-			}
-
-			step_l.set_up_function = [pos, proj, basic_proj](flecs::entity new_ent, flecs::world const &world_p) {
-				Position position;
-				position.pos = pos.pos;
-				new_ent.set<Position>(position)
-					.set<Projectile>(proj)
-					.set<ProjectileConstants>({basic_proj.speed});
-				basic_proj.setup(new_ent);
-			};
-
-			ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);
 		});
 
 	ecs.system<AttackTrigger const>()
@@ -316,6 +294,42 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 			move_p.target_move = Vector();
 			// set up attack command as not initialized
 			manager_p.get_last_layer().back().template get<AttackCommandInitStep>().add_step(e, {false});
+		});
+}
+
+template<class Projectile_t>
+void set_up_basic_projectile_systems(flecs::world &ecs)
+{
+	ecs.component<BasicProjectileAttack<Projectile_t>>()
+		.member("speed", &BasicProjectileAttack<Projectile_t>::speed)
+	;
+
+	ecs.observer<BasicProjectileAttack<Projectile_t>>()
+		.event(flecs::OnAdd)
+		.each([](flecs::entity e, BasicProjectileAttack<Projectile_t> const &) {
+			e.add<BasicProjectileAttackTag>();
+		});
+
+	ecs.system<Position const, AttackTrigger const, BasicProjectileAttack<Projectile_t> const, Attack const>()
+		.kind(ecs.entity(EndUpdatePhase))
+		.each([&ecs](flecs::entity e, Position const &pos, AttackTrigger const& trigger, BasicProjectileAttack<Projectile_t> const &basic_proj, Attack const &attack) {
+			EntityCreationStep step_l;
+			Projectile proj {trigger.target, octopus::Vector(), attack.cst.damage};
+			if(trigger.target && trigger.target.try_get<Position>())
+			{
+				proj.pos_target = trigger.target.try_get<Position>()->pos;
+			}
+
+			step_l.set_up_function = [pos, proj, basic_proj](flecs::entity new_ent, flecs::world const &world_p) {
+				Position position;
+				position.pos = pos.pos;
+				new_ent.set<Position>(position)
+					.set<Projectile>(proj)
+					.set<ProjectileConstants>({basic_proj.speed})
+					.template add<Projectile_t>();
+			};
+
+			ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);
 		});
 }
 

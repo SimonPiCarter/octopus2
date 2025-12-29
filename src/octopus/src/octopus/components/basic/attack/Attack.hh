@@ -18,10 +18,11 @@ struct AttackConstants {
 
 struct NoInstantDamage {};
 
+struct BasicProjectileAttackTag {};
+
+template<typename T>
 struct BasicProjectileAttack {
 	Fixed speed;
-	// setup(projectile)
-	std::function<void(flecs::entity)> setup;
 };
 
 struct Attack {
