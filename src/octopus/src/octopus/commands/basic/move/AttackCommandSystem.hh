@@ -302,6 +302,7 @@ void set_up_basic_projectile_systems(flecs::world &ecs)
 {
 	ecs.component<BasicProjectileAttack<Projectile_t>>()
 		.member("speed", &BasicProjectileAttack<Projectile_t>::speed)
+		.member("proj_data", &BasicProjectileAttack<Projectile_t>::proj_data)
 	;
 
 	ecs.observer<BasicProjectileAttack<Projectile_t>>()
@@ -319,14 +320,15 @@ void set_up_basic_projectile_systems(flecs::world &ecs)
 			{
 				proj.pos_target = trigger.target.try_get<Position>()->pos;
 			}
-
+			// Todo transfer Projectile_t from emitter to the project
 			step_l.set_up_function = [pos, proj, basic_proj](flecs::entity new_ent, flecs::world const &world_p) {
 				Position position;
 				position.pos = pos.pos;
 				new_ent.set<Position>(position)
 					.set<Projectile>(proj)
 					.set<ProjectileConstants>({basic_proj.speed})
-					.template add<Projectile_t>();
+					.template set<Projectile_t>(basic_proj.proj_data);
+				auto t = new_ent.template get<Projectile_t>();
 			};
 
 			ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);

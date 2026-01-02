@@ -23,6 +23,7 @@ struct BasicProjectileAttackTag {};
 template<typename T>
 struct BasicProjectileAttack {
 	Fixed speed;
+	T proj_data;
 };
 
 struct Attack {
