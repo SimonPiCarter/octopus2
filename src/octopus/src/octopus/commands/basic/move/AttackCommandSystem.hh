@@ -328,7 +328,6 @@ void set_up_basic_projectile_systems(flecs::world &ecs)
 					.set<Projectile>(proj)
 					.set<ProjectileConstants>({basic_proj.speed})
 					.template set<Projectile_t>(basic_proj.proj_data);
-				auto t = new_ent.template get<Projectile_t>();
 			};
 
 			ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);
