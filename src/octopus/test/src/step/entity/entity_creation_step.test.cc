@@ -55,7 +55,8 @@ struct ProdEntity : ProductionTemplate<StepManager<DEFAULT_STEPS_T>>
 			e.set<CustomCommandQueue>(queue_l)
 				.add<Move>()
 				.set<MoveCommand>({{10,10}})
-				.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::One(), false});
+				.set<Collision>({octopus::Fixed::One()})
+				.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), false});
 
 		};
 		ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);
@@ -93,7 +94,8 @@ TEST(entity_creation_step, simple)
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<ProductionQueue>({0, {"a"}})
-		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::One(), false});
+		.set<Collision>({octopus::Fixed::One()})
+		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), false});
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{

@@ -20,15 +20,17 @@ Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed con
 	return force;
 }
 
-Vector separation_force(flecs::entity const &ref_ent, PositionContext const &posContext_p, Position const &pos_ref_p)
+Vector separation_force(flecs::entity const &ref_ent, PositionContext const &posContext_p, Position const &pos_ref_p, Collision const &col_ref_p)
 {
 	Vector force;
 	Fixed force_factor = 500;
 
 	std::function<bool(int32_t, flecs::entity)> func_l = [&](int32_t idx_l, flecs::entity e) -> bool {
 		Position const *pos_l = e.try_get<Position>();
+		Collision const *col_l = e.try_get<Collision>();
 		Logger::getDebug() << "separation_force :: with name=" << e.name()<<" id="<<e.id()<<std::endl;
 		assert(pos_l);
+		assert(col_l);
 		if(!pos_l->collision || pos_l->mass == Fixed::Zero() || e.id() == ref_ent.id())
 		{
 			Logger::getDebug() << "separation_force :: skipped"<<std::endl;
@@ -36,9 +38,9 @@ Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos
 		}
 		Vector diff = pos_ref_p.pos - pos_l->pos;
 		Fixed length_squared = square_length(diff);
-		Fixed ray_squared = (pos_ref_p.ray + pos_l->ray)*(pos_ref_p.ray + pos_l->ray);
-		Logger::getDebug() << "separation_force :: pos_ref_p.ray ="<<pos_ref_p.ray<<std::endl;
-		Logger::getDebug() << "separation_force :: pos_l->ray ="<<pos_l->ray<<std::endl;
+		Fixed ray_squared = (col_ref_p.ray + col_l->ray)*(col_ref_p.ray + col_l->ray);
+		Logger::getDebug() << "separation_force :: col_ref_p.ray ="<<col_ref_p.ray<<std::endl;
+		Logger::getDebug() << "separation_force :: col_l->ray ="<<col_l->ray<<std::endl;
 		Fixed max_range_squared = ray_squared * 2;
 		if(length_squared <= ray_squared && length_squared > 0.001)
 		{
@@ -65,7 +67,7 @@ Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos
 		return true;
 	};
 
-	tree_circle_query(posContext_p.trees[0], pos_ref_p.pos, pos_ref_p.ray*4., func_l);
+	tree_circle_query(posContext_p.trees[0], pos_ref_p.pos, col_ref_p.ray*4., func_l);
 
 	return force;
 }

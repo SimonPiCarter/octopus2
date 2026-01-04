@@ -37,12 +37,12 @@ flecs::entity get_new_target(flecs::entity const &e, PositionContext const &cont
 	return new_candidates_l[0];
 }
 
-bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack const&attack_p)
+bool in_attack_range(Position const * target_pos_p, Collision const * target_col_p, Position const&pos_p, Collision const&col_p, Attack const&attack_p)
 {
-	Fixed range_ray = attack_p.cst.range + pos_p.ray;
+	Fixed range_ray = attack_p.cst.range + col_p.ray;
 	if(target_pos_p)
 	{
-		range_ray += target_pos_p->ray;
+		range_ray += target_col_p->ray;
 	}
 	return target_pos_p
 		&& square_length(pos_p.pos - target_pos_p->pos) <= range_ray*range_ray;

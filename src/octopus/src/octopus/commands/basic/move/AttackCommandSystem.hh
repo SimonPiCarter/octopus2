@@ -27,7 +27,7 @@ namespace octopus {
 
 flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p);
 
-bool in_attack_range(Position const * target_pos_p, Position const&pos_p, Attack const&attack_p);
+bool in_attack_range(Position const * target_pos_p, Collision const * target_col_p, Position const&pos_p, Collision const&col_p, Attack const&attack_p);
 
 bool has_reloaded(uint32_t time_p, Attack const&attack_p);
 
@@ -87,7 +87,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 			}
 		});
 
-	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
+	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t, Collision const>()
 		.kind(ecs.entity(PostUpdatePhase))
 		.multi_threaded()
 		.template write<AttackTrigger>()
@@ -102,6 +102,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 				auto attack = it.field<Attack const>(2);
 				auto move = it.field<Move>(3);
 				auto queue = it.field<CommandQueue_t>(4);
+				auto col = it.field<Collision const>(5);
 
 				size_t thread_idx = it.world().get_stage_id();
 				for(size_t ent_idx = 0; ent_idx < it.count(); ++ ent_idx)
@@ -112,6 +113,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					auto && attack_p = attack[ent_idx];
 					auto && move_p = move[ent_idx];
 					auto && queue_p = queue[ent_idx];
+					auto && col_p = col[ent_idx];
 
 					Logger::getDebug() << "AttackCommand :: = "<<e.name()<<" "<<e.id() <<std::endl;
 
@@ -121,6 +123,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					// check if target is valid
 					HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.try_get<HitPoint>() : nullptr;
 					Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.try_get<Position>() : nullptr;
+					Collision const * target_col = attackCommand_p.target ? attackCommand_p.target.try_get<Collision>() : nullptr;
 					if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
 					{
 						// override retaget wait in certain case
@@ -210,7 +213,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						}
 					}
 					// if not in range we need to move
-					else if(!in_attack_range(target_pos, pos_p, attack_p))
+					else if(!in_attack_range(target_pos, target_col, pos_p, col_p, attack_p))
 					{
 						Logger::getDebug() << " not inrange" <<std::endl;
 						// reset mass if necessary
@@ -231,7 +234,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						}
 
 						if(new_target
-						&& in_attack_range(new_target.try_get<Position>(), pos_p, attack_p))
+						&& in_attack_range(new_target.try_get<Position>(), new_target.try_get<Collision>(), pos_p, col_p, attack_p))
 						{
 							Logger::getDebug() << "   found" <<std::endl;
 							// update target

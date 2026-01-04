@@ -14,11 +14,14 @@ struct StuckInfo {
 	Vector last_pos;
 };
 
+struct Collision {
+	Fixed ray = 0.5;
+};
+
 struct Position {
 	Vector pos;
 	Vector velocity;
 	Fixed mass = Fixed::One();
-	Fixed ray = 0.5;
 	bool collision = true;
 	StuckInfo stuck_info;
 };

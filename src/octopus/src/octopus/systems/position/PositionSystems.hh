@@ -22,29 +22,29 @@ namespace octopus
 
 Vector seek_force(Vector const &direction_p, Vector const &velocity_p, Fixed const &max_speed_p);
 
-Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos_context, Position const &pos_ref_p);
+Vector separation_force(flecs::entity const &ref_ent, PositionContext const &posContext_p, Position const &pos_ref_p, Collision const &col_ref_p);
 
 template<class StepManager_t>
-void add_to_tree(uint32_t idx_tree, flecs::entity e, Position const &pos, StepManager_t &manager, PositionContext &pos_context)
+void add_to_tree(uint32_t idx_tree, flecs::entity e, Position const &pos, Collision const &col, StepManager_t &manager, PositionContext &pos_context)
 {
 	// check if we need to add to trees
 	if(!pos_context.tree_filters[idx_tree](e)) { return; }
 
 	aabb box {pos.pos, pos.pos};
-	box = expand_aabb(box, 2*pos.ray);
+	box = expand_aabb(box, 2*col.ray);
 	int32_t idx_l = add_new_leaf(pos_context.trees[idx_tree], box, e);
 	manager.get_last_layer().back().template get<PositionInTreeStep>().add_step(e, PositionInTreeStep{idx_l, idx_tree});
 }
 
 template<class StepManager_t>
-void update_tree(uint32_t idx_tree, flecs::entity e, Position const &pos, PositionInTree const &pos_in_tree, StepManager_t &manager, PositionContext &pos_context)
+void update_tree(uint32_t idx_tree, flecs::entity e, Position const &pos, Collision const &col, PositionInTree const &pos_in_tree, StepManager_t &manager, PositionContext &pos_context)
 {
 	// check if we need to add to trees
 	if(!pos_context.tree_filters[idx_tree](e)) { return; }
 
 	aabb box {pos.pos, pos.pos};
-	box = expand_aabb(box, pos.ray);
-	update_leaf(pos_context.trees[idx_tree], pos_in_tree.idx_leaf[idx_tree], box, pos.ray);
+	box = expand_aabb(box, col.ray);
+	update_leaf(pos_context.trees[idx_tree], pos_in_tree.idx_leaf[idx_tree], box, col.ray);
 }
 
 template<class StepManager_t>
@@ -53,9 +53,9 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	// Move system
 
 	// update position trees
-	ecs.system<PositionInTree const, Position const>()
+	ecs.system<PositionInTree const, Position const, Collision const>()
 		.kind(ecs.entity(UpdatePhase))
-		.each([&](flecs::entity e, PositionInTree const &pos_in_tree, Position const &pos) {
+		.each([&](flecs::entity e, PositionInTree const &pos_in_tree, Position const &pos, Collision const& col) {
 			Logger::getDebug() << "Positon system :: start name=" << e.name()<<" id="<<e.id()<<std::endl;
 			time_stats_p.moving_entities += 1;
 			START_TIME(tree_update)
@@ -64,7 +64,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 				Logger::getDebug() << "\tnew" << std::endl;
 				for(uint32_t i = 0 ; i < pos_context.trees.size() ; ++i )
 				{
-					add_to_tree(i, e, pos, manager, pos_context);
+					add_to_tree(i, e, pos, col, manager, pos_context);
 				}
 			}
 			else
@@ -72,7 +72,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 				Logger::getDebug() << "\tupdate" << std::endl;
 				for(uint32_t i = 0 ; i < pos_context.trees.size() ; ++i )
 				{
-					update_tree(i, e, pos, pos_in_tree, manager, pos_context);
+					update_tree(i, e, pos, col, pos_in_tree, manager, pos_context);
 				}
 			}
 			END_TIME(tree_update)
@@ -94,10 +94,10 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 	static Fixed max_speed = 100;
 
 	// flocking system
-	ecs.system<Position const, Move>()
+	ecs.system<Position const, Collision const, Move>()
 		.kind(ecs.entity(MovingPhase))
 		.multi_threaded()
-		.each([&](flecs::entity e, Position const &pos_p, Move &move_p) {
+		.each([&](flecs::entity e, Position const &pos_p, Collision const &col_p, Move &move_p) {
 			Logger::getDebug() << "Flocking :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 			START_TIME(position_system)
 
@@ -118,7 +118,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: seeking force = "<<seek_l<<std::endl;
 			f = seek_l;
 			// separation force
-			Vector sep_l = separation_force(e, pos_context, pos_p);
+			Vector sep_l = separation_force(e, pos_context, pos_p, col_p);
 			Logger::getDebug() << "Flocking :: separation force = "<<sep_l<<std::endl;
 			f += sep_l;
 

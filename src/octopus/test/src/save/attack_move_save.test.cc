@@ -61,7 +61,8 @@ void test_attack_move_save(size_t save_point)
 		.add<AttackCommand>()
 		.add<Move>()
 		.set<Team>({1})
-		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false})
+		.set<Collision>({octopus::Fixed::Zero()})
+		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), false})
 		.add<PositionInTree>()
 		.set<Attack>({0, 1, 0, 1, 2, 2});
 
@@ -72,7 +73,8 @@ void test_attack_move_save(size_t save_point)
 		.set<Team>({0})
 		.add<PositionInTree>()
 		.set<HitPoint>({10})
-		.set<Position>({{10,0}, {0,0}, octopus::Fixed::One(), octopus::Fixed::Zero(), false});
+		.set<Collision>({octopus::Fixed::Zero()})
+		.set<Position>({{10,0}, {0,0}, octopus::Fixed::One(), false});
 
 	RevertTester<custom_variant, Position, Attack, AttackCommand, CustomCommandQueue> reference_test({e1, e2});
 	reference_test.add_second_recorder(CustomCommandQueue::state(ecs));

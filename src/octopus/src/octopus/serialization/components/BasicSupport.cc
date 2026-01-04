@@ -45,12 +45,17 @@ void basic_components_support(flecs::world& ecs)
         .member("qty", &HitPointMax::qty);
     ecs.component<Destroyable>()
         .member("timestamp", &Destroyable::timestamp);
+    ecs.component<Collision>()
+		.member("ray", &Collision::ray);
+	ecs.component<StuckInfo>()
+		.member("step_stuck", &StuckInfo::step_stuck)
+		.member("last_pos", &StuckInfo::last_pos);
     ecs.component<Position>()
         .member("pos", &Position::pos)
         .member("velocity", &Position::velocity)
         .member("mass", &Position::mass)
-        .member("ray", &Position::ray)
-        .member("collision", &Position::collision);
+        .member("collision", &Position::collision)
+		.member("stuck_info", &Position::stuck_info);
 
 	ecs.component<NoInstantDamage>();
 	ecs.component<BasicProjectileAttackTag>();
