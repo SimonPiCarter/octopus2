@@ -323,7 +323,6 @@ void set_up_basic_projectile_systems(flecs::world &ecs)
 			{
 				proj.pos_target = trigger.target.try_get<Position>()->pos;
 			}
-			// Todo transfer Projectile_t from emitter to the project
 			step_l.set_up_function = [pos, proj, basic_proj](flecs::entity new_ent, flecs::world const &world_p) {
 				Position position;
 				position.pos = pos.pos;
