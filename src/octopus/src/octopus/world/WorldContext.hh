@@ -22,12 +22,7 @@ struct WorldContext
 	{
 		ecs.set_threads(12);
 	}
-	~WorldContext()
-	{
-		reset();
-	}
-
-	void reset() {
+	~WorldContext() {
 		if(ecs.try_get<AbilityTemplateLibrary<StepManager_t>>())
 		{
 			ecs.try_get_mut<AbilityTemplateLibrary<StepManager_t>>()->clean_up();
@@ -36,7 +31,6 @@ struct WorldContext
 		{
 			ecs.try_get_mut<ProductionTemplateLibrary<StepManager_t>>()->clean_up();
 		}
-		ecs.reset();
 	}
 
 	flecs::world ecs;
