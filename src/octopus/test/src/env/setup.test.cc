@@ -43,6 +43,13 @@ class Environment : public ::testing::Environment {
 			.member<int64_t>("start")
 			.member<int64_t>("duration")
 			.member<bool>("init");
+		ecs.component<ArmorBuff>()
+			.member<octopus::Fixed>("armor");
+		ecs.component<octopus::BuffComponent<ArmorBuff>>()
+			.member<ArmorBuff>("comp")
+			.member<int64_t>("start")
+			.member<int64_t>("duration")
+			.member<bool>("init");
 
 		// set up all command queues in test
 		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>(ecs);

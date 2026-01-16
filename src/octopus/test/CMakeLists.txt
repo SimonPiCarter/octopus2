@@ -45,6 +45,7 @@ target_sources (unit_tests
 	src/step/components/advanced/player/player_buff_simple.test.cc
 	src/step/components/advanced/ability_loop.test.cc
 	src/step/components/advanced/buff_component_loop.test.cc
+	src/step/components/advanced/buff_component_stats_loop.test.cc
 	src/step/components/advanced/component_loop.test.cc
 	src/step/components/advanced/production_loop.test.cc
 	src/step/components/basic/attack_loop.test.cc

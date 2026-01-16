@@ -41,3 +41,7 @@ struct AttackTestComponent {
 struct HpRegenBuff {
 	int32_t regen = 1;
 };
+
+struct ArmorBuff {
+	octopus::Fixed armor = 1;
+};
