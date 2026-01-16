@@ -7,6 +7,7 @@
 
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
+#include "octopus/components/basic/armor/Armor.hh"
 #include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/player/Team.hh"
@@ -271,7 +272,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 		.without<NoInstantDamage>()
 		.without<BasicProjectileAttackTag>()
 		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
-			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-attack_p.cst.damage});
+			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-get_damage_after_armor(trigger.target, attack_p.cst.damage)});
 		});
 
 	ecs.system<AttackTrigger const>()

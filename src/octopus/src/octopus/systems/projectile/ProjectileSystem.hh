@@ -4,6 +4,7 @@
 
 #include "flecs.h"
 
+#include "octopus/components/basic/armor/Armor.hh"
 #include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/position/Position.hh"
 #include "octopus/components/basic/projectile/Projectile.hh"
@@ -57,7 +58,7 @@ void set_up_projectile_systems(flecs::world &ecs, ThreadPool &pool, StepManager_
 		.without<NoInstantDamage>()
 		.each([&manager_p](flecs::entity e, ProjectileTrigger const& trigger, Projectile const &proj) {
 			if (trigger.target) {
-				manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-proj.damage});
+				manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-get_damage_after_armor(trigger.target, proj.damage)});
 			}
 		});
 
