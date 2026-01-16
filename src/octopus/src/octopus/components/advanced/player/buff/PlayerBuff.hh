@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "octopus/components/advanced/debuff/DebuffAll.hh"
+
 namespace octopus
 {
 
@@ -33,9 +35,5 @@ struct BuffAddComponent
     /// @brief component type to be set in the buffed entities
     ComponentType placeholder;
 };
-
-/// @brief This is an event to be used before saving since all buffs will be reapplied on load
-struct DebuffAll
-{};
 
 } // namespace octopus
