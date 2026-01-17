@@ -3,28 +3,49 @@
 namespace octopus
 {
 
-flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p)
+bool health_check_alive(flecs::entity const &other, bool ally)
+{
+	if(!other.try_get<HitPoint>()) {
+		return false;
+	}
+	if(other.try_get<HitPoint>()->qty <= Fixed::Zero())
+	{
+		return false;
+	}
+	// If allies ignore full health entities
+	if(ally && other.try_get<HitPointMax>() && other.try_get<HitPointMax>()->qty <= other.try_get<HitPoint>()->qty)
+	{
+		return false;
+	}
+	return true;
+}
+
+flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p, bool ally)
 {
 	Team const *team_l = e.try_get<Team>();
 	// get enemy closest entities
 	std::vector<flecs::entity> new_candidates_l;
-	if(team_l && team_l->team < context_p.trees_team_hp.size())
+
+	if (!team_l) {
+		return flecs::entity();
+	}
+
+	bool can_use_trees_team = (!ally || context_p.trees_team_hp.size() == 2) && team_l->team < context_p.trees_team_hp.size();
+	if(can_use_trees_team)
 	{
-		new_candidates_l = get_closest_entities(1, context_p.trees_team_hp[team_l->team], range_p, context_p, pos_p, [](flecs::entity const &other_p) -> bool {
-			if(other_p.try_get<HitPoint>() && other_p.try_get<HitPoint>()->qty > Fixed::Zero())
-			{
-				return true;
-			}
-			return false;
+		size_t tree_idx = ally ? context_p.trees_team_hp[(team_l->team+1) % 2] : context_p.trees_team_hp[team_l->team];
+		new_candidates_l = get_closest_entities(1, tree_idx, range_p, context_p, pos_p, [ally](flecs::entity const &other_p) -> bool {
+			return health_check_alive(other_p, ally);
 		});
 	}
-	// if team
-	else if(team_l)
+	else
 	{
-		new_candidates_l = get_closest_entities(1, 0, range_p, context_p, pos_p, [team_l](flecs::entity const &other_p) -> bool {
-			if(other_p.try_get<Team>() && other_p.try_get<HitPoint>() && other_p.try_get<HitPoint>()->qty > Fixed::Zero())
+		new_candidates_l = get_closest_entities(1, 0, range_p, context_p, pos_p, [team_l, ally](flecs::entity const &other_p) -> bool {
+			if(other_p.try_get<Team>() && health_check_alive(other_p, ally))
 			{
-				return team_l->team != other_p.try_get<Team>()->team;
+				bool is_same_team = team_l->team == other_p.try_get<Team>()->team;
+				// if looking for ally we need the team to be the same
+				return is_same_team == ally;
 			}
 			return false;
 		});

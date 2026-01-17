@@ -25,6 +25,9 @@ static Fixed get_armor_value(flecs::entity const &e)
 }
 
 Fixed get_damage_after_armor(flecs::entity const &e, octopus::Fixed damage) {
+	if (damage < Fixed::Zero()) {
+		return damage;
+	}
 	Fixed armor_value = get_armor_value(e);
 	return std::max(Fixed::One(), damage - armor_value);
 }

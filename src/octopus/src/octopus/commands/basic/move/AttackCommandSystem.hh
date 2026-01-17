@@ -26,7 +26,9 @@
 
 namespace octopus {
 
-flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p);
+bool health_check_alive(flecs::entity const &other, bool ally);
+
+flecs::entity get_new_target(flecs::entity const &e, PositionContext const &context_p, Position const&pos_p, octopus::Fixed const &range_p, bool ally);
 
 bool in_attack_range(Position const * target_pos_p, Collision const * target_col_p, Position const&pos_p, Collision const&col_p, Attack const&attack_p);
 
@@ -66,11 +68,11 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					{
 
 						Logger::getDebug() << "  looking for target" <<std::endl;
-						new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.cst.range));
+						new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(11), attack_p.cst.range), attack_p.cst.damage < 0);
 
 						if(new_target)
 						{
-							Logger::getDebug() << "  found" <<std::endl;
+							Logger::getDebug() << "    found " <<new_target.name()<<" "<<new_target.id()<<std::endl;
 							AttackCommand atk_l {new_target, pos_p.pos, true, true};
 							queue_p._queuedActions.push_back(CommandQueueActionAddFront<typename CommandQueue_t::variant> {atk_l});
 						}
@@ -125,7 +127,8 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.try_get<HitPoint>() : nullptr;
 					Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.try_get<Position>() : nullptr;
 					Collision const * target_col = attackCommand_p.target ? attackCommand_p.target.try_get<Collision>() : nullptr;
-					if(!attackCommand_p.target || !hp || hp->qty <= Fixed::Zero() || !target_pos)
+					bool target_done = attackCommand_p.target && !health_check_alive(attackCommand_p.target, attack_p.cst.damage < 0);
+					if(!attackCommand_p.target || !hp || target_done || !target_pos)
 					{
 						// override retaget wait in certain case
 						// - not initialized yet
@@ -137,7 +140,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						{
 							START_TIME(attack_command_new_target)
 
-							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
+							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range), attack_p.cst.damage < 0);
 							Logger::getDebug() << "  re-looking for target " << pos_p.pos<<std::endl;
 
 							if(!new_target)
@@ -181,7 +184,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						}
 						else
 						{
-							Logger::getDebug() << "    found" <<std::endl;
+							Logger::getDebug() << "    found " <<new_target.name()<<" "<<new_target.id()<<std::endl;
 							// update target
 							manager_p.get_last_layer()[thread_idx].template get<AttackCommandStep>().add_step(e, {new_target});
 							// reset windup
@@ -229,7 +232,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 							START_TIME(attack_command_new_target)
 
 							Logger::getDebug() << " re-target greedy" <<std::endl;
-							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range));
+							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range), attack_p.cst.damage < 0);
 
 							END_TIME(attack_command_new_target)
 						}
@@ -237,7 +240,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 						if(new_target
 						&& in_attack_range(new_target.try_get<Position>(), new_target.try_get<Collision>(), pos_p, col_p, attack_p))
 						{
-							Logger::getDebug() << "   found" <<std::endl;
+							Logger::getDebug() << "    found " <<new_target.name()<<" "<<new_target.id()<<std::endl;
 							// update target
 							manager_p.get_last_layer()[thread_idx].template get<AttackCommandStep>().add_step(e, {new_target});
 						}
