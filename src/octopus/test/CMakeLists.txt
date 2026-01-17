@@ -50,6 +50,7 @@ target_sources (unit_tests
 	src/step/components/advanced/component_loop.test.cc
 	src/step/components/advanced/production_loop.test.cc
 	src/step/components/basic/attack_loop.test.cc
+	src/step/components/basic/attack_move_heal_loop.test.cc
 	src/step/components/basic/attack_move_loop.test.cc
 	src/step/components/basic/attack_projectile_loop.test.cc
 	src/step/components/basic/attack_retarget_loop.test.cc
