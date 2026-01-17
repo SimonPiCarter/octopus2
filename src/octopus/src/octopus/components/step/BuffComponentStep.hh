@@ -2,6 +2,7 @@
 
 #include "ComponentStep.hh"
 #include "octopus/components/basic/timestamp/TimeStamp.hh"
+#include "octopus/systems/phases/Phases.hh"
 
 namespace octopus
 {
