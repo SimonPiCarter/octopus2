@@ -114,7 +114,8 @@ TEST(player_buff_no_component, simple)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>;
 
-	ecs.component<BuffHp>();
+	ecs.component<Ranger>().member<bool>("placeholder");
+	ecs.component<BuffHp>().member<bool>("placeholder");
 	ecs.component<BuffAddComponent<BuffHp>>()
 		.member<BuffHp>("placeholder");
 

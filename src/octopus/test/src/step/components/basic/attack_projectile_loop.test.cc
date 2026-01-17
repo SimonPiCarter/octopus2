@@ -57,7 +57,7 @@ TEST(attack_projectile_loop, simple)
 	auto step_context = makeDefaultStepContext<custom_variant>();
 
 	set_up_systems(world, step_context);
-	ecs.component<DummyProj>();
+	ecs.component<DummyProj>().member<bool>("decoy");
 	set_up_basic_projectile_systems<DummyProj>(ecs);
 
 	auto e1 = ecs.entity("e1")
