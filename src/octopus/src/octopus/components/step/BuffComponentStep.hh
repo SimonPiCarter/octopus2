@@ -77,6 +77,12 @@ struct AddBuffComponentStep : BaseComponentStep
 template<typename component_t, class StepManager_t>
 void declare_buff_system(flecs::world &ecs, StepManager_t &manager_p)
 {
+	ecs.component<BuffComponent<component_t>>()
+		.template member<component_t>("comp")
+		.template member<int64_t>("start")
+		.template member<int64_t>("duration")
+		.template member<bool>("init");
+
 	ecs.system<BuffComponent<component_t> const>()
 		.kind(ecs.entity(EndUpdatePhase))
 		.each([&ecs, &manager_p](flecs::entity e, BuffComponent<component_t> const&buff) {

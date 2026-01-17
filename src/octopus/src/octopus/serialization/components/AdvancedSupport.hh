@@ -6,7 +6,7 @@
 #include "octopus/serialization/queue/CommandQueueSupport.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/components/basic/flock/FlockManager.hh"
-#include "octopus/components/advanced/debuff/DebuffAll.hh"
+#include "octopus/components/advanced/buff/DebuffAll.hh"
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/step/StepEntityManager.hh"

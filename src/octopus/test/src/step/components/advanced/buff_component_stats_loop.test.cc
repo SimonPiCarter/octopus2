@@ -10,7 +10,7 @@
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 
-#include "octopus/components/advanced/debuff/DebuffAll.hh"
+#include "octopus/components/advanced/buff/BuffSystem.hh"
 #include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
@@ -50,7 +50,7 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 using CustomStepContext = StepContext<custom_variant, DEFAULT_STEPS_T>;
 using CustomStepManager = CustomStepContext::step;
 
-struct AbilityBuffRegen : AbilityTemplate<CustomStepManager>
+struct AbilityBuffArmor : AbilityTemplate<CustomStepManager>
 {
 	virtual bool check_requirement(flecs::entity caster, flecs::world const &ecs) const { return true; }
 	virtual std::unordered_map<std::string, Fixed> resource_consumption() const {
@@ -72,39 +72,7 @@ struct AbilityBuffRegen : AbilityTemplate<CustomStepManager>
 
 }
 
-template <typename Buff, typename Component, typename Applier, typename Reverter>
-void declare_stats_buff_systems(flecs::world &ecs, Applier apply, Reverter revert, bool add_debuff_all_system = true) {
-	ecs.observer<Buff const, Component>()
-		.event(flecs::OnSet)
-		.each([apply](flecs::entity e, Buff const& buff, Component &comp) {
-			apply(buff, comp);
-		});
-
-	ecs.observer<Buff const, Component>()
-		.event(flecs::OnRemove)
-		.each([revert](flecs::entity e, Buff const& buff, Component &comp) {
-			revert(buff, comp);
-		});
-
-	flecs::query query_units = ecs.query_builder<Buff const, Component>()
-		.build();
-
-	if(add_debuff_all_system)
-	{
-		get_debuff_all_entity(ecs).add<DebuffAll>();
-		ecs.observer<DebuffAll const>()
-			.template event<DebuffAll>()
-			.each([query_units, revert] (flecs::entity, DebuffAll const &) {
-				std::cout<<"debuff all revert"<<std::endl;
-				query_units.each([revert](flecs::entity e, Buff const &buff, Component &comp)
-				{
-					revert(buff, comp);
-				});
-			});
-	}
-}
-
-TEST(buff_component__stats_loop, simple)
+TEST(buff_component_stats_loop, simple)
 {
 	WorldContext<CustomStepContext::step> world;
 	flecs::world &ecs = world.ecs;
@@ -113,9 +81,12 @@ TEST(buff_component__stats_loop, simple)
 	basic_commands_support(ecs);
 	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
 
+	ecs.component<ArmorBuff>()
+		.member("qty", &ArmorBuff::qty);
+
 	auto step_context = CustomStepContext();
 	AbilityTemplateLibrary<CustomStepManager> lib_l;
-	lib_l.add_template(new AbilityBuffRegen());
+	lib_l.add_template(new AbilityBuffArmor());
 	ecs.set(lib_l);
 
 	set_up_systems(world, step_context);
@@ -123,10 +94,10 @@ TEST(buff_component__stats_loop, simple)
 	declare_stats_buff_systems<ArmorBuff, Armor>(
 		ecs,
 		[](ArmorBuff const& buf, Armor &arm) {
-			arm.qty += buf.armor;
+			arm.qty += buf.qty;
 		},
 		[](ArmorBuff const& buf, Armor &arm) {
-			arm.qty -= buf.armor;
+			arm.qty -= buf.qty;
 		}
 	);
 
@@ -167,9 +138,7 @@ TEST(buff_component__stats_loop, simple)
 		octopus::Fixed(3),
 	};
 
-	RevertTester<custom_variant, HitPoint, BuffComponent<HpRegenBuff>, HpRegenBuff> revert_test({e1});
-
-	emit_debuff_all_event(ecs);
+	RevertTester<custom_variant, HitPoint, Armor, BuffComponent<ArmorBuff>, ArmorBuff> revert_test({e1});
 
 	for(size_t i = 0; i < 14 ; ++ i)
 	{
@@ -190,7 +159,7 @@ TEST(buff_component__stats_loop, simple)
 
 		revert_test.add_record(ecs);
 
-		// stream_ent<custom_variant, HitPoint, BuffComponent<HpRegenBuff>, HpRegenBuff>(std::cout, ecs, e1);
+		// stream_ent<custom_variant, HitPoint, BuffComponent<ArmorBuff>, ArmorBuff>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
 		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}

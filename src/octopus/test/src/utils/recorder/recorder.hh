@@ -22,7 +22,7 @@ struct TemplatedRecorder : BaseRecorder
 {
     void record(std::ostream &oss, flecs::world &ecs, flecs::entity e) const final
     {
-        stream_ent<Targs...>(oss, ecs, e);
+        octopus::stream_ent<Targs...>(oss, ecs, e);
     }
 };
 

@@ -34,7 +34,7 @@ struct RevertTester
 			flecs::entity const &e = tracked_entities[i];
 			if(!e.is_alive()) { continue; }
 			std::stringstream ss_l;
-			stream_ent<Ts...>(ss_l, ecs, e);
+			octopus::stream_ent<Ts...>(ss_l, ecs, e);
 			for(flecs::entity const &first_l : tracked_pairs)
 			{
 				stream_second_components(ss_l, e, first_l, variant_t());
@@ -57,7 +57,7 @@ struct RevertTester
 				flecs::entity const &e = tracked_entities[i];
 				if(!e.is_alive()) { continue; }
 				std::stringstream ss_l;
-				stream_ent<Ts...>(ss_l, world.ecs, e);
+				octopus::stream_ent<Ts...>(ss_l, world.ecs, e);
 				for(flecs::entity const &first_l : tracked_pairs)
 				{
 					stream_second_components(ss_l, e, first_l, variant_t());
@@ -86,6 +86,11 @@ struct RevertTester
 		return records == other.records;
 	}
 
+	void add_tracked_entity(flecs::entity e)
+	{
+		tracked_entities.push_back(e);
+		records.push_back(StreamedEntityRecord());
+	}
 	std::vector<StreamedEntityRecord> const &get_records() const { return records; }
 private:
 	std::vector<flecs::entity> tracked_entities;

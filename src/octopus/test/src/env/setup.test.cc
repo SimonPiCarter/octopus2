@@ -44,7 +44,7 @@ class Environment : public ::testing::Environment {
 			.member<int64_t>("duration")
 			.member<bool>("init");
 		ecs.component<ArmorBuff>()
-			.member<octopus::Fixed>("armor");
+			.member("qty", &ArmorBuff::qty);
 		ecs.component<octopus::BuffComponent<ArmorBuff>>()
 			.member<ArmorBuff>("comp")
 			.member<int64_t>("start")

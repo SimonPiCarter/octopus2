@@ -1,6 +1,7 @@
 #include "BasicSupport.hh"
 
 #include "octopus/components/basic/ability/Caster.hh"
+#include "octopus/components/basic/armor/Armor.hh"
 #include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/flock/Flock.hh"
 #include "octopus/components/basic/flock/FlockManager.hh"
@@ -39,6 +40,8 @@ void basic_components_support(flecs::world& ecs)
 
     ecs.component<PathFindingCache>();
 
+    ecs.component<Armor>()
+        .member("qty", &Armor::qty);
     ecs.component<HitPoint>()
         .member("qty", &HitPoint::qty);
     ecs.component<HitPointMax>()

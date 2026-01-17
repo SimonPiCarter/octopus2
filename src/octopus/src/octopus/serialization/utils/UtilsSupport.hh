@@ -33,4 +33,15 @@ void stream_ent(std::ostream &oss, flecs::world &ecs, flecs::entity e)
 	stream_type(oss, ecs, e, Targs()...);
 }
 
+/// @brief Save the world to a json string
+/// @note only serialize entities! (no systems, no modules, no queries, no observers...)
+/// @param ecs
+/// @return
+std::string save_world(flecs::world &ecs);
+/// @brief load world from a json string
+/// @note will emit events such as DebuffAll so that buffs are reapplied correctly
+/// @param ecs
+/// @param json
+void load_world(flecs::world &ecs, std::string const &json);
+
 } // namespace octopus

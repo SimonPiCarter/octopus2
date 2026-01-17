@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "octopus/components/advanced/debuff/DebuffAll.hh"
+#include "octopus/components/advanced/buff/DebuffAll.hh"
 
 namespace octopus
 {

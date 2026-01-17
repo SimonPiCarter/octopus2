@@ -1,5 +1,7 @@
 #pragma once
 
+#include "octopus/serialization/utils/UtilsSupport.hh"
+
 struct StreamedEntityRecord
 {
 	std::list<std::string> records;
@@ -14,32 +16,6 @@ struct StreamedEntityRecord
 		return records == other.records;
 	}
 };
-
-template<typename type_t>
-void stream_type(std::ostream &oss, flecs::world &ecs, flecs::entity e, type_t arg)
-{
-	if(e.try_get<type_t>())
-		oss<<ecs.to_json(e.try_get<type_t>());
-	else
-		oss<<"null";
-}
-
-template<typename type_t, typename... Targs>
-void stream_type(std::ostream &oss, flecs::world &ecs, flecs::entity e, type_t arg, Targs... Fargs)
-{
-	if(e.try_get<type_t>())
-		oss<<ecs.to_json(e.try_get<type_t>())<<", ";
-	else
-		oss<<"null, ";
-	stream_type(oss, ecs, e, Fargs...);
-}
-
-template<typename... Targs>
-void stream_ent(std::ostream &oss, flecs::world &ecs, flecs::entity e)
-{
-	oss<<e.name()<<" : ";
-	stream_type(oss, ecs, e, Targs()...);
-}
 
 template<typename... Ts>
 void stream_second_component(std::ostream &oss, flecs::entity e, flecs::entity first)

@@ -43,5 +43,5 @@ struct HpRegenBuff {
 };
 
 struct ArmorBuff {
-	octopus::Fixed armor = 1;
+	octopus::Fixed qty = 1;
 };
