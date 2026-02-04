@@ -6,7 +6,7 @@
 #include "../../private_api.h"
 
 /* Update trs for cached query that has up fields. If a component got matched on
- * another entity (typically a parent or prefab), that component could have 
+ * another entity (typically a parent or prefab), that component could have
  * moved which would cause the table record in the trs array to become invalid.
  * This function updates the table records array to make sure they're pointing
  * to the right table/column for fields that used up traversal. */
@@ -37,7 +37,7 @@ void flecs_query_update_node_up_trs(
                 if (r->table != node->_tables[f]) {
                     ecs_component_record_t *cr = flecs_components_get(
                         ctx->world, q->ids[f]);
-                    const ecs_table_record_t *tr = node->base.trs[f] = 
+                    const ecs_table_record_t *tr = node->base.trs[f] =
                         flecs_component_get_table(cr, r->table);
                     ecs_assert(tr != NULL, ECS_INTERNAL_ERROR, NULL);
                     ctx->it->trs[field_map ? field_map[f] : f] = tr;
@@ -89,7 +89,7 @@ ecs_query_cache_match_t* flecs_query_cache_next(
     repeat: {
         if (qit->cur >= ecs_vec_count(qit->tables)) {
             /* We're iterating the table vector of the group */
-            if (qit->tables == qit->all_tables) {   
+            if (qit->tables == qit->all_tables) {
                 /* If a group is set, we might have to iterate multiple */
                 ecs_query_cache_group_t *group = qit->group;
                 if (!group || qit->iter_single_group) {
@@ -121,7 +121,7 @@ ecs_query_cache_match_t* flecs_query_cache_next(
         }
 
         /* Get currently iterated cache element */
-        ecs_query_cache_match_t *qm = 
+        ecs_query_cache_match_t *qm =
             ecs_vec_get_t(qit->tables, ecs_query_cache_match_t, qit->cur);
 
         /* Check if table is empty and whether we need to skip it */
@@ -138,7 +138,7 @@ ecs_query_cache_match_t* flecs_query_cache_next(
         }
 
         qit->elem = qm;
-    
+
         /* If there are multiple matches for table iterate those first. */
         if (qm->wildcard_matches) {
             qit->tables = qm->wildcard_matches;
@@ -157,7 +157,7 @@ ecs_query_cache_match_t* flecs_query_cache_next(
 /* Update cached pointers. Cached queries store the column pointers of a matched
  * table which improves cache locality of fetching component pointers while
  * iterating a cache as it avoids having to go through a table record.
- * Component pointers only need to be updated when a table column got 
+ * Component pointers only need to be updated when a table column got
  * reallocated, in which case the table_column_version will have increased. */
 static
 void flecs_query_cache_update_ptrs(
@@ -247,7 +247,7 @@ ecs_query_cache_match_t* flecs_query_test(
     if (!redo) {
         ecs_var_t *var = &ctx->vars[0];
         ecs_table_t *table = var->range.table;
-        ecs_assert(table != NULL, ECS_INVALID_OPERATION, 
+        ecs_assert(table != NULL, ECS_INVALID_OPERATION,
             "the variable set on the iterator is missing a table");
 
         ecs_query_cache_table_t *qt = flecs_query_cache_get_table(
@@ -305,7 +305,7 @@ void flecs_query_cache_init_mapped_fields(
 bool flecs_query_cache_search(
     const ecs_query_run_ctx_t *ctx)
 {
-    ecs_assert(!flecs_query_cache_is_trivial(ctx->query->cache), 
+    ecs_assert(!flecs_query_cache_is_trivial(ctx->query->cache),
         ECS_INTERNAL_ERROR, NULL);
 
     ecs_query_cache_match_t *node = flecs_query_cache_next(ctx, false);
@@ -326,7 +326,7 @@ bool flecs_query_cache_search(
 bool flecs_query_is_cache_search(
     const ecs_query_run_ctx_t *ctx)
 {
-    ecs_assert(!flecs_query_cache_is_trivial(ctx->query->cache), 
+    ecs_assert(!flecs_query_cache_is_trivial(ctx->query->cache),
         ECS_INTERNAL_ERROR, NULL);
 
     ecs_query_cache_match_t *node = flecs_query_cache_next(ctx, false);
@@ -376,7 +376,7 @@ bool flecs_query_is_cache_test(
     const ecs_query_run_ctx_t *ctx,
     bool redo)
 {
-    ecs_assert(!flecs_query_cache_is_trivial(ctx->query->cache), 
+    ecs_assert(!flecs_query_cache_is_trivial(ctx->query->cache),
         ECS_INTERNAL_ERROR, NULL);
 
     ecs_query_cache_match_t *node = flecs_query_test(ctx, redo);
@@ -399,14 +399,14 @@ bool flecs_query_is_trivial_cache_test(
     const ecs_query_run_ctx_t *ctx,
     bool redo)
 {
-    ecs_assert(flecs_query_cache_is_trivial(ctx->query->cache), 
+    ecs_assert(flecs_query_cache_is_trivial(ctx->query->cache),
         ECS_INTERNAL_ERROR, NULL);
 
     ecs_iter_t *it = ctx->it;
     if (!redo) {
         ecs_var_t *var = &ctx->vars[0];
         ecs_table_t *table = var->range.table;
-        ecs_assert(table != NULL, ECS_INVALID_OPERATION, 
+        ecs_assert(table != NULL, ECS_INVALID_OPERATION,
             "the variable set on the iterator is missing a table");
 
         ecs_query_cache_t *cache = ctx->query->cache;
@@ -415,7 +415,7 @@ bool flecs_query_is_trivial_cache_test(
             return false;
         }
 
-        ecs_query_cache_match_t *qm = 
+        ecs_query_cache_match_t *qm =
             flecs_query_cache_match_from_table(cache, qt);
         it->trs = qm->base.trs;
         it->set_fields = qm->base.set_fields;
