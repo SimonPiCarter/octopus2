@@ -304,36 +304,25 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 		});
 }
 
+void set_up_basic_projectile_basis(flecs::world &ecs);
+
 template<class Projectile_t>
-void set_up_basic_projectile_systems(flecs::world &ecs)
-{
-	ecs.component<BasicProjectileAttack<Projectile_t>>()
-		.member("speed", &BasicProjectileAttack<Projectile_t>::speed)
-		.member("proj_data", &BasicProjectileAttack<Projectile_t>::proj_data)
-	;
-
-	ecs.observer<BasicProjectileAttack<Projectile_t>>()
-		.event(flecs::OnAdd)
-		.each([](flecs::entity e, BasicProjectileAttack<Projectile_t> const &) {
-			e.add<BasicProjectileAttackTag>();
-		});
-
-	ecs.system<Position const, AttackTrigger const, BasicProjectileAttack<Projectile_t> const, Attack const>()
+void set_up_basic_projectile_systems(flecs::world &ecs) {
+	ecs.system<Position const, AttackTrigger const, BasicProjectileAttack const, Projectile_t const, Attack const>()
 		.kind(ecs.entity(EndUpdatePhase))
-		.each([&ecs](flecs::entity e, Position const &pos, AttackTrigger const& trigger, BasicProjectileAttack<Projectile_t> const &basic_proj, Attack const &attack) {
+		.each([&ecs](flecs::entity e, Position const &pos, AttackTrigger const& trigger, BasicProjectileAttack const &basic_proj, Projectile_t const &proj_data, Attack const &attack) {
 			EntityCreationStep step_l;
 			Projectile proj {trigger.target, octopus::Vector(), attack.cst.damage};
-			if(trigger.target && trigger.target.try_get<Position>())
-			{
+			if(trigger.target && trigger.target.try_get<Position>()) {
 				proj.pos_target = trigger.target.try_get<Position>()->pos;
 			}
-			step_l.set_up_function = [pos, proj, basic_proj](flecs::entity new_ent, flecs::world const &world_p) {
+			step_l.set_up_function = [pos, proj, basic_proj, proj_data](flecs::entity new_ent, flecs::world const &world_p) {
 				Position position;
 				position.pos = pos.pos;
 				new_ent.set<Position>(position)
 					.set<Projectile>(proj)
 					.set<ProjectileConstants>({basic_proj.speed})
-					.template set<Projectile_t>(basic_proj.proj_data);
+					.template set<Projectile_t>(proj_data);
 			};
 
 			ecs.try_get_mut<StepEntityManager>()->get_last_layer().push_back(step_l);

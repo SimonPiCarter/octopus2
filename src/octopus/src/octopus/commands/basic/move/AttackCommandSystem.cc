@@ -74,4 +74,17 @@ bool has_reloaded(uint32_t time_p, Attack const&attack_p)
 	return int32_t(time_p) >= attack_p.reload + attack_p.cst.reload_time;
 }
 
+void set_up_basic_projectile_basis(flecs::world &ecs)
+{
+	ecs.component<BasicProjectileAttack>()
+		.member("speed", &BasicProjectileAttack::speed)
+	;
+
+	ecs.observer<BasicProjectileAttack>()
+		.event(flecs::OnAdd)
+		.each([](flecs::entity e, BasicProjectileAttack const &) {
+			e.add<BasicProjectileAttackTag>();
+		});
+}
+
 } // octopus
