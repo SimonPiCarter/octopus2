@@ -228,7 +228,7 @@ ecs_query_cache_match_t* flecs_query_trivial_cache_next(
             }
         }
 
-        flecs_query_cache_update_ptrs(it, qm, table);
+        // flecs_query_cache_update_ptrs(it, qm, table);
 
         it->entities = ecs_table_entities(table);
         it->trs = qm->trs;
@@ -343,7 +343,7 @@ bool flecs_query_is_cache_search(
 
     flecs_query_update_node_up_trs(ctx, node);
 
-    flecs_query_cache_update_ptrs(it, &node->base, node->base.table);
+    // flecs_query_cache_update_ptrs(it, &node->base, node->base.table);
 
     return true;
 }
