@@ -125,8 +125,8 @@ public:
 
 	void unstack_input(WorldContext<StepManager_t> &world, StepManager_t &manager_p)
 	{
-		flecs::world &ecs = world.ecs;
 		std::lock_guard<std::mutex> lock_l(mutex);
+		flecs::world &ecs = world.ecs;
 
 		// declare all flocks into the ecs
 		if(flock_manager && flock_manager.try_get<FlockManager>())
@@ -199,6 +199,7 @@ public:
 
 	void stack_input()
 	{
+		std::lock_guard<std::mutex> lock_l(mutex);
 		container.container_add_production.push_layer();
 		container.container_cancel_production.push_layer();
 		container_command.push_layer();
