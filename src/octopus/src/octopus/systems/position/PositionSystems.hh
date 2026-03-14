@@ -124,6 +124,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 
 			if(pos_p.stuck_info.step_stuck > 25)
 			{
+				Logger::getDebug() << "Flocking :: unstuck speed = "<<Vector(-seek_l.y, seek_l.x)<<std::endl;
 				f += Vector(-seek_l.y, seek_l.x);
 			}
 
