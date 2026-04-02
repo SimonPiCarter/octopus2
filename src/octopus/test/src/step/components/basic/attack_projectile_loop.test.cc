@@ -66,7 +66,8 @@ TEST(attack_projectile_loop, simple)
 		.add<Move>()
 		.set<Collision>({octopus::Fixed::Zero()})
 		.set<Position>({{10,8}, {0,0}, octopus::Fixed::One(), false})
-		.set<BasicProjectileAttack<DummyProj>>({1})
+		.set<BasicProjectileAttack>({1})
+		.set<DummyProj>({})
 		.set<Attack>({{1, 1, 2, 2}});
 
 	auto e2 = ecs.entity("e2")
