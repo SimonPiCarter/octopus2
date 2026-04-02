@@ -61,6 +61,7 @@ target_sources (unit_tests
 	src/step/entity/entity_creation_step.test.cc
 	src/triangulation/path_finding_cache.test.cc
 	src/triangulation/projection.test.cc
+	src/triangulation/triangulation.test.cc
 	src/command_queue_chaining.test.cc
 	src/command_queue.test.cc
 	src/sandbox.test.cc

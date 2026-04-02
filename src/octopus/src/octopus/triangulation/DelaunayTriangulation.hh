@@ -1,5 +1,5 @@
-#ifndef __Octopus_Triangulation__
-#define __Octopus_Triangulation__
+#ifndef __Octopus_DelaunayTriangulation__
+#define __Octopus_DelaunayTriangulation__
 
 #include <array>
 #include <cstddef>
@@ -57,10 +57,10 @@ inline Edge makeEdge(PointIdx a, PointIdx b) { return a < b ? Edge{a, b} : Edge{
 /// Bowyer-Watson Delaunay triangulation supporting dynamic insertion and removal.
 /// Uses a super-triangle to bound all points; super-triangle vertices are removed
 /// from the final triangulation queries.
-class Triangulation
+class DelaunayTriangulation
 {
 public:
-    Triangulation();
+    DelaunayTriangulation();
 
     /// Insert a new point. Returns the index of the point.
     PointIdx addPoint(Fixed x, Fixed y);
@@ -105,4 +105,4 @@ private:
 
 } // namespace octopus
 
-#endif // __Octopus_Triangulation__
+#endif // __Octopus_DelaunayTriangulation__

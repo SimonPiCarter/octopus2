@@ -1,4 +1,4 @@
-#include "Triangulation.hh"
+#include "DelaunayTriangulation.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -12,19 +12,20 @@ namespace octopus
 // We pick vertices well outside that range.
 static const Fixed SUPER_SCALE = Fixed(10000);
 
-Triangulation::Triangulation()
+DelaunayTriangulation::DelaunayTriangulation()
 {
     // Super-triangle vertices (not stored in _points)
     _superA = { -SUPER_SCALE * Fixed(3),  -SUPER_SCALE };
     _superB = {  Fixed(0),                 SUPER_SCALE * Fixed(3) };
     _superC = {  SUPER_SCALE * Fixed(3),  -SUPER_SCALE };
 
-    // Initial triangle
-    _triangles.push_back({ { SUPER_A, SUPER_B, SUPER_C } });
+    // Initial triangle — vertices must be in CCW order.
+    // orient2d(A,C,B): (C-A)×(B-A) = 60000*40000 - 0*30000 > 0 ✓
+    _triangles.push_back({ { SUPER_A, SUPER_C, SUPER_B } });
     _cacheDirty = true;
 }
 
-TriPoint const &Triangulation::getPoint(PointIdx idx) const
+TriPoint const &DelaunayTriangulation::getPoint(PointIdx idx) const
 {
     if (idx == SUPER_A) return _superA;
     if (idx == SUPER_B) return _superB;
@@ -32,12 +33,12 @@ TriPoint const &Triangulation::getPoint(PointIdx idx) const
     return _points[idx];
 }
 
-TriPoint const &Triangulation::point(PointIdx idx) const
+TriPoint const &DelaunayTriangulation::point(PointIdx idx) const
 {
     return _points[idx];
 }
 
-Fixed Triangulation::orient2d(TriPoint const &p0, TriPoint const &p1, TriPoint const &p2) const
+Fixed DelaunayTriangulation::orient2d(TriPoint const &p0, TriPoint const &p1, TriPoint const &p2) const
 {
     // (p1 - p0) x (p2 - p0)
     Fixed ax = p1.x - p0.x;
@@ -47,35 +48,37 @@ Fixed Triangulation::orient2d(TriPoint const &p0, TriPoint const &p1, TriPoint c
     return ax * by - ay * bx;
 }
 
-bool Triangulation::inCircumcircle(Triangle const &t, TriPoint const &p) const
+bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p) const
 {
     TriPoint const &a = getPoint(t.v[0]);
     TriPoint const &b = getPoint(t.v[1]);
     TriPoint const &c = getPoint(t.v[2]);
 
-    // Standard in-circumcircle determinant (assumes CCW orientation):
-    // | ax-px  ay-py  (ax-px)^2+(ay-py)^2 |
-    // | bx-px  by-py  (bx-px)^2+(by-py)^2 | > 0
-    // | cx-px  cy-py  (cx-px)^2+(cy-py)^2 |
-    Fixed ax = a.x - p.x;
-    Fixed ay = a.y - p.y;
-    Fixed bx = b.x - p.x;
-    Fixed by = b.y - p.y;
-    Fixed cx = c.x - p.x;
-    Fixed cy = c.y - p.y;
+    // Use raw internal int64 values and promote to __int128 to avoid overflow
+    // (the super-triangle vertices have large coordinates).
+    // If real coordinates are coord.data()/e, then the determinant computed
+    // from raw values equals e^4 * det_real, preserving the sign.
+    typedef __int128 i128;
 
-    Fixed az = ax * ax + ay * ay;
-    Fixed bz = bx * bx + by * by;
-    Fixed cz = cx * cx + cy * cy;
+    i128 ax = a.x.data() - p.x.data();
+    i128 ay = a.y.data() - p.y.data();
+    i128 bx = b.x.data() - p.x.data();
+    i128 by = b.y.data() - p.y.data();
+    i128 cx = c.x.data() - p.x.data();
+    i128 cy = c.y.data() - p.y.data();
 
-    Fixed det = ax * (by * cz - bz * cy)
-              - ay * (bx * cz - bz * cx)
-              + az * (bx * cy - by * cx);
+    i128 az = ax*ax + ay*ay;
+    i128 bz = bx*bx + by*by;
+    i128 cz = cx*cx + cy*cy;
 
-    return det > Fixed(0);
+    i128 det = ax * (by * cz - bz * cy)
+             - ay * (bx * cz - bz * cx)
+             + az * (bx * cy - by * cx);
+
+    return det > 0;
 }
 
-void Triangulation::bowyerWatsonInsert(PointIdx pidx)
+void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
 {
     TriPoint const &p = getPoint(pidx);
 
@@ -125,7 +128,7 @@ void Triangulation::bowyerWatsonInsert(PointIdx pidx)
     markDirty();
 }
 
-PointIdx Triangulation::addPoint(Fixed x, Fixed y)
+PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
 {
     PointIdx idx = _points.size();
     _points.push_back({ x, y });
@@ -143,7 +146,7 @@ static bool touchesSuperVertex(Triangle const &t)
     return isSuperVertex(t.v[0]) || isSuperVertex(t.v[1]) || isSuperVertex(t.v[2]);
 }
 
-void Triangulation::retriangulateHole(std::vector<PointIdx> const &polygon, PointIdx /*removed*/)
+void DelaunayTriangulation::retriangulateHole(std::vector<PointIdx> const &polygon, PointIdx /*removed*/)
 {
     // Fan triangulation from the first vertex of the polygon.
     // For a Delaunay result we run Bowyer-Watson re-insertion on the polygon vertices,
@@ -175,10 +178,10 @@ void Triangulation::retriangulateHole(std::vector<PointIdx> const &polygon, Poin
     }
 }
 
-void Triangulation::removePoint(PointIdx idx)
+void DelaunayTriangulation::removePoint(PointIdx idx)
 {
     if (idx >= _points.size())
-        throw std::out_of_range("Triangulation::removePoint: invalid index");
+        throw std::out_of_range("DelaunayTriangulation::removePoint: invalid index");
 
     // Collect all triangles that contain this point and their surrounding polygon
     std::vector<std::size_t> toRemove;
@@ -249,7 +252,7 @@ void Triangulation::removePoint(PointIdx idx)
     markDirty();
 }
 
-std::vector<Triangle> const &Triangulation::triangles() const
+std::vector<Triangle> const &DelaunayTriangulation::triangles() const
 {
     if (_cacheDirty)
     {
