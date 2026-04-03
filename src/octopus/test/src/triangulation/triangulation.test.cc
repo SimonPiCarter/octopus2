@@ -204,7 +204,7 @@ TEST(triangulation_add, insert_point_bug)
     expectAllCCW(tri);
     expectDelaunay(tri);
 
-    tri.addPoint(Fixed(485), Fixed(223));
+    tri.addPoint(Fixed(505), Fixed(221));
 
     EXPECT_EQ(4u, tri.triangles().size());
     expectAllCCW(tri);
