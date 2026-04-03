@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cassert>
 #include <queue>
-#include <stdexcept>
 #include <unordered_map>
 
 namespace octopus
@@ -248,16 +247,12 @@ void DelaunayTriangulation::retriangulateHole(std::vector<PointIdx> const &polyg
 
 void DelaunayTriangulation::removePoint(PointIdx idx)
 {
-    if (idx >= _points.size())
-        throw std::out_of_range("DelaunayTriangulation::removePoint: invalid index");
+    assert(idx < _points.size() && "DelaunayTriangulation::removePoint: invalid index");
 
-    // Refuse to remove a point that is an endpoint of a constrained edge.
+    // Assert that the point is not part of any constrained edge.
     for (Edge const &e : _constrainedEdges)
-    {
-        if (e.a == idx || e.b == idx)
-            throw std::logic_error(
-                "DelaunayTriangulation::removePoint: point participates in a constrained edge");
-    }
+        assert(e.a != idx && e.b != idx &&
+               "DelaunayTriangulation::removePoint: point participates in a constrained edge");
 
     // Collect all triangles that contain this point and their surrounding polygon
     std::vector<std::size_t> toRemove;
@@ -513,8 +508,8 @@ void DelaunayTriangulation::retriangulatePolygon(std::vector<PointIdx> const &po
 
 void DelaunayTriangulation::addConstrainedEdge(PointIdx a, PointIdx b)
 {
-    if (a >= _points.size() || b >= _points.size())
-        throw std::out_of_range("DelaunayTriangulation::addConstrainedEdge: invalid point index");
+    assert(a < _points.size() && b < _points.size() &&
+           "DelaunayTriangulation::addConstrainedEdge: invalid point index");
     if (a == b)
         return;
 

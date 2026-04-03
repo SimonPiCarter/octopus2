@@ -4,6 +4,7 @@
 
 ## Code Style
 - Infer code style from existing code
+- **No exceptions**: the codebase must build with `-fno-exceptions`. Use `assert()` for programmer errors instead of `throw`.
 
 ## Workflow
 - Always run tests before tyding up code

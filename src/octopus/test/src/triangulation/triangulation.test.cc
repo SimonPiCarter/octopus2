@@ -400,7 +400,7 @@ TEST(constrained_edge, force_crossing_edge_present_after_add)
     expectAllCCW(tri);
 }
 
-TEST(constrained_edge, remove_point_with_constraint_throws)
+TEST(constrained_edge, remove_point_with_constraint_asserts)
 {
     DelaunayTriangulation tri;
     PointIdx a = tri.addPoint(Fixed(0), Fixed(0));
@@ -408,8 +408,8 @@ TEST(constrained_edge, remove_point_with_constraint_throws)
     tri.addPoint(Fixed(2), Fixed(3));
 
     tri.addConstrainedEdge(a, b);
-    EXPECT_THROW(tri.removePoint(a), std::logic_error);
-    EXPECT_THROW(tri.removePoint(b), std::logic_error);
+    EXPECT_DEBUG_DEATH(tri.removePoint(a), "");
+    EXPECT_DEBUG_DEATH(tri.removePoint(b), "");
 }
 
 // ─── hole tests ───────────────────────────────────────────────────────────────

@@ -68,7 +68,7 @@ public:
     PointIdx addPoint(Fixed x, Fixed y);
 
     /// Remove a point by index. The point must have been previously inserted
-    /// and must not participate in any constrained edge.
+    /// and must not participate in any constrained edge (both conditions are asserted).
     void removePoint(PointIdx idx);
 
     /// Access user-visible triangles (those not touching base vertices and not inside holes).
