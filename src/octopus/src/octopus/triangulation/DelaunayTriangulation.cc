@@ -10,28 +10,22 @@ namespace octopus
 
 DelaunayTriangulation::DelaunayTriangulation()
 {
-    // Bounding-box corners — outside the valid user-point range [-1000, 1000].
-    // All user points' circumcircle tests will correctly include these triangles.
-    static const Fixed B = Fixed(1001);
-    _baseBL = { -B, -B };
-    _baseBR = {  B, -B };
-    _baseTR = {  B,  B };
-    _baseTL = { -B,  B };
+    // Super-triangle vertices — large enough to contain all user points in [-1000, 1000]².
+    // Verified CCW; circumcircle contains the entire user-coordinate range.
+    _baseA = { -4000LL, -2000LL };
+    _baseB = {  4000LL, -2000LL };
+    _baseC = {     0LL,  4000LL };
 
-    // Two CCW triangles covering the bounding square (split along BL→TR diagonal):
-    //   T1: BL, BR, TR  (right-angle at BR, CCW ✓)
-    //   T2: BL, TR, TL  (right-angle at TL, CCW ✓)
-    _triangles.push_back({ { BASE_BL, BASE_BR, BASE_TR } });
-    _triangles.push_back({ { BASE_BL, BASE_TR, BASE_TL } });
+    // Single CCW super-triangle bootstrapping the triangulation
+    _triangles.push_back({ { BASE_A, BASE_B, BASE_C } });
     _cacheDirty = true;
 }
 
 TriPoint const &DelaunayTriangulation::getPoint(PointIdx idx) const
 {
-    if (idx == BASE_BL) return _baseBL;
-    if (idx == BASE_BR) return _baseBR;
-    if (idx == BASE_TR) return _baseTR;
-    if (idx == BASE_TL) return _baseTL;
+    if (idx == BASE_A) return _baseA;
+    if (idx == BASE_B) return _baseB;
+    if (idx == BASE_C) return _baseC;
     return _points[idx];
 }
 
@@ -40,26 +34,26 @@ TriPoint const &DelaunayTriangulation::point(PointIdx idx) const
     return _points[idx];
 }
 
-Fixed DelaunayTriangulation::orient2d(TriPoint const &p0, TriPoint const &p1, TriPoint const &p2) const
+long long DelaunayTriangulation::orient2d(TriPoint const &p0, TriPoint const &p1, TriPoint const &p2) const
 {
     // (p1 - p0) x (p2 - p0)
-    Fixed ax = p1.x - p0.x;
-    Fixed ay = p1.y - p0.y;
-    Fixed bx = p2.x - p0.x;
-    Fixed by = p2.y - p0.y;
+    long long ax = p1.x - p0.x;
+    long long ay = p1.y - p0.y;
+    long long bx = p2.x - p0.x;
+    long long by = p2.y - p0.y;
     return ax * by - ay * bx;
 }
 
 bool DelaunayTriangulation::segmentsIntersect(TriPoint const &p1, TriPoint const &p2,
                                                TriPoint const &p3, TriPoint const &p4) const
 {
-    Fixed d1 = orient2d(p3, p4, p1);
-    Fixed d2 = orient2d(p3, p4, p2);
-    Fixed d3 = orient2d(p1, p2, p3);
-    Fixed d4 = orient2d(p1, p2, p4);
+    long long d1 = orient2d(p3, p4, p1);
+    long long d2 = orient2d(p3, p4, p2);
+    long long d3 = orient2d(p1, p2, p3);
+    long long d4 = orient2d(p1, p2, p4);
 
-    if (((d1 > Fixed(0) && d2 < Fixed(0)) || (d1 < Fixed(0) && d2 > Fixed(0))) &&
-        ((d3 > Fixed(0) && d4 < Fixed(0)) || (d3 < Fixed(0) && d4 > Fixed(0))))
+    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+        ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0)))
         return true;
 
     return false;
@@ -71,25 +65,23 @@ bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p)
     TriPoint const &b = getPoint(t.v[1]);
     TriPoint const &c = getPoint(t.v[2]);
 
-    // Use integer real-value coordinates (via to_int()) to avoid overflow.
-    // With bounding vertices at ±1001 the max coordinate difference is 2002,
-    // and the 4th-degree determinant stays well within int64_t range (~1.93×10¹⁴).
-    typedef int64_t i64;
+    // Fields are already long long; with bounding vertices at ±1001 the max
+    // coordinate difference is 2002, and the 4th-degree determinant stays well
+    // within int64_t range (~3.2×10¹³).
+    long long ax = a.x - p.x;
+    long long ay = a.y - p.y;
+    long long bx = b.x - p.x;
+    long long by = b.y - p.y;
+    long long cx = c.x - p.x;
+    long long cy = c.y - p.y;
 
-    i64 ax = (i64)a.x.to_int() - (i64)p.x.to_int();
-    i64 ay = (i64)a.y.to_int() - (i64)p.y.to_int();
-    i64 bx = (i64)b.x.to_int() - (i64)p.x.to_int();
-    i64 by = (i64)b.y.to_int() - (i64)p.y.to_int();
-    i64 cx = (i64)c.x.to_int() - (i64)p.x.to_int();
-    i64 cy = (i64)c.y.to_int() - (i64)p.y.to_int();
+    long long az = ax*ax + ay*ay;
+    long long bz = bx*bx + by*by;
+    long long cz = cx*cx + cy*cy;
 
-    i64 az = ax*ax + ay*ay;
-    i64 bz = bx*bx + by*by;
-    i64 cz = cx*cx + cy*cy;
-
-    i64 det = ax * (by * cz - bz * cy)
-            - ay * (bx * cz - bz * cx)
-            + az * (bx * cy - by * cx);
+    long long det = ax * (by * cz - bz * cy)
+                  - ay * (bx * cz - bz * cx)
+                  + az * (bx * cy - by * cx);
 
     return det > 0;
 }
@@ -191,8 +183,8 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
             // Ensure the new triangle is CCW
             TriPoint const &ea = getPoint(edge.a);
             TriPoint const &eb = getPoint(edge.b);
-            Fixed o = orient2d(ea, eb, p);
-            if (o > Fixed(0))
+            long long o = orient2d(ea, eb, p);
+            if (o > 0)
                 _triangles.push_back({ { edge.a, edge.b, pidx } });
             else
                 _triangles.push_back({ { edge.b, edge.a, pidx } });
@@ -205,14 +197,14 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
 PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
 {
     PointIdx idx = _points.size();
-    _points.push_back({ x, y });
+    _points.push_back({ x.to_int(), y.to_int() });
     bowyerWatsonInsert(idx);
     return idx;
 }
 
 static bool isBaseVertex(PointIdx idx)
 {
-    return idx == BASE_BL || idx == BASE_BR || idx == BASE_TR || idx == BASE_TL;
+    return idx == BASE_A || idx == BASE_B || idx == BASE_C;
 }
 
 static bool touchesBaseVertex(Triangle const &t)
@@ -236,10 +228,10 @@ void DelaunayTriangulation::retriangulateHole(std::vector<PointIdx> const &polyg
         TriPoint const &pb_ = getPoint(pb);
         TriPoint const &pc_ = getPoint(pc);
 
-        Fixed o = orient2d(pa_, pb_, pc_);
-        if (o > Fixed(0))
+        long long o = orient2d(pa_, pb_, pc_);
+        if (o > 0)
             _triangles.push_back({ { anchor, pb, pc } });
-        else if (o < Fixed(0))
+        else if (o < 0)
             _triangles.push_back({ { anchor, pc, pb } });
         // if o == 0, collinear — skip degenerate triangle
     }
@@ -379,11 +371,11 @@ void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
                 TriPoint const &pNext = getPoint(vNext);
                 TriPoint const &pPrev = getPoint(vPrev);
 
-                Fixed oNext = orient2d(pa, pb, pNext);
-                Fixed oPrev = orient2d(pa, pb, pPrev);
+                long long oNext = orient2d(pa, pb, pNext);
+                long long oPrev = orient2d(pa, pb, pPrev);
 
                 // b is inside the sector if pNext is to the right (or on) and pPrev is to the left (or on)
-                if (oNext <= Fixed(0) && oPrev >= Fixed(0))
+                if (oNext <= 0 && oPrev >= 0)
                 {
                     current = i;
                     break;
@@ -418,9 +410,9 @@ void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
             {
                 PointIdx v = t.v[k];
                 if (v == a || v == b) continue;
-                Fixed o = orient2d(pa, pb, getPoint(v));
-                if (o > Fixed(0)) leftPoly.push_back(v);
-                else if (o < Fixed(0)) rightPoly.push_back(v);
+                long long o = orient2d(pa, pb, getPoint(v));
+                if (o > 0) leftPoly.push_back(v);
+                else if (o < 0) rightPoly.push_back(v);
             }
             crossingTriangles.push_back(current);
             break;
@@ -442,12 +434,12 @@ void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
             if (segmentsIntersect(pa, pb, ea, eb))
             {
                 // Classify va and vb to left/right of (a,b)
-                Fixed oa = orient2d(pa, pb, ea);
-                Fixed ob2 = orient2d(pa, pb, eb);
-                if (oa > Fixed(0)) leftPoly.push_back(va);
-                else if (oa < Fixed(0)) rightPoly.push_back(va);
-                if (ob2 > Fixed(0)) leftPoly.push_back(vb);
-                else if (ob2 < Fixed(0)) rightPoly.push_back(vb);
+                long long oa = orient2d(pa, pb, ea);
+                long long ob2 = orient2d(pa, pb, eb);
+                if (oa > 0) leftPoly.push_back(va);
+                else if (oa < 0) rightPoly.push_back(va);
+                if (ob2 > 0) leftPoly.push_back(vb);
+                else if (ob2 < 0) rightPoly.push_back(vb);
 
                 // Find the neighbouring triangle across this edge
                 Edge crossedEdge = makeEdge(va, vb);
@@ -499,10 +491,10 @@ void DelaunayTriangulation::retriangulatePolygon(std::vector<PointIdx> const &po
         TriPoint const &pb_ = getPoint(pb);
         TriPoint const &pc_ = getPoint(pc);
 
-        Fixed o = orient2d(pa_, pb_, pc_);
-        if (o > Fixed(0))
+        long long o = orient2d(pa_, pb_, pc_);
+        if (o > 0)
             _triangles.push_back({ { edgeA, pb, pc } });
-        else if (o < Fixed(0))
+        else if (o < 0)
             _triangles.push_back({ { edgeA, pc, pb } });
     }
 }
@@ -599,7 +591,7 @@ void DelaunayTriangulation::markHole(std::vector<PointIdx> const &polygon)
             {
                 if (vb.y > pt.y)
                 {
-                    if (orient2d(va, vb, pt) > Fixed(0))
+                    if (orient2d(va, vb, pt) > 0)
                         ++winding;
                 }
             }
@@ -607,7 +599,7 @@ void DelaunayTriangulation::markHole(std::vector<PointIdx> const &polygon)
             {
                 if (vb.y <= pt.y)
                 {
-                    if (orient2d(va, vb, pt) < Fixed(0))
+                    if (orient2d(va, vb, pt) < 0)
                         --winding;
                 }
             }
@@ -625,8 +617,8 @@ void DelaunayTriangulation::markHole(std::vector<PointIdx> const &polygon)
         TriPoint const &tc = getPoint(t.v[2]);
         // Centroid
         TriPoint centroid{
-            (ta.x + tb.x + tc.x) / Fixed(3),
-            (ta.y + tb.y + tc.y) / Fixed(3)
+            (ta.x + tb.x + tc.x) / 3,
+            (ta.y + tb.y + tc.y) / 3
         };
         if (pointInPolygon(centroid))
         {

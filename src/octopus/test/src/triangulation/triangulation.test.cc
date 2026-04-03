@@ -10,9 +10,9 @@ using octopus::PointIdx;
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 /// Cross product of (b-a) × (c-a). Positive ⟹ CCW.
-static Fixed orient2d(octopus::TriPoint const &a,
-                      octopus::TriPoint const &b,
-                      octopus::TriPoint const &c)
+static long long orient2d(octopus::TriPoint const &a,
+                          octopus::TriPoint const &b,
+                          octopus::TriPoint const &c)
 {
     return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
@@ -23,14 +23,14 @@ static bool inCircumcircle(octopus::TriPoint const &a,
                            octopus::TriPoint const &c,
                            octopus::TriPoint const &p)
 {
-    Fixed ax = a.x - p.x, ay = a.y - p.y;
-    Fixed bx = b.x - p.x, by = b.y - p.y;
-    Fixed cx = c.x - p.x, cy = c.y - p.y;
-    Fixed az = ax*ax + ay*ay;
-    Fixed bz = bx*bx + by*by;
-    Fixed cz = cx*cx + cy*cy;
-    Fixed det = ax*(by*cz - bz*cy) - ay*(bx*cz - bz*cx) + az*(bx*cy - by*cx);
-    return det > Fixed(0);
+    long long ax = a.x - p.x, ay = a.y - p.y;
+    long long bx = b.x - p.x, by = b.y - p.y;
+    long long cx = c.x - p.x, cy = c.y - p.y;
+    long long az = ax*ax + ay*ay;
+    long long bz = bx*bx + by*by;
+    long long cz = cx*cx + cy*cy;
+    long long det = ax*(by*cz - bz*cy) - ay*(bx*cz - bz*cx) + az*(bx*cy - by*cx);
+    return det > 0;
 }
 
 /// Verify every visible triangle is CCW and non-degenerate.
@@ -41,7 +41,7 @@ static void expectAllCCW(DelaunayTriangulation const &tri)
         octopus::TriPoint const &a = tri.point(t.v[0]);
         octopus::TriPoint const &b = tri.point(t.v[1]);
         octopus::TriPoint const &c = tri.point(t.v[2]);
-        EXPECT_GT(orient2d(a, b, c), Fixed(0))
+        EXPECT_GT(orient2d(a, b, c), 0LL)
             << "Triangle is not CCW / is degenerate";
     }
 }
@@ -174,8 +174,8 @@ TEST(triangulation_add, point_coordinates_accessible)
 {
     DelaunayTriangulation tri;
     PointIdx idx = tri.addPoint(Fixed(7), Fixed(3));
-    EXPECT_EQ(Fixed(7), tri.point(idx).x);
-    EXPECT_EQ(Fixed(3), tri.point(idx).y);
+    EXPECT_EQ(7LL, tri.point(idx).x);
+    EXPECT_EQ(3LL, tri.point(idx).y);
 }
 
 TEST(triangulation_add, insert_point_inside_existing_triangle_ccw_delaunay)
@@ -188,6 +188,25 @@ TEST(triangulation_add, insert_point_inside_existing_triangle_ccw_delaunay)
     tri.addPoint(Fixed(5),  Fixed(3));
 
     EXPECT_EQ(3u, tri.triangles().size());
+    expectAllCCW(tri);
+    expectDelaunay(tri);
+}
+
+TEST(triangulation_add, insert_point_bug)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(10), Fixed(10));
+    tri.addPoint(Fixed(510), Fixed(10));
+    tri.addPoint(Fixed(510), Fixed(510));
+    tri.addPoint(Fixed(10), Fixed(510));
+
+    EXPECT_EQ(2u, tri.triangles().size());
+    expectAllCCW(tri);
+    expectDelaunay(tri);
+
+    tri.addPoint(Fixed(485), Fixed(223));
+
+    EXPECT_EQ(4u, tri.triangles().size());
     expectAllCCW(tri);
     expectDelaunay(tri);
 }

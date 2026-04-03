@@ -14,8 +14,8 @@ namespace octopus
 
 struct TriPoint
 {
-    Fixed x;
-    Fixed y;
+    long long x;
+    long long y;
 
     bool operator==(TriPoint const &o) const { return x == o.x && y == o.y; }
     bool operator!=(TriPoint const &o) const { return !(*this == o); }
@@ -24,10 +24,9 @@ struct TriPoint
 /// Index into Triangulation::_points (large sentinel values for base vertices)
 using PointIdx = std::size_t;
 
-static constexpr PointIdx BASE_BL = std::size_t(-1); ///< (-1001,-1001)
-static constexpr PointIdx BASE_BR = std::size_t(-2); ///< ( 1001,-1001)
-static constexpr PointIdx BASE_TR = std::size_t(-3); ///< ( 1001, 1001)
-static constexpr PointIdx BASE_TL = std::size_t(-4); ///< (-1001, 1001)
+static constexpr PointIdx BASE_A = std::size_t(-1); ///< (-4000,-2000) super-triangle vertex A
+static constexpr PointIdx BASE_B = std::size_t(-2); ///< ( 4000,-2000) super-triangle vertex B
+static constexpr PointIdx BASE_C = std::size_t(-3); ///< (    0, 4000) super-triangle vertex C
 
 struct Triangle
 {
@@ -57,7 +56,7 @@ struct EdgeHash
 inline Edge makeEdge(PointIdx a, PointIdx b) { return a < b ? Edge{a, b} : Edge{b, a}; }
 
 /// Bowyer-Watson Delaunay triangulation supporting dynamic insertion and removal.
-/// Uses two bounding triangles covering [-1001,1001]² to bootstrap the triangulation;
+/// Uses a single super-triangle covering [-1000,1000]² to bootstrap the triangulation;
 /// base vertices are excluded from the final triangulation queries.
 class DelaunayTriangulation
 {
@@ -108,7 +107,7 @@ public:
 
 private:
     std::vector<TriPoint> _points; ///< user points indexed by PointIdx
-    TriPoint _baseBL, _baseBR, _baseTR, _baseTL; ///< bounding-box corner vertices
+    TriPoint _baseA, _baseB, _baseC; ///< super-triangle vertices
 
     std::vector<Triangle> _triangles; ///< all triangles including base-vertex ones
     mutable std::vector<Triangle> _visibleCache;
@@ -122,7 +121,7 @@ private:
     bool inCircumcircle(Triangle const &t, TriPoint const &p) const;
 
     /// Orient2d sign: positive if p0,p1,p2 are CCW
-    Fixed orient2d(TriPoint const &p0, TriPoint const &p1, TriPoint const &p2) const;
+    long long orient2d(TriPoint const &p0, TriPoint const &p1, TriPoint const &p2) const;
 
     /// Return true if segments (p1,p2) and (p3,p4) properly intersect.
     bool segmentsIntersect(TriPoint const &p1, TriPoint const &p2,
