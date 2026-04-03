@@ -250,10 +250,11 @@ void DelaunayTriangulation::removePoint(PointIdx idx)
     assert(idx < _points.size() && "DelaunayTriangulation::removePoint: invalid index");
 
     // Assert that the point is not part of any constrained edge.
-    for (Edge const &e : _constrainedEdges)
+    for (Edge const &e : _constrainedEdges) {
         assert(e.a != idx && e.b != idx &&
                "DelaunayTriangulation::removePoint: point participates in a constrained edge");
-
+        (void)e; // silence unused variable warning in release builds
+    }
     // Collect all triangles that contain this point and their surrounding polygon
     std::vector<std::size_t> toRemove;
     for (std::size_t i = 0; i < _triangles.size(); ++i)
