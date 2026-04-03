@@ -88,13 +88,45 @@ bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p)
 
 // ── Bowyer-Watson insertion (flood-fill, stops at constrained edges) ──────────
 
+static bool isBaseVertex(PointIdx idx)
+{
+    return idx == BASE_A || idx == BASE_B || idx == BASE_C;
+}
+
+static bool touchesBaseVertex(Triangle const &t)
+{
+    return isBaseVertex(t.v[0]) || isBaseVertex(t.v[1]) || isBaseVertex(t.v[2]);
+}
+
 void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
 {
     TriPoint const &p = getPoint(pidx);
 
-    // Find one triangle whose circumcircle contains p to seed the BFS.
-    // We still scan all triangles for the seed, then expand via adjacency.
-    // Build a per-edge adjacency map for efficient neighbor lookup.
+    // Classical BW step 1: find the triangle that contains p.
+    // A CCW triangle (a,b,c) contains p iff orient2d >= 0 for all three edges.
+    // The super-triangle guarantees every user point is covered.
+    std::size_t seed = SIZE_MAX;
+    for (std::size_t i = 0; i < _triangles.size(); ++i)
+    {
+        Triangle const &t = _triangles[i];
+        TriPoint const &a = getPoint(t.v[0]);
+        TriPoint const &b = getPoint(t.v[1]);
+        TriPoint const &c = getPoint(t.v[2]);
+        if (orient2d(a, b, p) >= 0 &&
+            orient2d(b, c, p) >= 0 &&
+            orient2d(c, a, p) >= 0)
+        {
+            seed = i;
+            break;
+        }
+    }
+    if (seed == SIZE_MAX)
+    {
+        markDirty();
+        return; // degenerate / point outside super-triangle (should not happen)
+    }
+
+    // Build a per-edge adjacency map for BFS neighbour lookup.
     std::unordered_map<Edge, std::vector<std::size_t>, EdgeHash> edgeToTri;
     for (std::size_t i = 0; i < _triangles.size(); ++i)
     {
@@ -104,24 +136,12 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
         edgeToTri[makeEdge(t.v[2], t.v[0])].push_back(i);
     }
 
-    // Find seed: any bad triangle
-    std::size_t seed = SIZE_MAX;
-    for (std::size_t i = 0; i < _triangles.size(); ++i)
-    {
-        if (inCircumcircle(_triangles[i], p))
-        {
-            seed = i;
-            break;
-        }
-    }
-    if (seed == SIZE_MAX)
-    {
-        markDirty();
-        return; // no bad triangle found (degenerate / coincident point)
-    }
-
-    // BFS flood-fill collecting all bad triangles reachable without crossing
-    // constrained edges.
+    // BFS flood-fill from the containing triangle: collect all bad triangles
+    // (circumcircle contains p) reachable without crossing constrained edges.
+    // When the current triangle has no base vertices (it is a user triangle),
+    // the flood-fill does not cross into base-vertex triangles: this prevents
+    // super-triangle-adjacent circumcircles from consuming user-visible cavity
+    // edges and producing a mis-triangulated interior.
     std::vector<bool> visited(_triangles.size(), false);
     std::vector<std::size_t> badIdx;
     std::queue<std::size_t> queue;
@@ -132,9 +152,14 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
     {
         std::size_t cur = queue.front();
         queue.pop();
+
+        if (!inCircumcircle(_triangles[cur], p))
+            continue; // good triangle — stop expanding in this direction
+
         badIdx.push_back(cur);
 
         Triangle const &t = _triangles[cur];
+        bool curIsBase = touchesBaseVertex(t);
         std::array<Edge, 3> edges = {
             makeEdge(t.v[0], t.v[1]),
             makeEdge(t.v[1], t.v[2]),
@@ -143,13 +168,18 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
         for (Edge const &e : edges)
         {
             if (_constrainedEdges.count(e))
-                continue; // do not cross constraint edges
+                continue; // do not cross constrained edges
             auto it = edgeToTri.find(e);
             if (it == edgeToTri.end()) continue;
             for (std::size_t nb : it->second)
             {
-                if (!visited[nb] && inCircumcircle(_triangles[nb], p))
+                if (!visited[nb])
                 {
+                    // Don't cross from a user triangle into a base-vertex triangle:
+                    // base-vertex circumcircles are large and would absorb user
+                    // cavity edges, producing incorrect re-triangulation.
+                    if (!curIsBase && touchesBaseVertex(_triangles[nb]))
+                        continue;
                     visited[nb] = true;
                     queue.push(nb);
                 }
@@ -157,17 +187,29 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
         }
     }
 
-    // Find the boundary polygon of the hole (edges belonging to exactly one bad triangle)
+    if (badIdx.empty())
+    {
+        markDirty();
+        return;
+    }
+
+    // Boundary edges: those belonging to exactly one bad triangle form the cavity.
     std::unordered_map<Edge, int, EdgeHash> edgeCount;
     for (std::size_t i : badIdx)
     {
         Triangle const &tri = _triangles[i];
-        edgeCount[makeEdge(tri.v[0], tri.v[1])]++;
-        edgeCount[makeEdge(tri.v[1], tri.v[2])]++;
-        edgeCount[makeEdge(tri.v[2], tri.v[0])]++;
+        for (int e = 0; e < 3; ++e)
+            edgeCount[makeEdge(tri.v[e], tri.v[(e+1)%3])]++;
     }
 
-    // Remove bad triangles (iterate in reverse to preserve indices)
+    std::vector<Edge> boundaryEdges;
+    for (auto const &[edge, count] : edgeCount)
+    {
+        if (count == 1)
+            boundaryEdges.push_back(edge);
+    }
+
+    // Remove bad triangles (swap-remove in descending index order).
     std::sort(badIdx.begin(), badIdx.end(), std::greater<std::size_t>());
     for (std::size_t i : badIdx)
     {
@@ -175,20 +217,16 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
         _triangles.pop_back();
     }
 
-    // Re-triangulate hole: for each boundary edge, create a new triangle with p
-    for (auto const &[edge, cnt] : edgeCount)
+    // Re-triangulate: connect each boundary edge to the new point.
+    for (Edge const &edge : boundaryEdges)
     {
-        if (cnt == 1)
-        {
-            // Ensure the new triangle is CCW
-            TriPoint const &ea = getPoint(edge.a);
-            TriPoint const &eb = getPoint(edge.b);
-            long long o = orient2d(ea, eb, p);
-            if (o > 0)
-                _triangles.push_back({ { edge.a, edge.b, pidx } });
-            else
-                _triangles.push_back({ { edge.b, edge.a, pidx } });
-        }
+        TriPoint const &ea = getPoint(edge.a);
+        TriPoint const &eb = getPoint(edge.b);
+        long long o = orient2d(ea, eb, p);
+        if (o > 0)
+            _triangles.push_back({ { edge.a, edge.b, pidx } });
+        else
+            _triangles.push_back({ { edge.b, edge.a, pidx } });
     }
 
     markDirty();
@@ -200,16 +238,6 @@ PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
     _points.push_back({ x.to_int(), y.to_int() });
     bowyerWatsonInsert(idx);
     return idx;
-}
-
-static bool isBaseVertex(PointIdx idx)
-{
-    return idx == BASE_A || idx == BASE_B || idx == BASE_C;
-}
-
-static bool touchesBaseVertex(Triangle const &t)
-{
-    return isBaseVertex(t.v[0]) || isBaseVertex(t.v[1]) || isBaseVertex(t.v[2]);
 }
 
 void DelaunayTriangulation::retriangulateHole(std::vector<PointIdx> const &polygon, PointIdx /*removed*/)
