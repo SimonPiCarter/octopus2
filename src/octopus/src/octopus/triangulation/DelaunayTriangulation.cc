@@ -8,28 +8,30 @@
 namespace octopus
 {
 
-// Super-triangle large enough to contain all points with values in [-1000, 1000].
-// We pick vertices well outside that range.
-static const Fixed SUPER_SCALE = Fixed(10000);
-
 DelaunayTriangulation::DelaunayTriangulation()
 {
-    // Super-triangle vertices (not stored in _points)
-    _superA = { -SUPER_SCALE * Fixed(3),  -SUPER_SCALE };
-    _superB = {  Fixed(0),                 SUPER_SCALE * Fixed(3) };
-    _superC = {  SUPER_SCALE * Fixed(3),  -SUPER_SCALE };
+    // Bounding-box corners — outside the valid user-point range [-1000, 1000].
+    // All user points' circumcircle tests will correctly include these triangles.
+    static const Fixed B = Fixed(1001);
+    _baseBL = { -B, -B };
+    _baseBR = {  B, -B };
+    _baseTR = {  B,  B };
+    _baseTL = { -B,  B };
 
-    // Initial triangle — vertices must be in CCW order.
-    // orient2d(A,C,B): (C-A)×(B-A) = 60000*40000 - 0*30000 > 0 ✓
-    _triangles.push_back({ { SUPER_A, SUPER_C, SUPER_B } });
+    // Two CCW triangles covering the bounding square (split along BL→TR diagonal):
+    //   T1: BL, BR, TR  (right-angle at BR, CCW ✓)
+    //   T2: BL, TR, TL  (right-angle at TL, CCW ✓)
+    _triangles.push_back({ { BASE_BL, BASE_BR, BASE_TR } });
+    _triangles.push_back({ { BASE_BL, BASE_TR, BASE_TL } });
     _cacheDirty = true;
 }
 
 TriPoint const &DelaunayTriangulation::getPoint(PointIdx idx) const
 {
-    if (idx == SUPER_A) return _superA;
-    if (idx == SUPER_B) return _superB;
-    if (idx == SUPER_C) return _superC;
+    if (idx == BASE_BL) return _baseBL;
+    if (idx == BASE_BR) return _baseBR;
+    if (idx == BASE_TR) return _baseTR;
+    if (idx == BASE_TL) return _baseTL;
     return _points[idx];
 }
 
@@ -48,32 +50,31 @@ Fixed DelaunayTriangulation::orient2d(TriPoint const &p0, TriPoint const &p1, Tr
     return ax * by - ay * bx;
 }
 
-bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p) const
+bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p) const--------
 {
     TriPoint const &a = getPoint(t.v[0]);
     TriPoint const &b = getPoint(t.v[1]);
     TriPoint const &c = getPoint(t.v[2]);
 
-    // Use raw internal int64 values and promote to __int128 to avoid overflow
-    // (the super-triangle vertices have large coordinates).
-    // If real coordinates are coord.data()/e, then the determinant computed
-    // from raw values equals e^4 * det_real, preserving the sign.
-    typedef __int128 i128;
+    // Use integer real-value coordinates (via to_int()) to avoid overflow.
+    // With bounding vertices at ±1001 the max coordinate difference is 2002,
+    // and the 4th-degree determinant stays well within int64_t range (~1.93×10¹⁴).
+    typedef int64_t i64;
 
-    i128 ax = a.x.data() - p.x.data();
-    i128 ay = a.y.data() - p.y.data();
-    i128 bx = b.x.data() - p.x.data();
-    i128 by = b.y.data() - p.y.data();
-    i128 cx = c.x.data() - p.x.data();
-    i128 cy = c.y.data() - p.y.data();
+    i64 ax = (i64)a.x.to_int() - (i64)p.x.to_int();
+    i64 ay = (i64)a.y.to_int() - (i64)p.y.to_int();
+    i64 bx = (i64)b.x.to_int() - (i64)p.x.to_int();
+    i64 by = (i64)b.y.to_int() - (i64)p.y.to_int();
+    i64 cx = (i64)c.x.to_int() - (i64)p.x.to_int();
+    i64 cy = (i64)c.y.to_int() - (i64)p.y.to_int();
 
-    i128 az = ax*ax + ay*ay;
-    i128 bz = bx*bx + by*by;
-    i128 cz = cx*cx + cy*cy;
+    i64 az = ax*ax + ay*ay;
+    i64 bz = bx*bx + by*by;
+    i64 cz = cx*cx + cy*cy;
 
-    i128 det = ax * (by * cz - bz * cy)
-             - ay * (bx * cz - bz * cx)
-             + az * (bx * cy - by * cx);
+    i64 det = ax * (by * cz - bz * cy)
+            - ay * (bx * cz - bz * cx)
+            + az * (bx * cy - by * cx);
 
     return det > 0;
 }
@@ -136,14 +137,14 @@ PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
     return idx;
 }
 
-static bool isSuperVertex(PointIdx idx)
+static bool isBaseVertex(PointIdx idx)
 {
-    return idx == SUPER_A || idx == SUPER_B || idx == SUPER_C;
+    return idx == BASE_BL || idx == BASE_BR || idx == BASE_TR || idx == BASE_TL;
 }
 
-static bool touchesSuperVertex(Triangle const &t)
+static bool touchesBaseVertex(Triangle const &t)
 {
-    return isSuperVertex(t.v[0]) || isSuperVertex(t.v[1]) || isSuperVertex(t.v[2]);
+    return isBaseVertex(t.v[0]) || isBaseVertex(t.v[1]) || isBaseVertex(t.v[2]);
 }
 
 void DelaunayTriangulation::retriangulateHole(std::vector<PointIdx> const &polygon, PointIdx /*removed*/)
@@ -244,7 +245,7 @@ void DelaunayTriangulation::removePoint(PointIdx idx)
     {
         for (int i = 0; i < 3; ++i)
         {
-            if (!isSuperVertex(t.v[i]) && t.v[i] > idx)
+            if (!isBaseVertex(t.v[i]) && t.v[i] > idx)
                 --t.v[i];
         }
     }
@@ -259,7 +260,7 @@ std::vector<Triangle> const &DelaunayTriangulation::triangles() const
         _visibleCache.clear();
         for (Triangle const &t : _triangles)
         {
-            if (!touchesSuperVertex(t))
+            if (!touchesBaseVertex(t))
                 _visibleCache.push_back(t);
         }
         _cacheDirty = false;
