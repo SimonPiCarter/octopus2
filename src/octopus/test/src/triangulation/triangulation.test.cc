@@ -305,3 +305,180 @@ TEST(triangulation_remove, remove_multiple_points_sequentially)
     expectAllCCW(tri);
     expectDelaunay(tri);
 }
+
+// ─── constrained edge tests ───────────────────────────────────────────────────
+
+/// Return true if the edge (a,b) appears as a side of any visible triangle.
+static bool edgeInTriangulation(DelaunayTriangulation const &tri,
+                                PointIdx a, PointIdx b)
+{
+    octopus::Edge target = octopus::makeEdge(a, b);
+    for (Triangle const &t : tri.triangles())
+        for (int i = 0; i < 3; ++i)
+            if (octopus::makeEdge(t.v[i], t.v[(i+1)%3]) == target)
+                return true;
+    return false;
+}
+
+TEST(constrained_edge, edge_already_present_is_marked)
+{
+    DelaunayTriangulation tri;
+    PointIdx a = tri.addPoint(Fixed(0), Fixed(0));
+    PointIdx b = tri.addPoint(Fixed(4), Fixed(0));
+    tri.addPoint(Fixed(2), Fixed(3));
+
+    tri.addConstrainedEdge(a, b);
+    EXPECT_TRUE(tri.isConstrained(a, b));
+    EXPECT_FALSE(tri.isConstrained(a, PointIdx(2)));
+}
+
+TEST(constrained_edge, is_constrained_canonical)
+{
+    // isConstrained should be symmetric (a,b) == (b,a)
+    DelaunayTriangulation tri;
+    PointIdx a = tri.addPoint(Fixed(0), Fixed(0));
+    PointIdx b = tri.addPoint(Fixed(4), Fixed(0));
+    tri.addPoint(Fixed(2), Fixed(3));
+
+    tri.addConstrainedEdge(a, b);
+    EXPECT_TRUE(tri.isConstrained(a, b));
+    EXPECT_TRUE(tri.isConstrained(b, a));
+}
+
+TEST(constrained_edge, remove_constrained_edge)
+{
+    DelaunayTriangulation tri;
+    PointIdx a = tri.addPoint(Fixed(0), Fixed(0));
+    PointIdx b = tri.addPoint(Fixed(4), Fixed(0));
+    tri.addPoint(Fixed(2), Fixed(3));
+
+    tri.addConstrainedEdge(a, b);
+    EXPECT_TRUE(tri.isConstrained(a, b));
+    tri.removeConstrainedEdge(a, b);
+    EXPECT_FALSE(tri.isConstrained(a, b));
+}
+
+TEST(constrained_edge, insertion_does_not_destroy_constraint)
+{
+    // Build a square, constrain the diagonal, then insert a point on each side.
+    // The diagonal must remain in the triangulation.
+    DelaunayTriangulation tri;
+    PointIdx bl = tri.addPoint(Fixed(0),  Fixed(0));
+    PointIdx br = tri.addPoint(Fixed(10), Fixed(0));
+    PointIdx tr = tri.addPoint(Fixed(10), Fixed(10));
+    PointIdx tl = tri.addPoint(Fixed(0),  Fixed(10));
+
+    // Constrain the diagonal bl->tr
+    tri.addConstrainedEdge(bl, tr);
+    EXPECT_TRUE(tri.isConstrained(bl, tr));
+
+    // Insert points on both sides of the diagonal
+    tri.addPoint(Fixed(2), Fixed(1)); // lower-right half
+    tri.addPoint(Fixed(8), Fixed(9)); // upper-left half
+
+    // Diagonal must still be present
+    EXPECT_TRUE(edgeInTriangulation(tri, bl, tr));
+    EXPECT_TRUE(tri.isConstrained(bl, tr));
+    expectAllCCW(tri);
+}
+
+TEST(constrained_edge, force_crossing_edge_present_after_add)
+{
+    // Square with diagonal added as constraint — the diagonal crosses the existing
+    // Delaunay diagonal if Delaunay chose the other diagonal.
+    DelaunayTriangulation tri;
+    PointIdx bl = tri.addPoint(Fixed(0),  Fixed(0));
+    PointIdx br = tri.addPoint(Fixed(10), Fixed(0));
+                  tri.addPoint(Fixed(10), Fixed(10));
+    PointIdx tl = tri.addPoint(Fixed(0),  Fixed(10));
+
+    // Force the other diagonal
+    tri.addConstrainedEdge(br, tl);
+    EXPECT_TRUE(tri.isConstrained(br, tl));
+    EXPECT_TRUE(edgeInTriangulation(tri, br, tl));
+    (void)bl;
+    expectAllCCW(tri);
+}
+
+TEST(constrained_edge, remove_point_with_constraint_throws)
+{
+    DelaunayTriangulation tri;
+    PointIdx a = tri.addPoint(Fixed(0), Fixed(0));
+    PointIdx b = tri.addPoint(Fixed(4), Fixed(0));
+    tri.addPoint(Fixed(2), Fixed(3));
+
+    tri.addConstrainedEdge(a, b);
+    EXPECT_THROW(tri.removePoint(a), std::logic_error);
+    EXPECT_THROW(tri.removePoint(b), std::logic_error);
+}
+
+// ─── hole tests ───────────────────────────────────────────────────────────────
+
+TEST(hole, square_with_inner_square_hole)
+{
+    // Outer square 0..20, inner square 5..15
+    DelaunayTriangulation tri;
+
+    // Outer corners
+    tri.addPoint(Fixed(0),  Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(20));
+    tri.addPoint(Fixed(0),  Fixed(20));
+
+    // Inner square corners
+    PointIdx h0 = tri.addPoint(Fixed(5),  Fixed(5));
+    PointIdx h1 = tri.addPoint(Fixed(15), Fixed(5));
+    PointIdx h2 = tri.addPoint(Fixed(15), Fixed(15));
+    PointIdx h3 = tri.addPoint(Fixed(5),  Fixed(15));
+
+    std::size_t before = tri.triangles().size();
+    EXPECT_GT(before, 0u);
+
+    tri.markHole({ h0, h1, h2, h3 });
+
+    std::size_t after = tri.triangles().size();
+    EXPECT_LT(after, before); // some triangles are now hidden
+    expectAllCCW(tri);
+}
+
+TEST(hole, clear_holes_restores_triangles)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(0),  Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(20));
+    tri.addPoint(Fixed(0),  Fixed(20));
+    PointIdx h0 = tri.addPoint(Fixed(5),  Fixed(5));
+    PointIdx h1 = tri.addPoint(Fixed(15), Fixed(5));
+    PointIdx h2 = tri.addPoint(Fixed(15), Fixed(15));
+    PointIdx h3 = tri.addPoint(Fixed(5),  Fixed(15));
+
+    std::size_t before = tri.triangles().size();
+
+    tri.markHole({ h0, h1, h2, h3 });
+    EXPECT_LT(tri.triangles().size(), before);
+
+    tri.clearHoles();
+    EXPECT_EQ(tri.triangles().size(), before);
+    expectAllCCW(tri);
+}
+
+TEST(hole, hole_boundary_edges_are_constrained)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(0),  Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(20));
+    tri.addPoint(Fixed(0),  Fixed(20));
+    PointIdx h0 = tri.addPoint(Fixed(5),  Fixed(5));
+    PointIdx h1 = tri.addPoint(Fixed(15), Fixed(5));
+    PointIdx h2 = tri.addPoint(Fixed(15), Fixed(15));
+    PointIdx h3 = tri.addPoint(Fixed(5),  Fixed(15));
+
+    tri.markHole({ h0, h1, h2, h3 });
+
+    EXPECT_TRUE(tri.isConstrained(h0, h1));
+    EXPECT_TRUE(tri.isConstrained(h1, h2));
+    EXPECT_TRUE(tri.isConstrained(h2, h3));
+    EXPECT_TRUE(tri.isConstrained(h3, h0));
+}
