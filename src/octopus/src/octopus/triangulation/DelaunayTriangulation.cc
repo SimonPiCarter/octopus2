@@ -405,14 +405,26 @@ std::vector<Triangle> const &DelaunayTriangulation::triangles() const
     if (_cacheDirty)
     {
         _visibleCache.clear();
+        _holeCache.clear();
         for (Triangle const &t : _triangles)
         {
-            if (!touchesBaseVertex(t) && !t.hole)
+            if (touchesBaseVertex(t))
+                continue;
+            if (t.hole)
+                _holeCache.push_back(t);
+            else
                 _visibleCache.push_back(t);
         }
         _cacheDirty = false;
     }
     return _visibleCache;
+}
+
+std::vector<Triangle> const &DelaunayTriangulation::holeTriangles() const
+{
+    if (_cacheDirty)
+        triangles(); // populate both caches
+    return _holeCache;
 }
 
 // ── Constrained edges ─────────────────────────────────────────────────────────

@@ -73,6 +73,9 @@ public:
     /// Access user-visible triangles (those not touching base vertices and not inside holes).
     std::vector<Triangle> const &triangles() const;
 
+    /// Access hole triangles (those not touching base vertices but inside hole regions).
+    std::vector<Triangle> const &holeTriangles() const;
+
     /// Access point by index.
     TriPoint const &point(PointIdx idx) const;
 
@@ -111,6 +114,7 @@ private:
 
     std::vector<Triangle> _triangles; ///< all triangles including base-vertex ones
     mutable std::vector<Triangle> _visibleCache;
+    mutable std::vector<Triangle> _holeCache;
     mutable bool _cacheDirty = true;
 
     std::unordered_set<Edge, EdgeHash> _constrainedEdges; ///< edges that must not be crossed
