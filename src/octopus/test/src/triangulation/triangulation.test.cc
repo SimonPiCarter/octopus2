@@ -213,6 +213,29 @@ TEST(triangulation_add, insert_point_bug)
 
 // ─── remove point tests ───────────────────────────────────────────────────────
 
+TEST(triangulation_remove, rem_point_bug)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(10), Fixed(10));
+    tri.addPoint(Fixed(510), Fixed(10));
+    tri.addPoint(Fixed(510), Fixed(510));
+    tri.addPoint(Fixed(10), Fixed(510));
+
+    EXPECT_EQ(2u, tri.triangles().size());
+    expectAllCCW(tri);
+    expectDelaunay(tri);
+
+    tri.addPoint(Fixed(226), Fixed(87));
+    tri.addPoint(Fixed(412), Fixed(94));
+    tri.addPoint(Fixed(303), Fixed(232));
+    tri.addPoint(Fixed(174), Fixed(198));
+    tri.removePoint(4);
+
+    //EXPECT_EQ(4u, tri.triangles().size());
+    expectAllCCW(tri);
+    expectDelaunay(tri);
+}
+
 TEST(triangulation_remove, remove_last_point_leaves_empty)
 {
     DelaunayTriangulation tri;

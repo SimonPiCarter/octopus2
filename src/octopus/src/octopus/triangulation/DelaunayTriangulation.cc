@@ -240,28 +240,84 @@ PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
     return idx;
 }
 
-void DelaunayTriangulation::retriangulateHole(std::vector<PointIdx> const &polygon, PointIdx /*removed*/)
+void DelaunayTriangulation::retriangulateHole(std::vector<PointIdx> const &polygonIn, PointIdx /*removed*/)
 {
-    // Fan triangulation from the first vertex of the polygon.
-    if (polygon.size() < 3)
+    if (polygonIn.size() < 3)
         return;
 
-    PointIdx anchor = polygon[0];
-    for (std::size_t i = 1; i + 1 < polygon.size(); ++i)
+    // Delaunay ear-clipping: repeatedly clip the ear (three consecutive polygon
+    // vertices) whose circumcircle contains no other polygon vertex.  This
+    // preserves the Delaunay property, unlike a simple fan from an arbitrary anchor.
+    std::vector<PointIdx> poly = polygonIn;
+
+    while (poly.size() > 3)
     {
-        PointIdx pb = polygon[i];
-        PointIdx pc = polygon[i + 1];
+        std::size_t n = poly.size();
+        std::size_t earIdx = SIZE_MAX; // index of the middle vertex of the chosen ear
 
-        TriPoint const &pa_ = getPoint(anchor);
-        TriPoint const &pb_ = getPoint(pb);
-        TriPoint const &pc_ = getPoint(pc);
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            PointIdx pa = poly[i];
+            PointIdx pb = poly[(i + 1) % n];
+            PointIdx pc = poly[(i + 2) % n];
 
-        long long o = orient2d(pa_, pb_, pc_);
+            // Only convex (CCW) vertices are valid ear tips.
+            if (orient2d(getPoint(pa), getPoint(pb), getPoint(pc)) <= 0)
+                continue;
+
+            // Accept this ear only if no other polygon vertex is strictly
+            // inside its circumcircle (Delaunay criterion).
+            Triangle candidate{ { pa, pb, pc } };
+            bool valid = true;
+            for (std::size_t j = 0; j < n && valid; ++j)
+            {
+                if (j == i || j == (i + 1) % n || j == (i + 2) % n)
+                    continue;
+                if (inCircumcircle(candidate, getPoint(poly[j])))
+                    valid = false;
+            }
+
+            if (valid)
+            {
+                earIdx = (i + 1) % n;
+                break;
+            }
+        }
+
+        if (earIdx == SIZE_MAX)
+        {
+            // No perfect Delaunay ear found (degenerate/collinear case).
+            // Fall back to the first valid CCW ear to avoid an infinite loop.
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                PointIdx pa = poly[i];
+                PointIdx pb = poly[(i + 1) % n];
+                PointIdx pc = poly[(i + 2) % n];
+                if (orient2d(getPoint(pa), getPoint(pb), getPoint(pc)) > 0)
+                {
+                    earIdx = (i + 1) % n;
+                    break;
+                }
+            }
+        }
+
+        if (earIdx == SIZE_MAX)
+            break; // completely degenerate polygon — give up
+
+        std::size_t prevIdx = (earIdx + n - 1) % n;
+        std::size_t nextIdx = (earIdx + 1) % n;
+        _triangles.push_back({ { poly[prevIdx], poly[earIdx], poly[nextIdx] } });
+        poly.erase(poly.begin() + earIdx);
+    }
+
+    if (poly.size() == 3)
+    {
+        long long o = orient2d(getPoint(poly[0]), getPoint(poly[1]), getPoint(poly[2]));
         if (o > 0)
-            _triangles.push_back({ { anchor, pb, pc } });
+            _triangles.push_back({ { poly[0], poly[1], poly[2] } });
         else if (o < 0)
-            _triangles.push_back({ { anchor, pc, pb } });
-        // if o == 0, collinear — skip degenerate triangle
+            _triangles.push_back({ { poly[0], poly[2], poly[1] } });
+        // skip degenerate (collinear) final triangle
     }
 }
 
