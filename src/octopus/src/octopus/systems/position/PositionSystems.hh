@@ -101,7 +101,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 			START_TIME(position_system)
 
-			if(!pos_p.collision || pos_p.mass == Fixed::Zero() || pos_p.mass > 999)
+			if(!col_p.collision || col_p.mass == Fixed::Zero() || col_p.mass > 999)
 			{
 				END_TIME(position_system)
 				return;
@@ -131,7 +131,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			limit_length(f, max_force);
 			Logger::getDebug() << "Flocking :: total force = "<<f<<std::endl;
 
-			a = f / pos_p.mass;
+			a = f / col_p.mass;
 			Logger::getDebug() << "Flocking :: acceleration = "<<a<<std::endl;
 			// tail force (to slow down when no other force)
 			if(manhattan_length(a) < Fixed(10, true) )
@@ -141,7 +141,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			}
 
 			v += a;
-			limit_length(v, pos_p.mass > 999 ? Fixed::Zero() : max_speed);
+			limit_length(v, col_p.mass > 999 ? Fixed::Zero() : max_speed);
 			Logger::getDebug() << "Flocking :: v = "<<v<<std::endl;
 
 			move_p.move = v * move_p.speed / max_speed;

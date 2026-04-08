@@ -16,13 +16,13 @@ struct StuckInfo {
 
 struct Collision {
 	Fixed ray = 0.5;
+	Fixed mass = Fixed::One();
+	bool collision = true;
 };
 
 struct Position {
 	Vector pos;
 	Vector velocity;
-	Fixed mass = Fixed::One();
-	bool collision = true;
 	StuckInfo stuck_info;
 };
 
@@ -56,7 +56,7 @@ struct MassMemento {
 struct MassStep {
 	Fixed new_mass;
 
-	typedef Position Data;
+	typedef Collision Data;
 	typedef MassMemento Memento;
 
 	void apply_step(Data &d, Memento &memento) const;
@@ -94,7 +94,7 @@ struct CollisionMemento {
 struct CollisionStep {
 	bool new_collision;
 
-	typedef Position Data;
+	typedef Collision Data;
 	typedef CollisionMemento Memento;
 
 	void apply_step(Data &d, Memento &memento) const;

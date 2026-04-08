@@ -145,7 +145,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 
 							if(!new_target)
 							{
-								if(pos_p.mass > 1)
+								if(col_p.mass > 1)
 								{
 									manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1});
 								}
@@ -221,7 +221,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					{
 						Logger::getDebug() << " not inrange" <<std::endl;
 						// reset mass if necessary
-						if(pos_p.mass > 1)
+						if(col_p.mass > 1)
 						{
 							manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1});
 						}
@@ -252,7 +252,7 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 					{
 						Logger::getDebug() << " inrange p="<<pos_p.pos<<" t="<<target_pos->pos <<std::endl;
 						// set mass if necessary
-						if(pos_p.mass < 5)
+						if(col_p.mass < 5)
 						{
 							manager_p.get_last_layer()[thread_idx].template get<MassStep>().add_step(e, {1000});
 						}
@@ -286,14 +286,14 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 		});
 
 	// clean up
-	ecs.system<AttackCommand const, Attack const, Position const, Move, CommandQueue_t>()
+	ecs.system<AttackCommand const, Attack const, Position const, Move, CommandQueue_t, Collision const>()
 		.kind(ecs.entity(CleanUpPhase))
 		.with(CommandQueue_t::cleanup(ecs), ecs.component<AttackCommand::State>())
-		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, Position const &pos_p, Move &move_p, CommandQueue_t &cQueue_p) {
+		.each([&manager_p](flecs::entity e, AttackCommand const &attackCommand_p, Attack const&attack_p, Position const &pos_p, Move &move_p, CommandQueue_t &cQueue_p, Collision const &col_p) {
 			// reset windup
 			manager_p.get_last_prelayer().back().template get<AttackWindupStep>().add_step(e, {0});
 			// reset mass if necessary
-			if(pos_p.mass > 1)
+			if(col_p.mass > 1)
 			{
 				manager_p.get_last_prelayer().back().template get<MassStep>().add_step(e, {1});
 			}

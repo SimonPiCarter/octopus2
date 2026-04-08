@@ -49,6 +49,8 @@ void basic_components_support(flecs::world& ecs)
     ecs.component<Destroyable>()
         .member("timestamp", &Destroyable::timestamp);
     ecs.component<Collision>()
+        .member("mass", &Collision::mass)
+        .member("collision", &Collision::collision)
 		.member("ray", &Collision::ray);
 	ecs.component<StuckInfo>()
 		.member("step_stuck", &StuckInfo::step_stuck)
@@ -56,8 +58,6 @@ void basic_components_support(flecs::world& ecs)
     ecs.component<Position>()
         .member("pos", &Position::pos)
         .member("velocity", &Position::velocity)
-        .member("mass", &Position::mass)
-        .member("collision", &Position::collision)
 		.member("stuck_info", &Position::stuck_info);
 
 	ecs.component<NoInstantDamage>();

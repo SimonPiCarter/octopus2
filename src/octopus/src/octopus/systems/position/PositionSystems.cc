@@ -31,7 +31,7 @@ Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos
 		Logger::getDebug() << "separation_force :: with name=" << e.name()<<" id="<<e.id()<<std::endl;
 		assert(pos_l);
 		assert(col_l);
-		if(!pos_l->collision || pos_l->mass == Fixed::Zero() || e.id() == ref_ent.id())
+		if(!col_l->collision || col_l->mass == Fixed::Zero() || e.id() == ref_ent.id())
 		{
 			Logger::getDebug() << "separation_force :: skipped"<<std::endl;
 			return true;
@@ -46,18 +46,18 @@ Vector separation_force(flecs::entity const &ref_ent, PositionContext const &pos
 		{
 			Vector local_force = diff/length(diff) * force_factor * 10 / length_squared;
 			// account for mass
-			local_force *= 2 * pos_l->mass / (pos_ref_p.mass + pos_l->mass);
+			local_force *= 2 * col_l->mass / (col_ref_p.mass + col_l->mass);
 			force += local_force;
 		}
 		else if(length_squared <= max_range_squared && length_squared > 0.001)
 		{
 			Vector local_force = diff/length(diff) * force_factor / length_squared;
-			if(pos_l->mass > 999)
+			if(col_l->mass > 999)
 			{
 				local_force /= 10;
 			}
 			// account for mass
-			local_force *= 2 * pos_l->mass / (pos_ref_p.mass + pos_l->mass);
+			local_force *= 2 * col_l->mass / (col_ref_p.mass + col_l->mass);
 			force += local_force;
 		}
 		if(length_squared <= 0.001)
