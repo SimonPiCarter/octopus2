@@ -64,8 +64,8 @@ TEST(attack_projectile_loop, simple)
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<Move>()
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,8}, {0,0}, octopus::Fixed::One(), false})
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,8}})
 		.set<BasicProjectileAttack>({1})
 		.set<DummyProj>({})
 		.set<Attack>({{1, 1, 2, 2}});
@@ -74,8 +74,8 @@ TEST(attack_projectile_loop, simple)
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<HitPoint>({10})
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,5}, {0,0}, octopus::Fixed::One(), false});
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,5}});
 
 	std::vector<octopus::Fixed> const expected_hp_l = {
 		octopus::Fixed(10),

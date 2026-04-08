@@ -160,7 +160,6 @@ TEST(input_production, simple_not_enough_resource)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<HitPoint>({10})
@@ -228,7 +227,6 @@ TEST(input_production, simple_cancel)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<HitPoint>({10})
@@ -300,7 +298,6 @@ TEST(input_production, simple_not_enough_resource_same_input)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<HitPoint>({10})

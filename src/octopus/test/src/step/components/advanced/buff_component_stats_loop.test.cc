@@ -108,8 +108,8 @@ TEST(buff_component_stats_loop, simple)
 		.add<Armor>()
 		.set<ResourceStock>({ {
 		}})
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), false})
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,10}})
 		.set<Attack>({{1, 1, 2, 2}})
 		.set<HitPoint>({10});
 
@@ -117,9 +117,9 @@ TEST(buff_component_stats_loop, simple)
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<HitPoint>({10})
-		.set<Collision>({octopus::Fixed::Zero()})
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
 		.set<Attack>({{1, 1, 2, 2}})
-		.set<Position>({{10,5}, {0,0}, octopus::Fixed::One(), false});
+		.set<Position>({{10,5}});
 
 	std::vector<octopus::Fixed> const expected_hp_l = {
 		octopus::Fixed(10),

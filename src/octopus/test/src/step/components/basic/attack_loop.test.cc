@@ -60,16 +60,16 @@ TEST(attack_loop, simple)
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.add<Move>()
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), false})
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,10}})
 		.set<Attack>({{1, 1, 2, 2}});
 
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()
 		.add<Move>()
 		.set<HitPoint>({10})
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,5}, {0,0}, octopus::Fixed::One(), false});
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,5}});
 
 	for(size_t i = 0; i < 10 ; ++ i)
 	{

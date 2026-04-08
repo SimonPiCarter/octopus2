@@ -60,8 +60,8 @@ TEST(attack_move_heal_loop, simple)
 		.add<AttackCommand>()
 		.add<Move>()
 		.set<Team>({1})
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,10}, {0,0}, octopus::Fixed::One(), false})
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,10}})
 		.add<PositionInTree>()
 		.set<Attack>({{1, 1, -2, 2}});
 
@@ -72,8 +72,8 @@ TEST(attack_move_heal_loop, simple)
 		.set<Team>({0})
 		.add<PositionInTree>()
 		.set<HitPoint>({10})
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,5}, {0,0}, octopus::Fixed::One(), false});
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,5}});
 
 	auto e3 = ecs.entity("e3")
 		.add<CustomCommandQueue>()
@@ -83,8 +83,8 @@ TEST(attack_move_heal_loop, simple)
 		.add<PositionInTree>()
 		.set<HitPoint>({10})
 		.set<HitPointMax>({14})
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,0}, {0,0}, octopus::Fixed::One(), false});
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,0}});
 
 	auto e4 = ecs.entity("e4")
 		.add<CustomCommandQueue>()
@@ -94,8 +94,8 @@ TEST(attack_move_heal_loop, simple)
 		.add<PositionInTree>()
 		.set<HitPoint>({10})
 		.set<HitPointMax>({14})
-		.set<Collision>({octopus::Fixed::Zero()})
-		.set<Position>({{10,-1}, {0,0}, octopus::Fixed::One(), false});
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,-1}});
 
 	RevertTester<custom_variant, Position, Attack, AttackCommand, CustomCommandQueue> revert_test({e1, e2});
 	revert_test.add_second_recorder(CustomCommandQueue::state(ecs));

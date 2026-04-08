@@ -102,10 +102,10 @@ TEST(buff_component_loop, simple)
 		});
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.set<ResourceStock>({ {
 			{"mana", {10,0} }

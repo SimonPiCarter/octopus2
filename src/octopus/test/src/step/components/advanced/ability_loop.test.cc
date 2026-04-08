@@ -79,10 +79,10 @@ TEST(ability_loop, simple)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.set<ResourceStock>({ {
 			{"mana", {10,0} }
@@ -145,10 +145,10 @@ TEST(ability_loop, reload)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.set<ResourceStock>({ {
 			{"mana", {50,0} }
@@ -217,10 +217,10 @@ TEST(ability_loop, two_casts)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.set<ResourceStock>({ {
 			{"mana", {50,0} }
@@ -289,10 +289,10 @@ TEST(ability_loop, resource_missing)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,10}};
-	pos_l.collision = false;
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.set<ResourceStock>({ {
 			{"mana", {10,0} }

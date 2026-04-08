@@ -63,10 +63,10 @@ TEST(input_move, simple)
 	set_up_systems(world, step_context);
 
 	Position pos_l = {{10,9}};
-	pos_l.collision = false;
 	auto e0 = ecs.entity("e0")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.add<MoveCommand>()
 		.set<HitPoint>({10});
@@ -75,6 +75,7 @@ TEST(input_move, simple)
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.add<MoveCommand>()
 		.set<HitPoint>({10});
@@ -83,6 +84,7 @@ TEST(input_move, simple)
 	auto e2 = ecs.entity("e2")
 		.add<CustomCommandQueue>()
 		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
 		.add<Move>()
 		.add<MoveCommand>()
 		.set<HitPoint>({10});
