@@ -51,6 +51,13 @@ struct AbilityTemplate
     /// @brief the range allowed between the point or entity and the caster
     /// before casting the ability
     virtual octopus::Fixed range() const = 0;
+    /// @brief Returns true if this ability can currently be cast by the given entity.
+    /// Override to add custom pre-cast conditions (e.g. sensor state, cooldown checks).
+    /// Default implementation always returns true.
+    /// @param caster The entity attempting to cast the ability.
+    /// @param ecs The current state of the world, which can be used to check conditions
+    /// @return an emtpy string if the ability is castable, or a non-empty string describing why it can't be cast
+    virtual std::string is_castable(flecs::entity, flecs::world const &) const { return ""; }
 };
 
 } // namespace octopus
