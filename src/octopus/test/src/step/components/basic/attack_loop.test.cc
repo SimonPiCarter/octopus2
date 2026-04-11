@@ -90,3 +90,46 @@ TEST(attack_loop, simple)
 	EXPECT_EQ(Fixed(7), e1.try_get<Position>()->pos.y) << "7 != "<<e1.try_get<Position>()->pos.y;
 	EXPECT_EQ(Fixed(6), e2.try_get<HitPoint>()->qty) << "6 != "<<e2.try_get<HitPoint>()->qty;
 }
+
+TEST(attack_loop, without_attack_component_does_not_trigger)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+
+	set_up_systems(world, step_context);
+
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.add<Move>()
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,10}});
+
+	auto e2 = ecs.entity("e2")
+		.add<CustomCommandQueue>()
+		.add<Move>()
+		.set<HitPoint>({10})
+		.set<Collision>({octopus::Fixed::Zero(), octopus::Fixed::One(), false})
+		.set<Position>({{10,5}});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		ecs.progress();
+
+		if(i == 2)
+		{
+			AttackCommand atk_l {{e2}};
+			e1.try_get_mut<CustomCommandQueue>()->_queuedActions.push_back(CommandQueueActionAddBack<custom_variant> {atk_l});
+		}
+	}
+
+	EXPECT_FALSE(e1.has<Attack>());
+	EXPECT_EQ(Fixed(10), e1.try_get<Position>()->pos.x) << "10 != "<<e1.try_get<Position>()->pos.x;
+	EXPECT_EQ(Fixed(10), e1.try_get<Position>()->pos.y) << "10 != "<<e1.try_get<Position>()->pos.y;
+	EXPECT_EQ(Fixed(10), e2.try_get<HitPoint>()->qty) << "10 != "<<e2.try_get<HitPoint>()->qty;
+}
