@@ -101,7 +101,7 @@ void set_up_position_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			Logger::getDebug() << "Flocking :: start name=" << e.name() << " idx=" << e.id() << std::endl;
 			START_TIME(position_system)
 
-			if(!col_p.collision || col_p.mass == Fixed::Zero() || col_p.mass > 999)
+			if(!col_p.collision || col_p.mass == Fixed::Zero() || col_p.mass > 999 || move_p.speed == Fixed::Zero())
 			{
 				END_TIME(position_system)
 				return;
