@@ -72,6 +72,23 @@ void set_up_hitpoint_systems(flecs::world &ecs, ThreadPool &pool, StepManager_t 
 			}
 		});
 
+	ecs.system<Destroyable>()
+		.with<Destroyed>()
+		// .multi_threaded() cannot be multithreaded because destroyed event will cause data race
+		.kind(ecs.entity(UpdatePhase))
+		.each([&ecs, &manager_p](flecs::entity e, Destroyable &destroyable_p) {
+			if(destroyable_p.timestamp == 0)
+			{
+				Logger::getDebug() << "Destroy :: name=" << e.name() << " idx=" << e.id() << std::endl;
+				manager_p.get_last_layer().back().template get<DestroyableStep>().add_step(e, {get_time_stamp(ecs)});
+				e.disable();
+				ecs.event<Destroyed>()
+					.id<Destroyable>()
+					.entity(e)
+					.emit();
+			}
+		});
+
 	ecs.system<Destroyable const>()
 		// .multi_threaded() cannot be multithreaded because destroyed event will cause data race
 		.kind(ecs.entity(UpdateUnpausedPhase))

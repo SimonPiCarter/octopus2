@@ -8,6 +8,7 @@ namespace octopus
 {
 
 struct Created {};
+// Used to tag event, can alse be added to an entity to destroy it manually
 struct Destroyed {};
 
 struct Destroyable {
