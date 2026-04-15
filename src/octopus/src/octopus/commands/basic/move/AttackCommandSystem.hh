@@ -125,22 +125,26 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 
 					// check if target is valid
 					HitPoint const * hp = attackCommand_p.target ? attackCommand_p.target.try_get<HitPoint>() : nullptr;
+					HitPointMax const * hp_max = attackCommand_p.target ? attackCommand_p.target.try_get<HitPointMax>() : nullptr;
 					Position const * target_pos = attackCommand_p.target ? attackCommand_p.target.try_get<Position>() : nullptr;
 					Collision const * target_col = attackCommand_p.target ? attackCommand_p.target.try_get<Collision>() : nullptr;
-					bool target_done = attackCommand_p.target && !health_check_alive(attackCommand_p.target, attack_p.cst.damage < 0);
+					bool healer = attack_p.cst.damage < 0;
+					bool target_done = attackCommand_p.target && !health_check_alive(attackCommand_p.target, healer);
 					if(!attackCommand_p.target || !hp || target_done || !target_pos)
 					{
 						// override retaget wait in certain case
 						// - not initialized yet
 						// - target died
-						bool should_scan_l = !attackCommand_p.init || !hp || hp->qty <= Fixed::Zero();
+						bool should_scan_l = !attackCommand_p.init;
+						should_scan_l |= (!hp || hp->qty <= Fixed::Zero()) && !healer;
+						should_scan_l |= (!hp || !hp_max || hp->qty >= hp_max->qty) && healer;
 
 						flecs::entity new_target;
 						if((get_time_stamp(ecs) + e.id()) % attack_retarget_wait == 0 || should_scan_l)
 						{
 							START_TIME(attack_command_new_target)
 
-							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range), attack_p.cst.damage < 0);
+							new_target = get_new_target(e, pos_context, pos_p, std::max(Fixed(8), attack_p.cst.range), healer);
 							Logger::getDebug() << "  re-looking for target " << pos_p.pos<<std::endl;
 
 							if(!new_target)
