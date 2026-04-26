@@ -35,8 +35,10 @@ bool in_attack_range(Position const * target_pos_p, Collision const * target_col
 bool has_reloaded(uint32_t time_p, Attack const&attack_p);
 
 template<class StepManager_t, class CommandQueue_t>
-void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<StepManager_t> &world_context, TimeStats &time_stats_p, int64_t attack_retarget_wait=1)
+void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldContext<StepManager_t> &world_context,
+	TimeStats &time_stats_p, int64_t attack_retarget_wait)
 {
+	DamageModifier *damage_modifier = world_context.damage_modifier.get();
 	PositionContext &pos_context = world_context.position_context;
 	ecs.system<Position const, AttackCommand const, Attack const, Move, CommandQueue_t>()
 		.kind(ecs.entity(PostUpdatePhase))
@@ -278,8 +280,8 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 		.kind(ecs.entity(EndUpdatePhase))
 		.without<NoInstantDamage>()
 		.without<BasicProjectileAttackTag>()
-		.each([&manager_p](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
-			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-get_damage_after_armor(trigger.target, attack_p.cst.damage)});
+		.each([&manager_p, damage_modifier](flecs::entity e, AttackTrigger const& trigger, Attack const &attack_p) {
+			manager_p.get_last_layer().back().template get<HitPointStep>().add_step(trigger.target, {-damage_modifier->modify_attack(e, trigger.target, attack_p)});
 		});
 
 	ecs.system<AttackTrigger const>()
@@ -310,13 +312,14 @@ void set_up_attack_system(flecs::world &ecs, StepManager_t &manager_p, WorldCont
 
 void set_up_basic_projectile_basis(flecs::world &ecs);
 
-template<class Projectile_t>
-void set_up_basic_projectile_systems(flecs::world &ecs) {
+template<class Projectile_t, class StepManager_t>
+void set_up_basic_projectile_systems(flecs::world &ecs, WorldContext<StepManager_t> &world_context) {
+	DamageModifier *damage_modifier = world_context.damage_modifier.get();
 	ecs.system<Position const, AttackTrigger const, BasicProjectileAttack const, Projectile_t const, Attack const>()
 		.kind(ecs.entity(EndUpdatePhase))
-		.each([&ecs](flecs::entity e, Position const &pos, AttackTrigger const& trigger, BasicProjectileAttack const &basic_proj, Projectile_t const &proj_data, Attack const &attack) {
+		.each([&ecs, damage_modifier](flecs::entity e, Position const &pos, AttackTrigger const& trigger, BasicProjectileAttack const &basic_proj, Projectile_t const &proj_data, Attack const &attack) {
 			EntityCreationStep step_l;
-			Projectile proj {trigger.target, octopus::Vector(), attack.cst.damage};
+			Projectile proj {trigger.target, octopus::Vector(), damage_modifier->modify_attack(e, trigger.target, attack)};
 			if(trigger.target && trigger.target.try_get<Position>()) {
 				proj.pos_target = trigger.target.try_get<Position>()->pos;
 			}

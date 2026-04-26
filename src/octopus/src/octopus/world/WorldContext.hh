@@ -8,7 +8,10 @@
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/StepContext.hh"
+#include "octopus/commands/basic/move/DamageModifier.hh"
 #include "flecs.h"
+
+#include <memory>
 
 namespace octopus
 {
@@ -39,6 +42,7 @@ struct WorldContext
 	TimeStats time_stats;
 	RandomGenerator rng;
 	Triangulation triangulation;
+	std::unique_ptr<DamageModifier> damage_modifier = std::make_unique<ArmorDamageModifier>();
 
 	/// @brief tell if the AttackSystems should wait for
 	/// some time before looking for new target

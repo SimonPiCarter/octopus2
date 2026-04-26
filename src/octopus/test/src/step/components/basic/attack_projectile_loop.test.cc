@@ -59,7 +59,7 @@ TEST(attack_projectile_loop, simple)
 	set_up_systems(world, step_context);
 	ecs.component<DummyProj>().member<bool>("decoy");
 	set_up_basic_projectile_basis(ecs);
-	set_up_basic_projectile_systems<DummyProj>(ecs);
+	set_up_basic_projectile_systems<DummyProj>(ecs, world);
 
 	auto e1 = ecs.entity("e1")
 		.add<CustomCommandQueue>()
