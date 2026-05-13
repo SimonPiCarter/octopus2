@@ -24,7 +24,7 @@ struct ProductionTemplate
         return check_requirements(producer_p, ecs, get_requirements())
             && can_produce(producer_p, ecs);
     }
-    /// @brief Return true if the producer can produce tu production
+    /// @brief Return true if the producer can produce the production
     /// @remark this is useful when something can only be produced once (exemple an upgrade)
     virtual bool can_produce(flecs::entity producer_p, flecs::world const &ecs) const { return true; }
     /// @brief Return a list of missing requirements
