@@ -6,6 +6,11 @@
 namespace octopus
 {
 
+struct InputProduction {
+	std::string production;
+	std::vector<flecs::entity> candidates;
+};
+
 struct InputAddProduction
 {
 	flecs::entity producer;
@@ -59,7 +64,7 @@ void handle_add_production(
 	{
 		manager.get_last_layer().back().template get<ProductionQueueOperationStep>().add_step(input.producer, {input.production, -1});
 		prod->enqueue(input.producer, ecs, manager);
-		for(auto &&pair : prod->resource_consumption())
+		for(auto &&pair : resource_cost)
 		{
 			std::string const &resource = pair.first;
 			Fixed resource_consumed = pair.second;

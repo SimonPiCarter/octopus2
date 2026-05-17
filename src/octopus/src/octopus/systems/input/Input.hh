@@ -10,6 +10,7 @@
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
 #include "octopus/components/basic/flock/FlockManager.hh"
+#include "octopus/world/ability/AbilityTemplateLibrary.hh"
 #include "octopus/world/production/ProductionTemplateLibrary.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/ResourceStock.hh"
@@ -19,10 +20,12 @@
 #include "octopus/systems/production/ProductionSystem.hh"
 #include "octopus/utils/log/Logger.hh"
 
+#include "InputCast.hh"
 #include "InputCommand.hh"
 #include "InputCommandFunctor.hh"
 #include "InputLayerContainer.hh"
 #include "InputProduction.hh"
+#include "InputStatus.hh"
 
 namespace octopus
 {
@@ -39,6 +42,8 @@ void add_flock_information(flecs::entity flock_manager, AttackCommand &cmd);
 template<typename command_variant_t, typename StepManager_t>
 struct InputContainer
 {
+	InputLayerContainer<InputCast> container_cast;
+	InputLayerContainer<InputProduction> container_production;
 	InputLayerContainer<InputAddProduction> container_add_production;
 	InputLayerContainer<InputCancelProduction> container_cancel_production;
 };
@@ -205,6 +210,9 @@ public:
 		container_command.push_layer();
 		container_command_functor.push_layer();
 	}
+
+	InputStatus get_input_status(WorldContext<StepManager_t> &world, ProductionTemplateLibrary<StepManager_t> const &prod_lib, InputProduction const &input);
+	InputStatus get_input_status(WorldContext<StepManager_t> &world, AbilityTemplateLibrary<StepManager_t> const &ability_lib, InputCast const &input);
 };
 
 template<typename command_variant_t, typename StepManager_t>
@@ -221,4 +229,15 @@ void set_up_input_system(WorldContext<StepManager_t> &world, StepManager_t &mana
 		});
 }
 
+
+template<typename StepManager_t>
+flecs::entity find_best_entity_for_production(
+	flecs::world const &ecs,
+	std::vector<flecs::entity> const &entities,
+	std::string const &production_name_p,
+	InputStatus &status
+);
+
 } // namespace octopus
+
+#include "Input.defs.hh"

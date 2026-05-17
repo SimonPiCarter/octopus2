@@ -27,6 +27,13 @@ struct ProductionTemplate
     /// @brief Return true if the producer can produce the production
     /// @remark this is useful when something can only be produced once (exemple an upgrade)
     virtual bool can_produce(flecs::entity producer_p, flecs::world const &ecs) const { return true; }
+    /// @brief Returns true if this production can currently be produced by the given entity.
+    /// Override to add custom pre-production conditions (e.g. resource availability, cooldown checks).
+    /// Default implementation always returns true.
+    /// @param producer The entity attempting to produce the item.
+    /// @param ecs The current state of the world, which can be used to check conditions
+    /// @return an empty string if the production is producable, or a non-empty string describing why it can't be produced
+    virtual std::string get_production_explaination(flecs::entity producer_p, flecs::world const &ecs) const { return ""; }
     /// @brief Return a list of missing requirements
     virtual UpgradeRequirement get_requirements() const { return {}; }
     /// @brief This is used to handle resource consumption and restoration
