@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 
+#include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 
@@ -36,7 +37,7 @@ using namespace octopus;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, AttackTestHP>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, AttackTestHP>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 template<class StepManager_t>

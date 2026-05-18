@@ -52,12 +52,11 @@ class Environment : public ::testing::Environment {
 			.member<bool>("init");
 
 		// set up all command queues in test
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, WalkTest, AttackTest>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, AttackTest>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, AttackTestHP>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, AttackTestComponent>(ecs);
-		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, WalkTest, AttackTest>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, AttackTest>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, AttackTestHP>(ecs);
+		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, AttackTestComponent>(ecs);
 		octopus::advanced_components_support<octopus::DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
 	}
 

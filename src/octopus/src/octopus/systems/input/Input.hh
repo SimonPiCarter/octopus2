@@ -145,6 +145,7 @@ public:
 		}
 
 		ProductionTemplateLibrary<StepManager_t> const *prod_lib = ecs.try_get<ProductionTemplateLibrary<StepManager_t>>();
+		AbilityTemplateLibrary<StepManager_t> const *ability_lib = ecs.try_get<AbilityTemplateLibrary<StepManager_t>>();
 
 		// Filling command inputs from functors
 		for(InputCommandFunctor<command_variant_t, StepManager_t> const & input : container_command_functor.get_front_layer())
@@ -178,6 +179,10 @@ public:
 			for(InputProduction const &input_l : container.container_production.get_front_layer())
 			{
 				handle_new_production(input_l, *prod_lib, ecs, manager_p);
+			}
+
+			for(InputCast const &input_l : container.container_cast.get_front_layer()) {
+				handle_cast<StepManager_t, command_variant_t>(input_l, *ability_lib, ecs, manager_p);
 			}
 		}
 
@@ -256,4 +261,5 @@ flecs::entity find_best_entity_for_production(
 
 } // namespace octopus
 
-#include "Input.defs.hh"
+#include "InputCast.defs.hh"
+#include "InputProduction.defs.hh"

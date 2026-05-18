@@ -40,7 +40,7 @@ using namespace octopus;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand, octopus::CastCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 }
@@ -51,7 +51,7 @@ TEST(input_move, simple)
 	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
-	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand>(ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::MoveCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
 
 	auto flock_manager = ecs.entity("flock_manager")
 							.add<FlockManager>();

@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 
+#include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
@@ -40,7 +41,7 @@ using namespace octopus;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 }
@@ -52,7 +53,7 @@ void test_attack_move_save(size_t save_point)
 
 	basic_components_support(ecs);
 	basic_commands_support(ecs);
-	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
 	auto step_context = makeDefaultStepContext<custom_variant>();
 	set_up_systems(world, step_context);
 
@@ -111,7 +112,7 @@ void test_attack_move_save(size_t save_point)
 	WorldContext loaded_world;
 	basic_components_support(loaded_world.ecs);
 	basic_commands_support(loaded_world.ecs);
-	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(loaded_world.ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(loaded_world.ecs);
 	auto loaded_step_context = makeDefaultStepContext<custom_variant>();
 	set_up_systems(loaded_world, loaded_step_context);
 

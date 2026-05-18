@@ -44,7 +44,7 @@ namespace
 {
 
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 using CustomStepContext = StepContext<custom_variant, DEFAULT_STEPS_T>;
 using CustomStepManager = CustomStepContext::step;

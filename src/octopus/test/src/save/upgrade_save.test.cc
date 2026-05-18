@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 
+#include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
@@ -40,7 +41,7 @@ using namespace octopus;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 struct ProdA : ProductionTemplate<DefaultStepManager>
@@ -78,7 +79,7 @@ TEST(upgrade_save, prod_before_save)
 	flecs::world &ecs = world.ecs;
 
 	basic_components_support(ecs);
-	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
 
 	ecs.add<Input<custom_variant, DefaultStepManager>>();
 
@@ -154,7 +155,7 @@ TEST(upgrade_save, prod_before_save)
 	WorldContext loaded_world;
 	auto loaded_step_context = makeDefaultStepContext<custom_variant>();
 	basic_components_support(loaded_world.ecs);
-	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(loaded_world.ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(loaded_world.ecs);
 	loaded_world.ecs.add<Input<custom_variant, DefaultStepManager>>();
 	ProductionTemplateLibrary<DefaultStepManager> new_lib_l;
 	new_lib_l.add_template(new ProdA());

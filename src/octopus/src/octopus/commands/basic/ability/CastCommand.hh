@@ -33,8 +33,35 @@ struct CastCommand {
 // after CastCommand definition
 #include "octopus/components/step/StepContainer.hh"
 #include "octopus/commands/basic/move/MoveCommand.hh"
+#include "octopus/systems/input/InputStatus.hh"
 
 namespace octopus {
+
+template<class StepManager_t>
+InputStatus can_cast(flecs::world const &ecs, ResourceStock const &stock, Caster const &caster, AbilityTemplate<StepManager_t> const *ability) {
+	InputStatus status;
+	if (!ability) {
+		status.ok = false;
+		status.other_explanations.push_back("UNREGISTERED_ABILITY");
+		return status;
+	}
+	// check reources
+	if(!check_resources(stock.resource, {}, ability->resource_consumption())) {
+		Logger::getDebug() <<"  no resource"<<std::endl;
+		status.other_explanations.push_back("MISSING_RESOURCES");
+		status.ok = false;
+	}
+	// check cooldown
+	int64_t last_call = caster.get_timestamp_last_call(ability->name());
+	if(last_call >= 0 && last_call + ability->reload() > get_time_stamp(ecs)) {
+		Logger::getDebug() <<"  no reload"<<std::endl;
+		status.cooldown_ratio = double(get_time_stamp(ecs) - last_call)/double(ability->reload());
+		status.cooldown_ticks_remaining = last_call + ability->reload() - get_time_stamp(ecs);
+		status.other_explanations.push_back("COOLDOWN");
+		status.ok = false;
+	}
+	return status;
+}
 
 template<class StepManager_t, class CommandQueue_t>
 void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
@@ -52,17 +79,9 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 			// get ability
 			AbilityTemplate<StepManager_t> const * ability_l = ability_library->try_get(castCommand_p.ability);
 			// check reources
-			if(!ability_l || !check_resources(res_p.resource, {}, ability_l->resource_consumption()))
-			{
-				Logger::getDebug() <<"  no resource"<<std::endl;
-				// done if not enough
-				queue_p._queuedActions.push_back(CommandQueueActionDone());
-			}
-			// check reload
-			else if(!caster_p.check_timestamp_last_cast(ability_l->reload(), get_time_stamp(ecs), ability_l->name()))
-			{
-				Logger::getDebug() <<"  no reload"<<std::endl;
-				// done if not enough
+			InputStatus status = can_cast(ecs, res_p, caster_p, ability_l);
+			if(!status.ok) {
+				// done
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
 			}
 			// check if target is required

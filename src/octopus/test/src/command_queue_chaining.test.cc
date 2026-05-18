@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/basic/move/AttackCommandSystem.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
@@ -14,7 +15,7 @@ using vString = std::stringstream;
 namespace
 {
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, WalkTest, AttackTest>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, WalkTest, AttackTest>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 void set_up_walk_systems(flecs::world &ecs, vString &res)

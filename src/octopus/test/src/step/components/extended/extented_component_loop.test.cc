@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 
+#include "octopus/commands/basic/ability/CastCommand.hh"
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/components/step/StepReversal.hh"
@@ -67,7 +68,7 @@ struct AttackTestStep {
 
 /// END component
 
-using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, AttackTestComponent>;
+using custom_variant = std::variant<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, AttackTestComponent>;
 using CustomCommandQueue = CommandQueue<custom_variant>;
 
 template<class StepManager_t>
@@ -120,7 +121,7 @@ TEST(extended_loop, simple)
 		.member("damage", &AttackTestComponent::damage)
 		.member("target", &AttackTestComponent::target);
 
-	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, AttackTestComponent>(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand, AttackTestComponent>(ecs);
 
 	auto step_context = makeStepContext<custom_variant, AttackTestStep>();
 	set_up_systems(world, step_context);

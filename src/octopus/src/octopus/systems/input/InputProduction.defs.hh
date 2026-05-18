@@ -118,11 +118,6 @@ InputStatus get_input_status(flecs::world &ecs, ProductionTemplateLibrary<StepMa
 }
 
 template<typename StepManager_t>
-InputStatus get_input_status(flecs::world &ecs, AbilityTemplateLibrary<StepManager_t> const &ability_lib, InputCast const &input) {
-	return InputStatus();
-}
-
-template<typename StepManager_t>
 void handle_new_production(
 	InputProduction const &input,
 	ProductionTemplateLibrary<StepManager_t> const &prod_lib,
