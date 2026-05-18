@@ -57,7 +57,13 @@ flecs::entity find_best_entity_for_casting(flecs::world const &ecs,
 		}
 	}
 	status.ok = false;
-	status.other_explanations.push_back("NO_VALID_CANDIDATE");
+	if (found_missing_resource) {
+		status.other_explanations.push_back("MISSING_RESOURCES");
+	} else if(found_cooldown) {
+		status.other_explanations.push_back("COOLDOWN");
+	} else {
+		status.other_explanations.push_back("NO_VALID_CANDIDATE");
+	}
 	return flecs::entity();
 }
 
@@ -102,15 +108,15 @@ void handle_cast(
 	StepManager_t &manager) {
 	InputStatus status = octopus::get_input_status(ecs, ability_lib, input);
 	if (!status.ok) {
-		// std::cout<<"Can't produce "<<input.production<<std::endl;
-		// std::cout<<"missing_upgrades"<<std::endl;
-		// for(auto str : status.missing_upgrades) {
-		// 	std::cout<<str<<std::endl;
-		// }
-		// std::cout<<"other_explanations"<<std::endl;
-		// for(auto str : status.other_explanations) {
-		// 	std::cout<<str<<std::endl;
-		// }
+		std::cout<<"Can't produce "<<input.cast_command.ability<<std::endl;
+		std::cout<<"missing_upgrades"<<std::endl;
+		for(auto str : status.missing_upgrades) {
+			std::cout<<str<<std::endl;
+		}
+		std::cout<<"other_explanations"<<std::endl;
+		for(auto str : status.other_explanations) {
+			std::cout<<str<<std::endl;
+		}
 		Logger::getDebug() << "Can't cast "<<input.cast_command.ability<<std::endl;
 		return;
 	}

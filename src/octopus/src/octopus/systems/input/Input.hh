@@ -111,6 +111,10 @@ public:
 		container_command.get_back_layer().push_back(stop);
 	}
 
+	void addInputCast(InputCast const &input_p) {
+		std::lock_guard<std::mutex> lock_l(mutex);
+		container.container_cast.get_back_layer().push_back(input_p);
+	}
 	void newProduction(InputProduction const &input_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);

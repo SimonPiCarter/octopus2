@@ -90,6 +90,7 @@ TEST(input_ability, simple)
 			{"mana", {10,0} }
 		}})
 		.add<Caster>()
+		.add<Caster>(ecs.component("heal"))
 		.add<CastCommand>()
 		.set<HitPoint>({10});
 
@@ -118,6 +119,161 @@ TEST(input_ability, simple)
 		{
 			CastCommand cast_l {"heal"};
 			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addFrontCommand(e1, cast_l);
+		}
+
+		revert_test.add_record(ecs);
+
+		// stream_ent<HitPoint, Caster, ResourceStock, CastCommand, CustomCommandQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_ability, input_cast)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	AbilityTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new AbilityA());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	Position pos_l = {{10,10}};
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
+		.add<Move>()
+		.set<ResourceStock>({ {
+			{"mana", {10,0} }
+		}})
+		.add<Caster>()
+		.set<PlayerAppartenance>({0})
+		.add<Caster>(ecs.component("heal"))
+		.add<CastCommand>()
+		.set<HitPoint>({10});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+	};
+
+	InputStatus status = get_input_status(ecs, ecs.get<AbilityTemplateLibrary<DefaultStepManager>>(), {{e1}, "heal"});
+	EXPECT_TRUE(status.ok);
+
+	RevertTester<custom_variant, HitPoint, Caster, CastCommand, ResourceStock> revert_test({e1});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+
+		if(i == 2)
+		{
+			CastCommand cast_l {"heal"};
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addInputCast({{e1}, cast_l});
+		}
+
+		revert_test.add_record(ecs);
+
+		// stream_ent<HitPoint, Caster, ResourceStock, CastCommand, CustomCommandQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+
+TEST(input_ability, input_cast_missing_resource)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	AbilityTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new AbilityA());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	Position pos_l = {{10,10}};
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<Position>(pos_l)
+		.set<Collision>({octopus::Fixed::One(), octopus::Fixed::One(), false})
+		.add<Move>()
+		.set<ResourceStock>({ {
+			{"mana", {8,0} }
+		}})
+		.add<Caster>()
+		.set<PlayerAppartenance>({0})
+		.add<Caster>(ecs.component("heal"))
+		.add<CastCommand>()
+		.set<HitPoint>({10});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+	};
+
+	RevertTester<custom_variant, HitPoint, Caster, CastCommand, ResourceStock> revert_test({e1});
+
+	InputStatus status = get_input_status(ecs, ecs.get<AbilityTemplateLibrary<DefaultStepManager>>(), {{e1}, "heal"});
+	EXPECT_FALSE(status.ok);
+	ASSERT_EQ(1, status.other_explanations.size());
+	EXPECT_EQ("MISSING_RESOURCES", status.other_explanations[0]);
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+
+		if(i == 2)
+		{
+			CastCommand cast_l {"heal"};
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addInputCast({{e1}, cast_l});
 		}
 
 		revert_test.add_record(ecs);
