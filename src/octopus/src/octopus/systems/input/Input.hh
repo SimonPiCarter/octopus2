@@ -111,6 +111,11 @@ public:
 		container_command.get_back_layer().push_back(stop);
 	}
 
+	void newProduction(InputProduction const &input_p)
+	{
+		std::lock_guard<std::mutex> lock_l(mutex);
+		container.container_production.get_back_layer().push_back(input_p);
+	}
 	void addProduction(InputAddProduction const &input_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
@@ -169,6 +174,11 @@ public:
 			{
 				handle_cancel_production(input_l, *prod_lib, query_player, ecs, manager_p);
 			}
+
+			for(InputProduction const &input_l : container.container_production.get_front_layer())
+			{
+				handle_new_production(input_l, *prod_lib, ecs, manager_p);
+			}
 		}
 
 		// Handling command inputs
@@ -198,6 +208,8 @@ public:
 
 		container.container_add_production.pop_layer();
 		container.container_cancel_production.pop_layer();
+		container.container_production.pop_layer();
+		container.container_cast.pop_layer();
 		container_command.pop_layer();
 		container_command_functor.pop_layer();
 	}
@@ -207,13 +219,17 @@ public:
 		std::lock_guard<std::mutex> lock_l(mutex);
 		container.container_add_production.push_layer();
 		container.container_cancel_production.push_layer();
+		container.container_production.push_layer();
+		container.container_cast.push_layer();
 		container_command.push_layer();
 		container_command_functor.push_layer();
 	}
 
-	InputStatus get_input_status(WorldContext<StepManager_t> &world, ProductionTemplateLibrary<StepManager_t> const &prod_lib, InputProduction const &input);
-	InputStatus get_input_status(WorldContext<StepManager_t> &world, AbilityTemplateLibrary<StepManager_t> const &ability_lib, InputCast const &input);
 };
+template<typename StepManager_t>
+InputStatus get_input_status(flecs::world &ecs, ProductionTemplateLibrary<StepManager_t> const &prod_lib, InputProduction const &input);
+template<typename StepManager_t>
+InputStatus get_input_status(flecs::world &ecs, AbilityTemplateLibrary<StepManager_t> const &ability_lib, InputCast const &input);
 
 template<typename command_variant_t, typename StepManager_t>
 void set_up_input_system(WorldContext<StepManager_t> &world, StepManager_t &manager)

@@ -2,13 +2,14 @@
 
 #include "flecs.h"
 #include <string>
+#include "InputStatus.hh"
 
 namespace octopus
 {
 
 struct InputProduction {
-	std::string production;
 	std::vector<flecs::entity> candidates;
+	std::string production;
 };
 
 struct InputAddProduction

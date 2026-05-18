@@ -8,8 +8,8 @@ namespace octopus {
 /// @brief This struct is used to return the status of an input command, it can be used to explain to the player why a command is not castable or producable
 struct InputStatus {
 	bool ok = true;
-	std::vector<std::string> missing_resources_player;
-	std::vector<std::string> missing_resources_entity;
+	flecs::entity entity;
+	std::unordered_map<std::string, Fixed> resource_cost;
 	std::vector<std::string> missing_upgrades;
 	std::vector<std::string> other_explanations;
 	double cooldown_ratio = 0.;

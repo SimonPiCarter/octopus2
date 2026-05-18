@@ -44,35 +44,57 @@ using CustomCommandQueue = CommandQueue<custom_variant>;
 
 struct ProdA : ProductionTemplate<DefaultStepManager>
 {
-    virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
-    virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
-    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
+	virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
+	virtual std::unordered_map<std::string, Fixed> resource_consumption() const { return {}; }
+	virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
 	{
 		manager_p.get_last_layer().back().template get<HitPointStep>().add_step(producer_p, HitPointStep{1});
 	}
-    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual std::string name() const { return "a"; }
-    virtual int64_t duration() const { return 2;}
+	virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+	virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+	virtual std::string name() const { return "a"; }
+	virtual int64_t duration() const { return 2;}
 };
 
 struct ProdB : ProductionTemplate<DefaultStepManager>
 {
-    virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
-    virtual std::unordered_map<std::string, Fixed> resource_consumption() const
+	virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
+	virtual std::unordered_map<std::string, Fixed> resource_consumption() const
 	{
 		return {
 			{"food", 10 }
 		};
 	}
-    virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
+	virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
 	{
 		manager_p.get_last_layer().back().template get<HitPointStep>().add_step(producer_p, HitPointStep{10});
 	}
-    virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
-    virtual std::string name() const { return "b"; }
-    virtual int64_t duration() const { return 3;}
+	virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+	virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+	virtual std::string name() const { return "b"; }
+	virtual int64_t duration() const { return 3;}
+};
+
+struct ProdC : ProductionTemplate<DefaultStepManager>
+{
+	virtual bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const {return true;}
+	virtual std::unordered_map<std::string, Fixed> resource_consumption() const
+	{
+		return {
+			{"food", 10 }
+		};
+	}
+	virtual void produce(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const
+	{
+		manager_p.get_last_layer().back().template get<HitPointStep>().add_step(producer_p, HitPointStep{10});
+	}
+	virtual UpgradeRequirement get_requirements() const { return {{{
+			{"techno", 1 }
+		}}}; }
+	virtual void enqueue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+	virtual void dequeue(flecs::entity producer_p, flecs::world const &ecs, DefaultStepManager &manager_p) const {}
+	virtual std::string name() const { return "c"; }
+	virtual int64_t duration() const { return 3;}
 };
 
 }
@@ -341,6 +363,442 @@ TEST(input_production, simple_not_enough_resource_same_input)
 		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
 		// std::cout<<std::endl;
 		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+
+TEST(input_new_production, simple_new_production)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new ProdA());
+	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.add<ProductionQueue>(ecs.component("a"))
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {}});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 2) {
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->newProduction({{e1}, "a"});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_new_production, simple_not_enough_resource)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new ProdA());
+	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	Position pos_l = {{10,10}};
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.add<ProductionQueue>(ecs.component("b"))
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {
+			{"food", {8,0} }
+		}});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	InputStatus status = get_input_status(ecs, ecs.get<ProductionTemplateLibrary<DefaultStepManager>>(), {{e1}, "b"});
+	EXPECT_FALSE(status.ok);
+	ASSERT_EQ(1, status.other_explanations.size());
+	EXPECT_EQ("MISSING_RESOURCES", status.other_explanations[0]);
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 0 || i == 4)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->newProduction({{e1}, "b"});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_new_production, simple_cancel)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager > lib_l;
+	lib_l.add_template(new ProdA());
+	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	Position pos_l = {{10,10}};
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.add<ProductionQueue>(ecs.component("b"))
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {
+			{"food", {10,0} }
+		}});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 0 || i == 4)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->newProduction({{e1}, "b"});
+		}
+		if(i == 1)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->cancelProduction({e1, 0});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_new_production, simple_not_enough_resource_same_input)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager > lib_l;
+	lib_l.add_template(new ProdA());
+	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	Position pos_l = {{10,10}};
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.add<ProductionQueue>(ecs.component("b"))
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {
+			{"food", {10,0} }
+		}});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+		octopus::Fixed(20),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 0)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->newProduction({{e1}, "b"});
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->newProduction({{e1}, "b"});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_new_production, simple_missing_requirement)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new ProdC());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	Position pos_l = {{10,10}};
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.add<ProductionQueue>(ecs.component("c"))
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<ResourceStock>({ {
+			{"food", {10,0} }
+		}});
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	InputStatus status = get_input_status(ecs, ecs.get<ProductionTemplateLibrary<DefaultStepManager>>(), {{e1}, "c"});
+	EXPECT_FALSE(status.ok);
+	ASSERT_EQ(1, status.missing_upgrades.size());
+	EXPECT_EQ("techno 1", status.missing_upgrades[0]);
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 0)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->newProduction({{e1}, "c"});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_new_production, balance_queue)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	basic_commands_support(ecs);
+	command_queue_support<octopus::NoOpCommand, octopus::AttackCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new ProdA());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	Position pos_l = {{10,10}};
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.add<ProductionQueue>(ecs.component("a"))
+		.set<PlayerAppartenance>({0});
+	auto e2 = ecs.entity("e2")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.add<ProductionQueue>(ecs.component("a"))
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.add<ResourceStock>();
+
+	std::vector<octopus::Fixed> const expected_hp1_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+	};
+
+	std::vector<octopus::Fixed> const expected_hp2_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1, e2});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 2 || i == 3)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->newProduction({{e1, e2}, "a"});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp1_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+		EXPECT_EQ(expected_hp2_l.at(i), e2.try_get<HitPoint>()->qty) << "10 != "<<e2.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);
