@@ -65,7 +65,7 @@ InputStatus can_cast(flecs::world const &ecs, flecs::entity e, ResourceStock con
 	ResourceStock const * resource_stock = player.is_valid() ? player.try_get<ResourceStock>() : nullptr;
 	ReductionLibrary const * reduction_library = player.is_valid() ? player.try_get<ReductionLibrary>() : nullptr;
 	ResourceSpent * resource_spent = player.is_valid() ? player.try_get_mut<ResourceSpent>() : nullptr;
-	status.resource_cost = reduction_library ? get_required_resources(reduction_library->reductions[ability->name()], ability->resource_consumption()) : ability->resource_consumption();
+	status.resource_cost = reduction_library ? get_required_resources(reduction_library->reductions[ability->name()], ability->player_resource_consumption()) : ability->player_resource_consumption();
 	if (!check_resources(
 		resource_stock ? resource_stock->resource : fast_map<std::string, ResourceInfo>{},
 		resource_spent ? resource_spent->resources_spent : std::unordered_map<std::string, Fixed>{},
