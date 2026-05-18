@@ -48,6 +48,13 @@ struct InputContainer
 	InputLayerContainer<InputCancelProduction> container_cancel_production;
 };
 
+template<typename StepManager_t, typename command_variant_t>
+void handle_cast(
+	InputCast const &input,
+	AbilityTemplateLibrary<StepManager_t> const &ability_lib,
+	flecs::world &ecs,
+	StepManager_t &manager);
+
 template<typename command_variant_t, typename StepManager_t>
 struct Input
 {
@@ -184,7 +191,8 @@ public:
 			{
 				handle_new_production(input_l, *prod_lib, ecs, manager_p);
 			}
-
+		}
+		if(ability_lib) {
 			for(InputCast const &input_l : container.container_cast.get_front_layer()) {
 				handle_cast<StepManager_t, command_variant_t>(input_l, *ability_lib, ecs, manager_p);
 			}
