@@ -101,7 +101,6 @@ InputStatus get_input_status(flecs::world &ecs, ProductionTemplateLibrary<StepMa
 	status.ok &= status.missing_upgrades.empty();
 
 	// Check player resources
-	PlayerInfo const * player_info = player.try_get<PlayerInfo>();
 	ResourceStock const * resource_stock = player.try_get<ResourceStock>();
 	ReductionLibrary const * reductionibrary = player.try_get<ReductionLibrary>();
 	ResourceSpent * resource_spent = player.try_get_mut<ResourceSpent>();
