@@ -30,6 +30,8 @@ struct AbilityTemplate
     /// The resource consumption will be done and check over the resources of the
     /// caster
     virtual std::unordered_map<std::string, Fixed> resource_consumption() const = 0;
+    /// @brief This is used to handle resource consumption and restoration for the player
+    virtual std::unordered_map<std::string, Fixed> player_resource_consumption() const { return {}; }
     /// @brief This is called when the windup starts
     /// @note example : start an animation
     virtual void start_windup(flecs::entity, Vector, flecs::entity, flecs::world const &, StepManager_t &) const {}

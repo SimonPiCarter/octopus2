@@ -40,7 +40,7 @@ flecs::entity find_best_entity_for_casting(flecs::world const &ecs,
 			continue;
 		}
 		Caster const &caster = e.get<Caster>();
-		InputStatus current_status = can_cast<StepManager_t>(ecs, *stock, caster, &ability);
+		InputStatus current_status = can_cast<StepManager_t>(ecs, e, *stock, caster, &ability);
 		if(current_status.ok) {
 			return e;
 		}

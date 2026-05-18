@@ -8,6 +8,8 @@
 #include "octopus/commands/queue/CommandQueue.hh"
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
+#include "octopus/world/player/PlayerInfo.hh"
+#include "octopus/world/resources/CostReduction.hh"
 #include "octopus/world/resources/ResourceStock.hh"
 
 namespace octopus
@@ -38,16 +40,38 @@ struct CastCommand {
 namespace octopus {
 
 template<class StepManager_t>
-InputStatus can_cast(flecs::world const &ecs, ResourceStock const &stock, Caster const &caster, AbilityTemplate<StepManager_t> const *ability) {
+InputStatus can_cast(flecs::world const &ecs, flecs::entity e, ResourceStock const &stock, Caster const &caster, AbilityTemplate<StepManager_t> const *ability) {
 	InputStatus status;
 	if (!ability) {
 		status.ok = false;
 		status.other_explanations.push_back("UNREGISTERED_ABILITY");
 		return status;
 	}
-	// check reources
+	// check is_castable
+	std::string castability_error = ability->is_castable(e, ecs);
+	if(!castability_error.empty()) {
+		Logger::getDebug() <<"  not castable: "<<castability_error<<std::endl;
+		status.ok = false;
+		status.other_explanations.push_back(castability_error);
+	}
+	// check resources
 	if(!check_resources(stock.resource, {}, ability->resource_consumption())) {
 		Logger::getDebug() <<"  no resource"<<std::endl;
+		status.other_explanations.push_back("MISSING_RESOURCES");
+		status.ok = false;
+	}
+	// check player resource
+	flecs::entity player = get_player_from_appartenance(e, ecs);
+	ResourceStock const * resource_stock = player.is_valid() ? player.try_get<ResourceStock>() : nullptr;
+	ReductionLibrary const * reduction_library = player.is_valid() ? player.try_get<ReductionLibrary>() : nullptr;
+	ResourceSpent * resource_spent = player.is_valid() ? player.try_get_mut<ResourceSpent>() : nullptr;
+	status.resource_cost = reduction_library ? get_required_resources(reduction_library->reductions[ability->name()], ability->resource_consumption()) : ability->resource_consumption();
+	if (!check_resources(
+		resource_stock ? resource_stock->resource : fast_map<std::string, ResourceInfo>{},
+		resource_spent ? resource_spent->resources_spent : std::unordered_map<std::string, Fixed>{},
+		status.resource_cost
+	)){
+		Logger::getDebug() <<"  no player resource"<<std::endl;
 		status.other_explanations.push_back("MISSING_RESOURCES");
 		status.ok = false;
 	}
@@ -79,7 +103,7 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 			// get ability
 			AbilityTemplate<StepManager_t> const * ability_l = ability_library->try_get(castCommand_p.ability);
 			// check reources
-			InputStatus status = can_cast(ecs, res_p, caster_p, ability_l);
+			InputStatus status = can_cast(ecs, e, res_p, caster_p, ability_l);
 			if(!status.ok) {
 				// done
 				queue_p._queuedActions.push_back(CommandQueueActionDone());
@@ -140,6 +164,16 @@ void set_up_cast_system(flecs::world &ecs, StepManager_t &manager_p)
 					Fixed resource_consumed_l = pair_l.second;
 					// add step for consumption
 					manager_p.get_last_layer().back().template get<ResourceStockStep>().add_step(e, {-resource_consumed_l, resource_l});
+				}
+				// consume player resources
+				flecs::entity player = get_player_from_appartenance(e, ecs);
+				// consume resources
+				for(auto &&pair_l : status.resource_cost)
+				{
+					std::string const &resource_l = pair_l.first;
+					Fixed resource_consumed_l = pair_l.second;
+					// add step for consumption
+					manager_p.get_last_layer().back().template get<ResourceStockStep>().add_step(player, {-resource_consumed_l, resource_l});
 				}
 				// reset windup
 				manager_p.get_last_layer().back().template get<CasterWindupStep>().add_step(e, {0});

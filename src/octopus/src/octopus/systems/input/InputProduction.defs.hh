@@ -102,9 +102,9 @@ InputStatus get_input_status(flecs::world &ecs, ProductionTemplateLibrary<StepMa
 
 	// Check player resources
 	ResourceStock const * resource_stock = player.try_get<ResourceStock>();
-	ReductionLibrary const * reductionibrary = player.try_get<ReductionLibrary>();
+	ReductionLibrary const * reduction_library = player.try_get<ReductionLibrary>();
 	ResourceSpent * resource_spent = player.try_get_mut<ResourceSpent>();
-	status.resource_cost = reductionibrary ? get_required_resources(reductionibrary->reductions[prod->name()], prod->resource_consumption()) : prod->resource_consumption();
+	status.resource_cost = reduction_library ? get_required_resources(reduction_library->reductions[prod->name()], prod->resource_consumption()) : prod->resource_consumption();
 	status.ok &= check_resources(
 		resource_stock ? resource_stock->resource : fast_map<std::string, ResourceInfo>{},
 		resource_spent ? resource_spent->resources_spent : std::unordered_map<std::string, Fixed>{},
