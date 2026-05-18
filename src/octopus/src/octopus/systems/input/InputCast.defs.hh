@@ -108,15 +108,15 @@ void handle_cast(
 	StepManager_t &manager) {
 	InputStatus status = octopus::get_input_status(ecs, ability_lib, input);
 	if (!status.ok) {
-		std::cout<<"Can't produce "<<input.cast_command.ability<<std::endl;
-		std::cout<<"missing_upgrades"<<std::endl;
-		for(auto str : status.missing_upgrades) {
-			std::cout<<str<<std::endl;
-		}
-		std::cout<<"other_explanations"<<std::endl;
-		for(auto str : status.other_explanations) {
-			std::cout<<str<<std::endl;
-		}
+		// std::cout<<"Can't produce "<<input.cast_command.ability<<std::endl;
+		// std::cout<<"missing_upgrades"<<std::endl;
+		// for(auto str : status.missing_upgrades) {
+		// 	std::cout<<str<<std::endl;
+		// }
+		// std::cout<<"other_explanations"<<std::endl;
+		// for(auto str : status.other_explanations) {
+		// 	std::cout<<str<<std::endl;
+		// }
 		Logger::getDebug() << "Can't cast "<<input.cast_command.ability<<std::endl;
 		return;
 	}
