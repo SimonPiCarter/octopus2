@@ -105,13 +105,16 @@ InputStatus get_input_status(flecs::world &ecs, ProductionTemplateLibrary<StepMa
 	ReductionLibrary const * reduction_library = player.try_get<ReductionLibrary>();
 	ResourceSpent * resource_spent = player.try_get_mut<ResourceSpent>();
 	status.resource_cost = reduction_library ? get_required_resources(reduction_library->reductions[prod->name()], prod->resource_consumption()) : prod->resource_consumption();
-	status.ok &= check_resources(
+	bool missing_resources = !check_resources(
 		resource_stock ? resource_stock->resource : fast_map<std::string, ResourceInfo>{},
 		resource_spent ? resource_spent->resources_spent : std::unordered_map<std::string, Fixed>{},
 		status.resource_cost
 		);
-	const std::string reason = "MISSING_RESOURCES";
-	status.other_explanations.push_back(reason);
+	if (missing_resources) {
+		const std::string reason = "MISSING_RESOURCES";
+		status.other_explanations.push_back(reason);
+		status.ok = false;
+	}
 
 	return status;
 }
