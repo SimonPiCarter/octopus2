@@ -41,6 +41,7 @@ flecs::entity find_best_entity_for_casting(flecs::world const &ecs,
 		}
 		Caster const &caster = e.get<Caster>();
 		InputStatus current_status = can_cast<StepManager_t>(ecs, e, *stock, caster, &ability);
+		std::swap(status.resource_cost, current_status.resource_cost);
 		if(current_status.ok) {
 			return e;
 		}
