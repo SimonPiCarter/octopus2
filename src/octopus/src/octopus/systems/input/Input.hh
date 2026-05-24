@@ -46,6 +46,8 @@ struct InputContainer
 	InputLayerContainer<InputProduction> container_production;
 	InputLayerContainer<InputAddProduction> container_add_production;
 	InputLayerContainer<InputCancelProduction> container_cancel_production;
+	InputLayerContainer<InputCommand<command_variant_t> > container_command;
+	InputLayerContainer<InputCommandFunctor<command_variant_t, StepManager_t> > container_command_functor;
 };
 
 template<typename StepManager_t, typename command_variant_t>
@@ -63,8 +65,6 @@ private:
 
 	InputContainer<command_variant_t, StepManager_t> container;
 
-	InputLayerContainer<InputCommand<command_variant_t> > container_command;
-	InputLayerContainer<InputCommandFunctor<command_variant_t, StepManager_t> > container_command_functor;
 public:
 	flecs::entity flock_manager;
 
@@ -91,7 +91,7 @@ public:
 		}
 		for(auto entity : entities)
 		{
-			container_command.get_back_layer().push_back({entity, command_p, true});
+			container.container_command.get_back_layer().push_back({entity, command_p, true});
 		}
 	}
 
@@ -105,7 +105,7 @@ public:
 		}
 		for(auto entity : entities)
 		{
-			container_command.get_back_layer().push_back({entity, command_p, false});
+			container.container_command.get_back_layer().push_back({entity, command_p, false});
 		}
 	}
 
@@ -115,7 +115,7 @@ public:
 		InputCommand<command_variant_t> stop;
 		stop.entity = entity;
 		stop.stop = true;
-		container_command.get_back_layer().push_back(stop);
+		container.container_command.get_back_layer().push_back(stop);
 	}
 
 	void addInputCast(InputCast const &input_p) {
@@ -141,7 +141,7 @@ public:
 	void addFunctorCommand(InputCommandFunctor<command_variant_t, StepManager_t> const &input_p)
 	{
 		std::lock_guard<std::mutex> lock_l(mutex);
-		container_command_functor.get_back_layer().push_back(input_p);
+		container.container_command_functor.get_back_layer().push_back(input_p);
 	}
 
 	void unstack_input(WorldContext<StepManager_t> &world, StepManager_t &manager_p)
@@ -159,7 +159,7 @@ public:
 		AbilityTemplateLibrary<StepManager_t> const *ability_lib = ecs.try_get<AbilityTemplateLibrary<StepManager_t>>();
 
 		// Filling command inputs from functors
-		for(InputCommandFunctor<command_variant_t, StepManager_t> const & input : container_command_functor.get_front_layer())
+		for(InputCommandFunctor<command_variant_t, StepManager_t> const & input : container.container_command_functor.get_front_layer())
 		{
 			InputCommandPackage<command_variant_t> package = input.func(world, container);
 			if(package.entities.size() > 1)
@@ -169,7 +169,7 @@ public:
 			for(flecs::entity const &entity : package.entities)
 			{
 				// append to front layer for them to be handled just after this loop
-				container_command.get_front_layer().push_back({entity, package.command, package.front, package.stop});
+				container.container_command.get_front_layer().push_back({entity, package.command, package.front, package.stop});
 			}
 		}
 
@@ -199,7 +199,7 @@ public:
 		}
 
 		// Handling command inputs
-		for(InputCommand<command_variant_t> const & input : container_command.get_front_layer())
+		for(InputCommand<command_variant_t> const & input : container.container_command.get_front_layer())
 		{
 			if(!input.entity.is_valid()) { continue; }
 			auto &&command_queue = input.entity.template try_get_mut<CommandQueue<command_variant_t>>();
@@ -227,8 +227,8 @@ public:
 		container.container_cancel_production.pop_layer();
 		container.container_production.pop_layer();
 		container.container_cast.pop_layer();
-		container_command.pop_layer();
-		container_command_functor.pop_layer();
+		container.container_command.pop_layer();
+		container.container_command_functor.pop_layer();
 	}
 
 	void stack_input()
@@ -238,8 +238,8 @@ public:
 		container.container_cancel_production.push_layer();
 		container.container_production.push_layer();
 		container.container_cast.push_layer();
-		container_command.push_layer();
-		container_command_functor.push_layer();
+		container.container_command.push_layer();
+		container.container_command_functor.push_layer();
 	}
 
 };
