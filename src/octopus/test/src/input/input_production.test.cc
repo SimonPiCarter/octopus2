@@ -13,6 +13,7 @@
 #include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/position/Move.hh"
 #include "octopus/components/basic/position/Position.hh"
+#include "octopus/components/advanced/production/PlayerProduction.hh"
 #include "octopus/components/step/StepContainer.hh"
 
 #include "octopus/systems/Systems.hh"
@@ -800,6 +801,138 @@ TEST(input_new_production, balance_queue)
 		// std::cout<<std::endl;
 		EXPECT_EQ(expected_hp1_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 		EXPECT_EQ(expected_hp2_l.at(i), e2.try_get<HitPoint>()->qty) << "10 != "<<e2.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_production, player_production_ok)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new ProdA());
+	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<PlayerProduction>({{{
+			{"a", true}
+		}}})
+		.add<ResourceStock>();
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+		octopus::Fixed(11),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 2)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
+	}
+
+	revert_test.revert_and_check_records(world, step_context);
+}
+
+TEST(input_production, player_production_ko)
+{
+	WorldContext world;
+	flecs::world &ecs = world.ecs;
+
+	basic_components_support(ecs);
+	advanced_components_support<DefaultStepManager, octopus::NoOpCommand, octopus::AttackCommand, octopus::CastCommand>(ecs);
+
+	ecs.add<Input<custom_variant, DefaultStepManager>>();
+
+	auto step_context = makeDefaultStepContext<custom_variant>();
+	ProductionTemplateLibrary<DefaultStepManager> lib_l;
+	lib_l.add_template(new ProdA());
+	lib_l.add_template(new ProdB());
+	ecs.set(lib_l);
+
+	set_up_systems(world, step_context);
+
+	auto e1 = ecs.entity("e1")
+		.add<CustomCommandQueue>()
+		.set<HitPoint>({10})
+		.set<ProductionQueue>({0, {}})
+		.set<PlayerAppartenance>({0});
+
+	auto player = ecs.entity("player")
+		.set<PlayerInfo>({0, 0})
+		.set<PlayerProduction>({{{
+			{"a", false}
+		}}})
+		.add<ResourceStock>();
+
+	std::vector<octopus::Fixed> const expected_hp_l = {
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+		octopus::Fixed(10),
+	};
+
+	RevertTester<custom_variant, HitPoint, ProductionQueue> revert_test({e1});
+
+	for(size_t i = 0; i < 10 ; ++ i)
+	{
+		// std::cout<<"p"<<i<<std::endl;
+
+		ecs.progress();
+		revert_test.add_record(ecs);
+
+		if(i == 2)
+		{
+			ecs.try_get_mut<Input<custom_variant, DefaultStepManager>>()->addProduction({e1, "a"});
+		}
+
+		// stream_ent<HitPoint, ProductionQueue>(std::cout, ecs, e1);
+		// std::cout<<std::endl;
+		EXPECT_EQ(expected_hp_l.at(i), e1.try_get<HitPoint>()->qty) << "10 != "<<e1.try_get<HitPoint>()->qty.to_double();
 	}
 
 	revert_test.revert_and_check_records(world, step_context);

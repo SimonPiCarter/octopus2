@@ -4,6 +4,7 @@
 
 #include "octopus/commands/basic/move/AttackCommand.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
+#include "octopus/components/advanced/production/PlayerProduction.hh"
 #include "octopus/components/basic/ability/Caster.hh"
 #include "octopus/components/basic/attack/Attack.hh"
 #include "octopus/components/basic/flock/Flock.hh"
@@ -48,7 +49,8 @@ octopus::ReductionLibraryStep, \
 octopus::ProjectileStep, \
 octopus::PlayerUpgradeStep, \
 octopus::RallyPointStep, \
-octopus::TimeStampIncrementStep \
+octopus::TimeStampIncrementStep, \
+octopus::PlayerProductionStep \
 
 
 namespace octopus
