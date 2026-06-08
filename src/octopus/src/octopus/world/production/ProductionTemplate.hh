@@ -5,6 +5,7 @@
 #include "octopus/components/basic/player/Player.hh"
 #include "octopus/components/basic/player/PlayerUpgrade.hh"
 #include "octopus/components/basic/player/UpgradeRequirement.hh"
+#include "octopus/components/advanced/production/PlayerProduction.hh"
 #include "octopus/utils/FixedPoint.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 
@@ -22,7 +23,8 @@ struct ProductionTemplate
     bool check_requirement(flecs::entity producer_p, flecs::world const &ecs) const
     {
         return check_requirements(producer_p, ecs, get_requirements())
-            && can_produce(producer_p, ecs);
+            && can_produce(producer_p, ecs)
+            && satisfy_player_production_requirements(producer_p, name());
     }
     /// @brief Return true if the producer can produce the production
     /// @remark this is useful when something can only be produced once (exemple an upgrade)

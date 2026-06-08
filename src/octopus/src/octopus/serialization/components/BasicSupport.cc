@@ -19,6 +19,7 @@
 #include "octopus/components/basic/rally_point/RallyPoint.hh"
 #include "octopus/components/basic/timestamp/TimeStamp.hh"
 #include "octopus/components/advanced/production/queue/ProductionQueue.hh"
+#include "octopus/components/advanced/production/PlayerProduction.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/world/path/PathFindingCache.hh"
 #include "octopus/world/player/PlayerInfo.hh"
@@ -180,6 +181,12 @@ void basic_components_support(flecs::world& ecs)
 
 	ecs.component<TimeStamp>()
 		.member("time", &TimeStamp::time);
+
+    ecs.component<fast_map<std::string, bool> >()
+        .opaque(fast_map_support<std::string, bool>);
+
+	ecs.component<PlayerProduction>()
+		.member("productions", &PlayerProduction::productions);
 }
 
 } // namespace octopus
