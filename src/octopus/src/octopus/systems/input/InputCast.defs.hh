@@ -22,8 +22,7 @@ flecs::entity find_best_entity_for_casting(flecs::world const &ecs,
 	using namespace octopus;
 	octopus::AbilityTemplate<StepManager_t> const &ability = ability_library.get(cast_name);
 
-	bool found_missing_resource = false;
-	bool found_cooldown = false;
+	std::string deepest_explanation = "";
 	status.cooldown_ratio = 1.;
 	/// @todo Tri entre les entités :
 	/// - Proximité
@@ -45,12 +44,24 @@ flecs::entity find_best_entity_for_casting(flecs::world const &ecs,
 		if(current_status.ok) {
 			return e;
 		}
+		bool found_cooldown = false;
+		bool found_missing_resources = false;
+		std::string other_explanation = "";
 		for (std::string const & expl : current_status.other_explanations) {
 			if (expl == "MISSING_RESOURCES") {
-				found_missing_resource = true;
+				found_missing_resources = true;
 			} else if (expl == "COOLDOWN") {
 				found_cooldown = true;
+			} else {
+				other_explanation = expl;
 			}
+		}
+		if (!other_explanation.empty() && deepest_explanation != "MISSING_RESOURCES" && deepest_explanation != "COOLDOWN") {
+			deepest_explanation = other_explanation;
+		} else if (found_missing_resources && deepest_explanation != "COOLDOWN") {
+			deepest_explanation = "MISSING_RESOURCES";
+		} else if (found_cooldown) {
+			deepest_explanation = "COOLDOWN";
 		}
 		if (current_status.cooldown_ratio < status.cooldown_ratio) {
 			status.cooldown_ratio = current_status.cooldown_ratio;
@@ -58,10 +69,8 @@ flecs::entity find_best_entity_for_casting(flecs::world const &ecs,
 		}
 	}
 	status.ok = false;
-	if (found_missing_resource) {
-		status.other_explanations.push_back("MISSING_RESOURCES");
-	} else if(found_cooldown) {
-		status.other_explanations.push_back("COOLDOWN");
+	if (deepest_explanation != "") {
+		status.other_explanations.push_back(deepest_explanation);
 	} else {
 		status.other_explanations.push_back("NO_VALID_CANDIDATE");
 	}
