@@ -102,6 +102,30 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
 {
     TriPoint const &p = getPoint(pidx);
 
+    // Detect constrained edges that the new point lies exactly on (collinear
+    // with, and strictly between, the endpoints). Such an edge must not
+    // block the cavity flood-fill for this insertion: if it did, the
+    // boundary-edge fan below would have to connect that edge directly to p,
+    // producing a degenerate zero-area triangle (a,b,p) since a, b and p are
+    // collinear, while the triangle on the *other* side of the constrained
+    // edge (never reached by the fill) would keep the old, unsplit edge —
+    // an inconsistent, self-corrupting mesh. Instead, the edge is crossed
+    // for this insertion only, splitting both adjacent triangles cleanly,
+    // and the constraint set is updated below to replace (a,b) with (a,p)
+    // and (p,b) so later operations stay consistent.
+    std::vector<Edge> edgesToSplit;
+    for (Edge const &ce : _constrainedEdges)
+    {
+        TriPoint const &ea = getPoint(ce.a);
+        TriPoint const &eb = getPoint(ce.b);
+        if (orient2d(ea, eb, p) != 0)
+            continue;
+        long long const dot = (p.x - ea.x) * (eb.x - ea.x) + (p.y - ea.y) * (eb.y - ea.y);
+        long long const lenSq = (eb.x - ea.x) * (eb.x - ea.x) + (eb.y - ea.y) * (eb.y - ea.y);
+        if (dot > 0 && dot < lenSq) // strictly between ea and eb
+            edgesToSplit.push_back(ce);
+    }
+
     // Classical BW step 1: find the triangle that contains p.
     // A CCW triangle (a,b,c) contains p iff orient2d >= 0 for all three edges.
     // The super-triangle guarantees every user point is covered.
@@ -167,8 +191,9 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
         };
         for (Edge const &e : edges)
         {
-            if (_constrainedEdges.count(e))
-                continue; // do not cross constrained edges
+            if (_constrainedEdges.count(e) &&
+                std::find(edgesToSplit.begin(), edgesToSplit.end(), e) == edgesToSplit.end())
+                continue; // do not cross constrained edges (unless p splits them)
             auto it = edgeToTri.find(e);
             if (it == edgeToTri.end()) continue;
             for (std::size_t nb : it->second)
@@ -227,6 +252,15 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
             _triangles.push_back({ { edge.a, edge.b, pidx } });
         else
             _triangles.push_back({ { edge.b, edge.a, pidx } });
+    }
+
+    // Replace each split constrained edge (a,b) with its two halves (a,p)
+    // and (p,b): p is now the mesh vertex lying between a and b.
+    for (Edge const &e : edgesToSplit)
+    {
+        _constrainedEdges.erase(e);
+        _constrainedEdges.insert(makeEdge(e.a, pidx));
+        _constrainedEdges.insert(makeEdge(e.b, pidx));
     }
 
     markDirty();
@@ -505,9 +539,24 @@ std::vector<PointIdx> DelaunayTriangulation::collinearIntermediatePoints(PointId
 
 void DelaunayTriangulation::removeConstrainedEdge(PointIdx a, PointIdx b)
 {
-    // Mirror addConstrainedEdge's splitting: if a point lies exactly on
-    // segment (a,b), the actually-stored edges are the sub-segments through
-    // it, not (a,b) itself. Recurse the same way so both agree.
+    // If (a,b) is stored verbatim, remove it directly. This must be checked
+    // before assuming a collinear split occurred: a point can be added
+    // *after* (a,b) was constrained and happen to land exactly on that
+    // segment. Such a point never retroactively splits the already-stored
+    // edge, so blindly mirroring addConstrainedEdge's split (as if that
+    // point had existed at insertion time) would target sub-edges that were
+    // never actually inserted, silently failing to remove the real (a,b)
+    // entry and leaving a stale constraint behind.
+    Edge const direct = makeEdge(a, b);
+    if (_constrainedEdges.count(direct))
+    {
+        _constrainedEdges.erase(direct);
+        return;
+    }
+
+    // (a,b) isn't stored as-is: it must have been split at
+    // addConstrainedEdge time by intermediate point(s) that existed then.
+    // Mirror that splitting so both agree.
     std::vector<PointIdx> const intermediatePoints = collinearIntermediatePoints(a, b);
     if (!intermediatePoints.empty())
     {
@@ -518,10 +567,7 @@ void DelaunayTriangulation::removeConstrainedEdge(PointIdx a, PointIdx b)
             previous = idx;
         }
         removeConstrainedEdge(previous, b);
-        return;
     }
-
-    _constrainedEdges.erase(makeEdge(a, b));
 }
 
 void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
@@ -680,26 +726,108 @@ void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
 void DelaunayTriangulation::retriangulatePolygon(std::vector<PointIdx> const &polygon,
                                                   PointIdx edgeA, PointIdx edgeB)
 {
-    // Simple fan triangulation from edgeA, always keeping edge (edgeA, edgeB) present.
-    // The polygon is ordered such that edgeA is first and edgeB is last.
+    // polygon[0] == edgeA, polygon.back() == edgeB; the implicit closing edge
+    // (edgeB, edgeA) is the newly constrained edge, so the input describes a
+    // simple closed polygon (polygon plus that closing edge).
+    //
+    // A naive "always fan from edgeA" triangulation is only correct when the
+    // cavity is star-shaped from edgeA (e.g. convex). The cavity boundary
+    // walked from the real mesh topology can be concave, in which case a fan
+    // from edgeA produces triangles that spill outside the cavity and
+    // overlap pre-existing triangles on the other side of the cavity
+    // boundary — silently corrupting the mesh (later surfacing e.g. as a
+    // "branching cavity boundary" assertion in removePoint). Ear-clipping
+    // triangulates simple polygons of any (concave) shape correctly, and
+    // since (edgeB, edgeA) is a polygon edge it is guaranteed to appear in
+    // exactly one of the produced triangles.
+    (void)edgeB; // edgeB == polygon.back(); kept for documentation/API clarity
     if (polygon.size() < 3) return;
 
-    // polygon[0] == edgeA, polygon.back() == edgeB
-    for (std::size_t i = 1; i + 1 < polygon.size(); ++i)
+    std::vector<PointIdx> ring = polygon;
+
+    // Determine the polygon winding via the shoelace formula so "convex
+    // vertex" tests below use a consistent notion of interior turn.
+    long long signedArea2 = 0;
+    for (std::size_t i = 0; i < ring.size(); ++i)
     {
-        PointIdx pb = polygon[i];
-        PointIdx pc = polygon[i + 1];
-
-        TriPoint const &pa_ = getPoint(edgeA);
-        TriPoint const &pb_ = getPoint(pb);
-        TriPoint const &pc_ = getPoint(pc);
-
-        long long o = orient2d(pa_, pb_, pc_);
-        if (o > 0)
-            _triangles.push_back({ { edgeA, pb, pc } });
-        else if (o < 0)
-            _triangles.push_back({ { edgeA, pc, pb } });
+        TriPoint const &p0 = getPoint(ring[i]);
+        TriPoint const &p1 = getPoint(ring[(i + 1) % ring.size()]);
+        signedArea2 += p0.x * p1.y - p1.x * p0.y;
     }
+    bool const ccw = signedArea2 > 0;
+
+    auto isConvexVertex = [&](PointIdx prev, PointIdx cur, PointIdx next)
+    {
+        long long o = orient2d(getPoint(prev), getPoint(cur), getPoint(next));
+        return ccw ? (o > 0) : (o < 0);
+    };
+
+    auto pointInOrOnTriangle = [&](TriPoint const &a, TriPoint const &b, TriPoint const &c, TriPoint const &p)
+    {
+        long long o1 = orient2d(a, b, p);
+        long long o2 = orient2d(b, c, p);
+        long long o3 = orient2d(c, a, p);
+        bool const hasNeg = (o1 < 0) || (o2 < 0) || (o3 < 0);
+        bool const hasPos = (o1 > 0) || (o2 > 0) || (o3 > 0);
+        return !(hasNeg && hasPos);
+    };
+
+    while (ring.size() > 3)
+    {
+        bool clipped = false;
+        std::size_t const n = ring.size();
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            std::size_t const iPrev = (i + n - 1) % n;
+            std::size_t const iNext = (i + 1) % n;
+            PointIdx const prev = ring[iPrev];
+            PointIdx const cur  = ring[i];
+            PointIdx const next = ring[iNext];
+
+            if (!isConvexVertex(prev, cur, next))
+                continue; // reflex vertex: cannot safely clip this ear
+
+            TriPoint const &pa = getPoint(prev);
+            TriPoint const &pb = getPoint(cur);
+            TriPoint const &pc = getPoint(next);
+
+            bool anyOtherVertexInside = false;
+            for (std::size_t j = 0; j < n; ++j)
+            {
+                if (j == iPrev || j == i || j == iNext) continue;
+                if (pointInOrOnTriangle(pa, pb, pc, getPoint(ring[j])))
+                {
+                    anyOtherVertexInside = true;
+                    break;
+                }
+            }
+            if (anyOtherVertexInside) continue;
+
+            // `cur` is a valid ear: emit its triangle (CCW) and remove it.
+            if (ccw)
+                _triangles.push_back({ { prev, cur, next } });
+            else
+                _triangles.push_back({ { prev, next, cur } });
+
+            ring.erase(ring.begin() + i);
+            clipped = true;
+            break;
+        }
+
+        if (!clipped)
+        {
+            // Should not happen for a simple polygon; avoid an infinite loop
+            // on unexpectedly degenerate input.
+            assert(false && "DelaunayTriangulation::retriangulatePolygon: no ear found");
+            return;
+        }
+    }
+
+    long long o = orient2d(getPoint(ring[0]), getPoint(ring[1]), getPoint(ring[2]));
+    if (o > 0)
+        _triangles.push_back({ { ring[0], ring[1], ring[2] } });
+    else if (o < 0)
+        _triangles.push_back({ { ring[0], ring[2], ring[1] } });
 }
 
 void DelaunayTriangulation::addConstrainedEdge(PointIdx a, PointIdx b)
