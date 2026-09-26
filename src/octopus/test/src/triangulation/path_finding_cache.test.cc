@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "octopus/utils/triangulation/Triangulation.hh"
+#include "octopus/triangulation/DelaunayTriangulationNavigator.hh"
 #include "octopus/world/path/PathFindingCache.hh"
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/systems/Systems.hh"
@@ -24,6 +25,39 @@ TEST(path_finding_cache, only_triangulation)
     EXPECT_EQ(Vector(20,20), funnel[1]);
     EXPECT_EQ(Vector(40,20), funnel[2]);
     EXPECT_EQ(Vector(50,30), funnel[3]);
+}
+
+TEST(path_finding_cache, delaunay_navigator_uses_caller_built_mesh)
+{
+    DelaunayTriangulation mesh;
+    std::vector<PointIdx> const boundary = {
+        mesh.addPoint(Fixed(-100), Fixed(-100)),
+        mesh.addPoint(Fixed(600), Fixed(-100)),
+        mesh.addPoint(Fixed(600), Fixed(600)),
+        mesh.addPoint(Fixed(-100), Fixed(600))
+    };
+    for (std::size_t i = 0; i < boundary.size(); ++i)
+        mesh.addConstrainedEdge(boundary[i], boundary[(i + 1) % boundary.size()]);
+
+    std::vector<PointIdx> const obstacle = {
+        mesh.addPoint(Fixed(20), Fixed(20)),
+        mesh.addPoint(Fixed(40), Fixed(20)),
+        mesh.addPoint(Fixed(40), Fixed(40)),
+        mesh.addPoint(Fixed(20), Fixed(40))
+    };
+    mesh.markHole(obstacle);
+
+    DelaunayTriangulationNavigator navigator(mesh);
+    std::vector<Vector> const funnel = navigator.compute_funnel({10, 30}, {50, 30});
+    ASSERT_EQ(4u, funnel.size());
+    EXPECT_EQ(Vector(10, 30), funnel[0]);
+    EXPECT_EQ(Vector(20, 20), funnel[1]);
+    EXPECT_EQ(Vector(40, 20), funnel[2]);
+    EXPECT_EQ(Vector(50, 30), funnel[3]);
+    EXPECT_TRUE(navigator.compute_path({10, 30}, {50, 30}).size() > 1);
+    EXPECT_TRUE(navigator.compute_path({10, 30}, {30, 30}).empty());
+    EXPECT_TRUE(navigator.compute_path_from_idx(9999, 0).empty());
+    EXPECT_EQ(1, navigator.debug_funnel({10, 30}, {50, 30}, 1).steps);
 }
 
 struct TestGrid
