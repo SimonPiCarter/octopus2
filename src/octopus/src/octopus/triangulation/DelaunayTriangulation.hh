@@ -70,6 +70,11 @@ public:
     /// and must not participate in any constrained edge (both conditions are asserted).
     void removePoint(PointIdx idx);
 
+    /// Remove points by their indices before the batch starts. Indices are
+    /// processed in descending order; duplicate indices are ignored.
+    /// None of the points may participate in a constrained edge.
+    void removePoints(std::vector<PointIdx> const &indices);
+
     /// Access user-visible triangles (those not touching base vertices and not inside holes).
     std::vector<Triangle> const &triangles() const;
 

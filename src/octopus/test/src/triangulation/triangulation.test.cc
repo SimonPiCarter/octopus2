@@ -219,6 +219,69 @@ TEST(triangulation_add, insert_point_bug)
     expectDelaunay(tri);
 }
 
+TEST(triangulation_add, insert_remove_on_existing_points)
+{
+    DelaunayTriangulation tri;
+    PointIdx tl = tri.addPoint(Fixed(10), Fixed(10));
+    PointIdx tr = tri.addPoint(Fixed(510), Fixed(10));
+    PointIdx br = tri.addPoint(Fixed(510), Fixed(510));
+    PointIdx bl = tri.addPoint(Fixed(10), Fixed(510));
+
+    tri.addConstrainedEdge(tl, tr);
+    tri.addConstrainedEdge(tr, br);
+    tri.addConstrainedEdge(br, bl);
+    tri.addConstrainedEdge(bl, tl);
+
+    // The outer frame encloses a 500 × 500 square, so the sum of visible
+    // triangle areas doubled must remain 500000 as interior points are inserted.
+    EXPECT_EQ(500000LL, visibleArea2(tri));
+    expectAllCCW(tri);
+
+    tri.addPoint(Fixed(200), Fixed(250));
+
+    // Re-adding an existing point can place an older index between new indices.
+    long long const insertPoints[4][2] = {
+        { 200, 200 }, { 200, 250 }, { 250, 250 }, { 250, 200 }
+    };
+    PointIdx insertIndices[4]= {0,0,0,0};
+    auto updateInsert = [&]() {
+        for (std::size_t i = 0; i + 1 < 4; ++i)
+        {
+            if (insertIndices[i] != 0 && insertIndices[i + 1] != 0)
+                tri.removeConstrainedEdge(insertIndices[i], insertIndices[i + 1]);
+        }
+        std::vector<PointIdx> pointsToRemove;
+        for (PointIdx idx : insertIndices)
+            if (idx != 0)
+                pointsToRemove.push_back(idx);
+        tri.removePoints(pointsToRemove);
+        for (PointIdx &idx : insertIndices)
+            idx = 0;
+        for (std::size_t i = 0; i < 4; ++i)
+        {
+            auto const &point = insertPoints[i];
+            insertIndices[i] = tri.addPoint(Fixed(point[0]), Fixed(point[1]));
+            EXPECT_EQ(500000LL, visibleArea2(tri));
+        }
+        for (std::size_t i = 0; i + 1 < 4; ++i)
+            tri.addConstrainedEdge(insertIndices[i], insertIndices[i + 1]);
+
+        EXPECT_EQ(500000LL, visibleArea2(tri));
+    };
+
+    updateInsert();
+    EXPECT_EQ(8u, tri.pointCount());
+    for (std::size_t i = 0; i < 4; ++i)
+        EXPECT_GT(vertexRefCount(tri, insertIndices[i]), 0);
+
+    updateInsert();
+    EXPECT_EQ(8u, tri.pointCount());
+    for (std::size_t i = 0; i < 4; ++i)
+        EXPECT_GT(vertexRefCount(tri, insertIndices[i]), 0);
+
+    expectAllCCW(tri);
+}
+
 TEST(triangulation_add, update_insert_repeated_call_preserves_outer_frame_coverage)
 {
     DelaunayTriangulation tri;
@@ -416,6 +479,28 @@ TEST(triangulation_remove, remove_multiple_points_sequentially)
     EXPECT_EQ(3u, tri.pointCount());
     expectAllCCW(tri);
     expectDelaunay(tri);
+}
+
+TEST(triangulation_remove, remove_points_batch_orders_and_deduplicates_indices)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(0), Fixed(0));
+    tri.addPoint(Fixed(10), Fixed(0));
+    tri.addPoint(Fixed(10), Fixed(10));
+    tri.addPoint(Fixed(0), Fixed(10));
+    tri.addPoint(Fixed(5), Fixed(5));
+
+    tri.removePoints({4, 1, 4});
+
+    EXPECT_EQ(3u, tri.pointCount());
+    EXPECT_EQ(0LL, tri.point(0).x);
+    EXPECT_EQ(0LL, tri.point(0).y);
+    EXPECT_EQ(10LL, tri.point(1).x);
+    EXPECT_EQ(10LL, tri.point(1).y);
+    EXPECT_EQ(0LL, tri.point(2).x);
+    EXPECT_EQ(10LL, tri.point(2).y);
+    EXPECT_EQ(1u, tri.triangles().size());
+    expectAllCCW(tri);
 }
 
 // ─── constrained edge tests ───────────────────────────────────────────────────

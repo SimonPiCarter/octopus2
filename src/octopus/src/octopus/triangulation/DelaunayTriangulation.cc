@@ -407,6 +407,17 @@ void DelaunayTriangulation::removePoint(PointIdx idx)
     markDirty();
 }
 
+void DelaunayTriangulation::removePoints(std::vector<PointIdx> const &indices)
+{
+    std::vector<PointIdx> orderedIndices = indices;
+    std::sort(orderedIndices.begin(), orderedIndices.end(), std::greater<PointIdx>());
+    orderedIndices.erase(std::unique(orderedIndices.begin(), orderedIndices.end()),
+                         orderedIndices.end());
+
+    for (PointIdx idx : orderedIndices)
+        removePoint(idx);
+}
+
 std::vector<Triangle> const &DelaunayTriangulation::triangles() const
 {
     if (_cacheDirty)
