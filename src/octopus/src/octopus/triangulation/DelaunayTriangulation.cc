@@ -347,9 +347,9 @@ void DelaunayTriangulation::removePoint(PointIdx idx)
             toRemove.push_back(i);
     }
 
-    // Collect the boundary polygon of the hole (edges NOT containing idx)
-    // and order them into a polygon loop
+    // Collect the boundary polygon of the hole (edges NOT containing idx).
     std::unordered_map<PointIdx, PointIdx> nextVertex;
+    std::unordered_map<PointIdx, std::size_t> incomingEdges;
     for (std::size_t i : toRemove)
     {
         Triangle const &t = _triangles[i];
@@ -362,24 +362,45 @@ void DelaunayTriangulation::removePoint(PointIdx idx)
             {
                 // This edge is on the hole boundary; in the CCW triangle, the
                 // direction va->vb faces away from idx
-                nextVertex[va] = vb;
+                bool const inserted = nextVertex.emplace(va, vb).second;
+                assert(inserted && "DelaunayTriangulation::removePoint: branching cavity boundary");
+                ++incomingEdges[vb];
             }
         }
     }
 
-    // Build ordered polygon from nextVertex map
+    // Start at the open end when the cavity boundary is a chain. Starting at
+    // an arbitrary vertex can otherwise miss part of the chain.
     std::vector<PointIdx> polygon;
     if (!nextVertex.empty())
     {
         PointIdx start = nextVertex.begin()->first;
+        bool hasOpenStart = false;
+        for (auto const &[vertex, next] : nextVertex)
+        {
+            (void)next;
+            if (incomingEdges[vertex] == 0)
+            {
+                assert(!hasOpenStart && "DelaunayTriangulation::removePoint: multiple cavity chains");
+                start = vertex;
+                hasOpenStart = true;
+            }
+        }
+
         PointIdx cur = start;
-        do
+        std::unordered_set<PointIdx> visited;
+        while (visited.insert(cur).second)
         {
             polygon.push_back(cur);
-            cur = nextVertex[cur];
-        } while (cur != start && polygon.size() <= nextVertex.size());
-    }
+            auto const next = nextVertex.find(cur);
+            if (next == nextVertex.end())
+                break;
+            cur = next->second;
+        }
 
+        assert(visited.size() == nextVertex.size() &&
+               "DelaunayTriangulation::removePoint: disconnected cavity boundary");
+    }
     // Remove hole triangles
     std::sort(toRemove.begin(), toRemove.end(), std::greater<std::size_t>());
     for (std::size_t i : toRemove)
