@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cmath>
+#include <random>
+
 #include "octopus/triangulation/DelaunayTriangulation.hh"
 
 using octopus::Fixed;
@@ -217,6 +221,316 @@ TEST(triangulation_add, insert_point_bug)
     EXPECT_EQ(4u, tri.triangles().size());
     expectAllCCW(tri);
     expectDelaunay(tri);
+}
+
+TEST(triangulation_add, debug_calls)
+{
+    DelaunayTriangulation tri;
+
+// Initial square points (invariant)
+tri.addPoint(10, 10);
+tri.addPoint(510, 10);
+tri.addPoint(510, 510);
+tri.addPoint(10, 510);
+tri.addConstrainedEdge(0, 1);
+tri.addConstrainedEdge(1, 2);
+tri.addConstrainedEdge(2, 3);
+tri.addConstrainedEdge(3, 0);
+
+// Set of initial points in the square point (can be modified for testing)
+tri.addPoint(200, 225);
+
+// Sequence Call 1
+tri.removePoints({});
+tri.addPoint(200, 200);
+tri.addPoint(200, 250);
+tri.addPoint(250, 250);
+tri.addPoint(250, 200);
+tri.addConstrainedEdge(5, 6);
+tri.addConstrainedEdge(6, 7);
+tri.addConstrainedEdge(7, 8);
+tri.removeConstrainedEdge(5, 6);
+tri.removeConstrainedEdge(6, 7);
+tri.removeConstrainedEdge(7, 8);
+
+// Sequence Call 2
+tri.removePoints({5, 6, 7, 8});
+tri.addPoint(200, 200);
+tri.addPoint(200, 250);
+tri.addPoint(250, 250);
+tri.addPoint(250, 200);
+tri.addConstrainedEdge(5, 6);
+tri.addConstrainedEdge(6, 7);
+tri.addConstrainedEdge(7, 8);
+
+EXPECT_EQ(500000LL, visibleArea2(tri));
+}
+
+// ─── fuzz testing: successive add/remove/constrain sequences ─────────────────
+//
+// Reproduces the debug_calls pattern (a small "unit square" of 4 points is
+// repeatedly created, constrained on its perimeter, unconstrained and
+// removed/recreated inside the outer 500x500 frame) but with randomized
+// interior point positions and randomized ordering/timing of operations, to
+// flush out any breakage of the visible area invariant across successive
+// calls.
+TEST(triangulation_add, fuzz_successive_calls_preserve_area)
+{
+    std::mt19937 rng(12345);
+    std::uniform_int_distribution<int> coordDist(20, 500); // stay inside [10,510] frame, away from edges
+
+    for (int iter = 0; iter < 500; ++iter)
+    {
+        DelaunayTriangulation tri;
+
+        PointIdx tl = tri.addPoint(Fixed(10), Fixed(10));
+        PointIdx tr = tri.addPoint(Fixed(510), Fixed(10));
+        PointIdx br = tri.addPoint(Fixed(510), Fixed(510));
+        PointIdx bl = tri.addPoint(Fixed(10), Fixed(510));
+        tri.addConstrainedEdge(tl, tr);
+        tri.addConstrainedEdge(tr, br);
+        tri.addConstrainedEdge(br, bl);
+        tri.addConstrainedEdge(bl, tl);
+
+        std::vector<PointIdx> quad; // indices of the current inner quad's 4 points
+
+        auto checkInvariants = [&](int wave) {
+            EXPECT_EQ(500000LL, visibleArea2(tri))
+                << "iter " << iter << " wave " << wave << ": visible area corrupted";
+            expectAllCCW(tri);
+        };
+
+        for (int wave = 0; wave < 6; ++wave)
+        {
+            // Randomly decide whether to remove the previous wave's quad
+            // before re-inserting a new one (constrained edges must be
+            // cleared first, mirroring the debug_calls sequence).
+            if (!quad.empty())
+            {
+                tri.removeConstrainedEdge(quad[0], quad[1]);
+                tri.removeConstrainedEdge(quad[1], quad[2]);
+                tri.removeConstrainedEdge(quad[2], quad[3]);
+                tri.removeConstrainedEdge(quad[3], quad[0]);
+
+                if (iter % 2 == 0)
+                {
+                    // Sometimes remove immediately, sometimes keep the points
+                    // around for one extra wave before removal (like the
+                    // debug_calls first no-op removePoints({})).
+                    tri.removePoints(quad);
+                    quad.clear();
+                }
+            }
+
+            // Random axis-aligned quad (random position, random size) fully
+            // inside the outer frame.
+            int x0 = coordDist(rng);
+            int y0 = coordDist(rng);
+            int w = std::uniform_int_distribution<int>(5, 60)(rng);
+            int h = std::uniform_int_distribution<int>(5, 60)(rng);
+            int x1 = std::min(x0 + w, 505);
+            int y1 = std::min(y0 + h, 505);
+
+            if (!quad.empty())
+            {
+                // Points still present from a prior wave (not removed this
+                // round) -- remove them now before re-adding fresh ones,
+                // since coordinates differ.
+                tri.removePoints(quad);
+                quad.clear();
+            }
+
+            PointIdx p0 = tri.addPoint(Fixed(x0), Fixed(y0));
+            PointIdx p1 = tri.addPoint(Fixed(x0), Fixed(y1));
+            PointIdx p2 = tri.addPoint(Fixed(x1), Fixed(y1));
+            PointIdx p3 = tri.addPoint(Fixed(x1), Fixed(y0));
+            quad = { p0, p1, p2, p3 };
+
+            tri.addConstrainedEdge(p0, p1);
+            tri.addConstrainedEdge(p1, p2);
+            tri.addConstrainedEdge(p2, p3);
+            tri.addConstrainedEdge(p3, p0);
+
+            checkInvariants(wave);
+        }
+    }
+}
+
+// Variant seeding an extra collinear point on one of the outer-frame edges
+// before the quad churn begins, matching the exact structure that originally
+// exposed the removeConstrainedEdge splitting bug (a point exactly on the
+// segment between two other constrained points).
+TEST(triangulation_add, fuzz_successive_calls_with_collinear_seed_point)
+{
+    std::mt19937 rng(98765);
+    std::uniform_int_distribution<int> coordDist(20, 500);
+
+    for (int iter = 0; iter < 300; ++iter)
+    {
+        DelaunayTriangulation tri;
+
+        PointIdx tl = tri.addPoint(Fixed(10), Fixed(10));
+        PointIdx tr = tri.addPoint(Fixed(510), Fixed(10));
+        PointIdx br = tri.addPoint(Fixed(510), Fixed(510));
+        PointIdx bl = tri.addPoint(Fixed(10), Fixed(510));
+        tri.addConstrainedEdge(tl, tr);
+        tri.addConstrainedEdge(tr, br);
+        tri.addConstrainedEdge(br, bl);
+        tri.addConstrainedEdge(bl, tl);
+
+        int cx = coordDist(rng);
+        int cy = coordDist(rng);
+        tri.addPoint(Fixed(cx), Fixed(cy)); // lone seed point, akin to (200,225)
+
+        std::vector<PointIdx> quad;
+
+        for (int wave = 0; wave < 4; ++wave)
+        {
+            if (!quad.empty())
+            {
+                tri.removeConstrainedEdge(quad[0], quad[1]);
+                tri.removeConstrainedEdge(quad[1], quad[2]);
+                tri.removeConstrainedEdge(quad[2], quad[3]);
+                tri.removeConstrainedEdge(quad[3], quad[0]);
+                tri.removePoints(quad);
+                quad.clear();
+            }
+
+            // Quad straddling the seed point's x or y coordinate so the seed
+            // point is collinear with one of the quad's edges (matching the
+            // original bug pattern where (200,225) sits on the (200,200)-(200,250) edge).
+            int half = std::uniform_int_distribution<int>(10, 40)(rng);
+            int x0 = std::max(11, cx - half);
+            int x1 = std::min(509, cx + half);
+            int y0 = std::max(11, cy - half);
+            int y1 = std::min(509, cy + half);
+            if (x0 == x1) x1 = x0 + 1;
+            if (y0 == y1) y1 = y0 + 1;
+
+            PointIdx p0 = tri.addPoint(Fixed(x0), Fixed(y0));
+            PointIdx p1 = tri.addPoint(Fixed(x0), Fixed(y1));
+            PointIdx p2 = tri.addPoint(Fixed(x1), Fixed(y1));
+            PointIdx p3 = tri.addPoint(Fixed(x1), Fixed(y0));
+            quad = { p0, p1, p2, p3 };
+
+            tri.addConstrainedEdge(p0, p1);
+            tri.addConstrainedEdge(p1, p2);
+            tri.addConstrainedEdge(p2, p3);
+            tri.addConstrainedEdge(p3, p0);
+            tri.removeConstrainedEdge(p0, p1);
+            tri.removeConstrainedEdge(p1, p2);
+            tri.removeConstrainedEdge(p2, p3);
+            tri.removeConstrainedEdge(p3, p0);
+
+            tri.addConstrainedEdge(p0, p1);
+            tri.addConstrainedEdge(p1, p2);
+            tri.addConstrainedEdge(p2, p3);
+            tri.addConstrainedEdge(p3, p0);
+
+            EXPECT_EQ(500000LL, visibleArea2(tri))
+                << "iter " << iter << " wave " << wave;
+            expectAllCCW(tri);
+        }
+    }
+}
+
+// Variant with fully random (non-axis-aligned) convex polygons of varying
+// vertex counts, randomized point-removal ordering, and random interior
+// "clutter" points, to stress test beyond the simple axis-aligned quad shape.
+TEST(triangulation_add, fuzz_successive_calls_random_convex_polygons)
+{
+    std::mt19937 rng(555111);
+    std::uniform_int_distribution<int> coordDist(20, 500);
+
+    for (int iter = 0; iter < 300; ++iter)
+    {
+        DelaunayTriangulation tri;
+
+        PointIdx tl = tri.addPoint(Fixed(10), Fixed(10));
+        PointIdx tr = tri.addPoint(Fixed(510), Fixed(10));
+        PointIdx br = tri.addPoint(Fixed(510), Fixed(510));
+        PointIdx bl = tri.addPoint(Fixed(10), Fixed(510));
+        tri.addConstrainedEdge(tl, tr);
+        tri.addConstrainedEdge(tr, br);
+        tri.addConstrainedEdge(br, bl);
+        tri.addConstrainedEdge(bl, tl);
+
+        // A few clutter points scattered anywhere in the square, some of
+        // which may end up collinear with later polygon edges.
+        int clutterCount = std::uniform_int_distribution<int>(0, 3)(rng);
+        for (int c = 0; c < clutterCount; ++c)
+            tri.addPoint(Fixed(coordDist(rng)), Fixed(coordDist(rng)));
+
+        std::vector<PointIdx> poly;
+
+        for (int wave = 0; wave < 5; ++wave)
+        {
+            if (!poly.empty())
+            {
+                for (std::size_t i = 0; i < poly.size(); ++i)
+                    tri.removeConstrainedEdge(poly[i], poly[(i + 1) % poly.size()]);
+
+                // Randomize removal order (removePoints sorts descending
+                // internally and dedups, so any order/duplication is valid
+                // input).
+                std::vector<PointIdx> toRemove = poly;
+                std::shuffle(toRemove.begin(), toRemove.end(), rng);
+                tri.removePoints(toRemove);
+                poly.clear();
+            }
+
+            int n = std::uniform_int_distribution<int>(3, 6)(rng);
+            int cx = coordDist(rng);
+            int cy = coordDist(rng);
+            int radius = std::uniform_int_distribution<int>(15, 45)(rng);
+
+            // Build a simple (non-self-intersecting) star-shaped polygon:
+            // evenly-spaced base angles with bounded jitter guarantee strictly
+            // increasing angles (so the polygon is star-shaped around the
+            // centre and cannot self-intersect), while purely random angles
+            // can land close enough together that integer coordinate
+            // rounding produces a reflex/crossing vertex.
+            double const step = 6.28318530718 / n;
+            double const jitter = step * 0.3;
+            std::uniform_real_distribution<double> jitterDist(-jitter, jitter);
+            std::vector<double> angles(n);
+            for (int k = 0; k < n; ++k)
+                angles[k] = k * step + jitterDist(rng);
+
+            std::vector<PointIdx> newPoly;
+            for (double a : angles)
+            {
+                int x = std::clamp(cx + static_cast<int>(radius * std::cos(a)), 11, 509);
+                int y = std::clamp(cy + static_cast<int>(radius * std::sin(a)), 11, 509);
+                newPoly.push_back(tri.addPoint(Fixed(x), Fixed(y)));
+            }
+            // Deduplicate consecutive points that collapsed to the same
+            // coordinate (addPoint returns the same index for identical
+            // coordinates), which would otherwise produce a degenerate
+            // zero-length constrained edge.
+            newPoly.erase(std::unique(newPoly.begin(), newPoly.end()), newPoly.end());
+            if (newPoly.size() >= 3 && newPoly.front() == newPoly.back())
+                newPoly.pop_back();
+
+            if (newPoly.size() < 3)
+            {
+                // Degenerate sample (too few distinct points) — skip
+                // constraining this wave but keep the points for the next
+                // iteration's removal.
+                poly = newPoly;
+                continue;
+            }
+
+            for (std::size_t i = 0; i < newPoly.size(); ++i)
+                tri.addConstrainedEdge(newPoly[i], newPoly[(i + 1) % newPoly.size()]);
+
+            poly = newPoly;
+
+            EXPECT_EQ(500000LL, visibleArea2(tri))
+                << "iter " << iter << " wave " << wave << " n " << n;
+            expectAllCCW(tri);
+        }
+    }
 }
 
 TEST(triangulation_add, insert_remove_on_existing_points)
@@ -678,4 +992,37 @@ TEST(hole, hole_boundary_edges_are_constrained)
     EXPECT_TRUE(tri.isConstrained(h1, h2));
     EXPECT_TRUE(tri.isConstrained(h2, h3));
     EXPECT_TRUE(tri.isConstrained(h3, h0));
+}
+
+TEST(constrained_edge, walk_segment_reaches_endpoint_past_non_adjacent_triangle)
+{
+    // Regression test: forcing in a constrained edge whose triangle-walk
+    // passes through a triangle with no edge incident to either endpoint
+    // previously could bounce back across the edge it just entered through,
+    // silently truncating the walk before reaching the far endpoint and
+    // corrupting the triangulation (see walkSegment's entered-edge tracking).
+    DelaunayTriangulation tri;
+    PointIdx tl = tri.addPoint(Fixed(10), Fixed(10));
+    PointIdx tr = tri.addPoint(Fixed(510), Fixed(10));
+    PointIdx br = tri.addPoint(Fixed(510), Fixed(510));
+    PointIdx bl = tri.addPoint(Fixed(10), Fixed(510));
+    tri.addConstrainedEdge(tl, tr);
+    tri.addConstrainedEdge(tr, br);
+    tri.addConstrainedEdge(br, bl);
+    tri.addConstrainedEdge(bl, tl);
+
+    tri.addPoint(Fixed(382), Fixed(407));
+
+    PointIdx p7 = tri.addPoint(Fixed(430), Fixed(410));
+    PointIdx p8 = tri.addPoint(Fixed(413), Fixed(417));
+    PointIdx p9 = tri.addPoint(Fixed(439), Fixed(344));
+    PointIdx p10 = tri.addPoint(Fixed(448), Fixed(359));
+
+    tri.addConstrainedEdge(p7, p8);
+    tri.addConstrainedEdge(p8, p9);
+    tri.addConstrainedEdge(p9, p10);
+    tri.addConstrainedEdge(p10, p7);
+
+    EXPECT_EQ(500000LL, visibleArea2(tri));
+    expectAllCCW(tri);
 }

@@ -146,6 +146,13 @@ private:
                      std::vector<PointIdx> &leftPoly,
                      std::vector<PointIdx> &rightPoly) const;
 
+    /// Return the indices of points strictly between a and b that lie exactly
+    /// on segment (a,b), ordered by increasing distance from a. Used to split
+    /// a requested constrained edge into sub-segments so that both
+    /// addConstrainedEdge and removeConstrainedEdge agree on which edges are
+    /// actually stored in _constrainedEdges.
+    std::vector<PointIdx> collinearIntermediatePoints(PointIdx a, PointIdx b) const;
+
     /// Triangulate a simple polygon that has edge (edgeA,edgeB) as one side.
     /// polygon is ordered and must already include edgeA and edgeB as consecutive entries.
     void retriangulatePolygon(std::vector<PointIdx> const &polygon,

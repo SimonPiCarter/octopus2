@@ -473,8 +473,54 @@ bool DelaunayTriangulation::isConstrained(PointIdx a, PointIdx b) const
     return _constrainedEdges.count(makeEdge(a, b)) > 0;
 }
 
+std::vector<PointIdx> DelaunayTriangulation::collinearIntermediatePoints(PointIdx a, PointIdx b) const
+{
+    TriPoint const &pa = getPoint(a);
+    TriPoint const &pb = getPoint(b);
+    std::vector<std::pair<long long, PointIdx>> intermediatePoints;
+    for (PointIdx idx = 0; idx < _points.size(); ++idx)
+    {
+        if (idx == a || idx == b)
+            continue;
+
+        TriPoint const &p = getPoint(idx);
+        if (orient2d(pa, pb, p) != 0 ||
+            p.x < std::min(pa.x, pb.x) || p.x > std::max(pa.x, pb.x) ||
+            p.y < std::min(pa.y, pb.y) || p.y > std::max(pa.y, pb.y))
+            continue;
+
+        long long const distance = (p.x - pa.x) * (pb.x - pa.x) +
+                                   (p.y - pa.y) * (pb.y - pa.y);
+        intermediatePoints.emplace_back(distance, idx);
+    }
+
+    std::sort(intermediatePoints.begin(), intermediatePoints.end());
+
+    std::vector<PointIdx> result;
+    result.reserve(intermediatePoints.size());
+    for (auto const &entry : intermediatePoints)
+        result.push_back(entry.second);
+    return result;
+}
+
 void DelaunayTriangulation::removeConstrainedEdge(PointIdx a, PointIdx b)
 {
+    // Mirror addConstrainedEdge's splitting: if a point lies exactly on
+    // segment (a,b), the actually-stored edges are the sub-segments through
+    // it, not (a,b) itself. Recurse the same way so both agree.
+    std::vector<PointIdx> const intermediatePoints = collinearIntermediatePoints(a, b);
+    if (!intermediatePoints.empty())
+    {
+        PointIdx previous = a;
+        for (PointIdx const idx : intermediatePoints)
+        {
+            removeConstrainedEdge(previous, idx);
+            previous = idx;
+        }
+        removeConstrainedEdge(previous, b);
+        return;
+    }
+
     _constrainedEdges.erase(makeEdge(a, b));
 }
 
@@ -529,6 +575,8 @@ void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
 
     // Advance triangle-by-triangle until we reach a triangle incident to b
     std::unordered_set<std::size_t> visited;
+    Edge enteredEdge{ SIZE_MAX, SIZE_MAX }; // edge through which `current` was entered (invalid for the seed triangle)
+    bool reachedB = false;
     while (current != SIZE_MAX)
     {
         if (visited.count(current)) break;
@@ -550,18 +598,26 @@ void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
                 else if (o < 0) rightPoly.push_back(v);
             }
             crossingTriangles.push_back(current);
+            reachedB = true;
             break;
         }
 
         crossingTriangles.push_back(current);
 
-        // Find the exit edge of this triangle (the edge crossed by segment (a,b))
+        // Find the exit edge of this triangle (the edge crossed by segment (a,b)).
+        // Skip edges incident to `a` (they cannot be the exit edge once inside
+        // the fan around a) and the edge we just entered through — without
+        // excluding the latter, a triangle whose only intersecting edge
+        // (per segmentsIntersect) is the entry edge itself would send the
+        // walk straight back where it came from, silently truncating the
+        // path before it ever reaches `b`.
         std::size_t nextTri = SIZE_MAX;
         for (int e = 0; e < 3; ++e)
         {
             PointIdx va = t.v[e];
             PointIdx vb = t.v[(e + 1) % 3];
             if (va == a || vb == a) continue; // skip edges incident to a
+            if (makeEdge(va, vb) == enteredEdge) continue; // skip the edge we entered through
 
             TriPoint const &ea = getPoint(va);
             TriPoint const &eb = getPoint(vb);
@@ -592,10 +648,22 @@ void DelaunayTriangulation::walkSegment(PointIdx a, PointIdx b,
                     }
                     if (nextTri != SIZE_MAX) break;
                 }
+                enteredEdge = crossedEdge;
                 break;
             }
         }
         current = nextTri;
+    }
+
+    if (!reachedB)
+    {
+        // The walk failed to reach b (should not normally happen); report no
+        // crossing so the caller treats this as a degenerate no-op rather
+        // than retriangulating from a truncated/incorrect polygon.
+        crossingTriangles.clear();
+        leftPoly.clear();
+        rightPoly.clear();
+        return;
     }
 
     leftPoly.push_back(b);
@@ -643,33 +711,15 @@ void DelaunayTriangulation::addConstrainedEdge(PointIdx a, PointIdx b)
 
     Edge ce = makeEdge(a, b);
 
-    TriPoint const &pa = getPoint(a);
-    TriPoint const &pb = getPoint(b);
-    std::vector<std::pair<long long, PointIdx>> intermediatePoints;
-    for (PointIdx idx = 0; idx < _points.size(); ++idx)
-    {
-        if (idx == a || idx == b)
-            continue;
-
-        TriPoint const &p = getPoint(idx);
-        if (orient2d(pa, pb, p) != 0 ||
-            p.x < std::min(pa.x, pb.x) || p.x > std::max(pa.x, pb.x) ||
-            p.y < std::min(pa.y, pb.y) || p.y > std::max(pa.y, pb.y))
-            continue;
-
-        long long const distance = (p.x - pa.x) * (pb.x - pa.x) +
-                                   (p.y - pa.y) * (pb.y - pa.y);
-        intermediatePoints.emplace_back(distance, idx);
-    }
+    std::vector<PointIdx> const intermediatePoints = collinearIntermediatePoints(a, b);
 
     if (!intermediatePoints.empty())
     {
-        std::sort(intermediatePoints.begin(), intermediatePoints.end());
         PointIdx previous = a;
-        for (auto const &entry : intermediatePoints)
+        for (PointIdx const idx : intermediatePoints)
         {
-            addConstrainedEdge(previous, entry.second);
-            previous = entry.second;
+            addConstrainedEdge(previous, idx);
+            previous = idx;
         }
         addConstrainedEdge(previous, b);
         return;
