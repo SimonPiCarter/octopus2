@@ -78,6 +78,14 @@ static int vertexRefCount(DelaunayTriangulation const &tri, PointIdx idx)
     return count;
 }
 
+static long long visibleArea2(DelaunayTriangulation const &tri)
+{
+    long long area2 = 0;
+    for (Triangle const &t : tri.triangles())
+        area2 += orient2d(tri.point(t.v[0]), tri.point(t.v[1]), tri.point(t.v[2]));
+    return area2;
+}
+
 // ─── add point tests ──────────────────────────────────────────────────────────
 
 TEST(triangulation_add, empty_returns_no_triangles)
@@ -209,6 +217,68 @@ TEST(triangulation_add, insert_point_bug)
     EXPECT_EQ(4u, tri.triangles().size());
     expectAllCCW(tri);
     expectDelaunay(tri);
+}
+
+TEST(triangulation_add, update_insert_repeated_call_preserves_outer_frame_coverage)
+{
+    DelaunayTriangulation tri;
+    PointIdx tl = tri.addPoint(Fixed(10), Fixed(10));
+    PointIdx tr = tri.addPoint(Fixed(510), Fixed(10));
+    PointIdx br = tri.addPoint(Fixed(510), Fixed(510));
+    PointIdx bl = tri.addPoint(Fixed(10), Fixed(510));
+
+    tri.addConstrainedEdge(tl, tr);
+    tri.addConstrainedEdge(tr, br);
+    tri.addConstrainedEdge(br, bl);
+    tri.addConstrainedEdge(bl, tl);
+
+    // The outer frame encloses a 500 × 500 square, so the sum of visible
+    // triangle areas doubled must remain 500000 as interior points are inserted.
+    EXPECT_EQ(500000LL, visibleArea2(tri));
+    expectAllCCW(tri);
+
+    long long const insertPoints[4][2] = {
+        { 200, 200 }, { 200, 250 }, { 250, 250 }, { 250, 200 }
+    };
+    PointIdx insertIndices[4]= {0,0,0,0};
+    auto updateInsert = [&]() {
+        for (std::size_t i = 0; i + 1 < 4; ++i)
+        {
+            if (insertIndices[i] != 0 && insertIndices[i + 1] != 0)
+                tri.removeConstrainedEdge(insertIndices[i], insertIndices[i + 1]);
+        }
+        for (std::size_t i = 4; i > 0; --i)
+        {
+            std::size_t const pointIndex = i - 1;
+            if (insertIndices[pointIndex] != 0)
+            {
+                tri.removePoint(insertIndices[pointIndex]);
+                insertIndices[pointIndex] = 0;
+            }
+        }
+        for (std::size_t i = 0; i < 4; ++i)
+        {
+            auto const &point = insertPoints[i];
+            insertIndices[i] = tri.addPoint(Fixed(point[0]), Fixed(point[1]));
+            EXPECT_EQ(500000LL, visibleArea2(tri));
+        }
+        for (std::size_t i = 0; i + 1 < 4; ++i)
+            tri.addConstrainedEdge(insertIndices[i], insertIndices[i + 1]);
+
+        EXPECT_EQ(500000LL, visibleArea2(tri));
+    };
+
+    updateInsert();
+    EXPECT_EQ(8u, tri.pointCount());
+    for (std::size_t i = 0; i < 4; ++i)
+        EXPECT_GT(vertexRefCount(tri, insertIndices[i]), 0);
+
+    updateInsert();
+    EXPECT_EQ(8u, tri.pointCount());
+    for (std::size_t i = 0; i < 4; ++i)
+        EXPECT_GT(vertexRefCount(tri, insertIndices[i]), 0);
+
+    expectAllCCW(tri);
 }
 
 // ─── remove point tests ───────────────────────────────────────────────────────
