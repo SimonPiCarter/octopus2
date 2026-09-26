@@ -643,6 +643,38 @@ void DelaunayTriangulation::addConstrainedEdge(PointIdx a, PointIdx b)
 
     Edge ce = makeEdge(a, b);
 
+    TriPoint const &pa = getPoint(a);
+    TriPoint const &pb = getPoint(b);
+    std::vector<std::pair<long long, PointIdx>> intermediatePoints;
+    for (PointIdx idx = 0; idx < _points.size(); ++idx)
+    {
+        if (idx == a || idx == b)
+            continue;
+
+        TriPoint const &p = getPoint(idx);
+        if (orient2d(pa, pb, p) != 0 ||
+            p.x < std::min(pa.x, pb.x) || p.x > std::max(pa.x, pb.x) ||
+            p.y < std::min(pa.y, pb.y) || p.y > std::max(pa.y, pb.y))
+            continue;
+
+        long long const distance = (p.x - pa.x) * (pb.x - pa.x) +
+                                   (p.y - pa.y) * (pb.y - pa.y);
+        intermediatePoints.emplace_back(distance, idx);
+    }
+
+    if (!intermediatePoints.empty())
+    {
+        std::sort(intermediatePoints.begin(), intermediatePoints.end());
+        PointIdx previous = a;
+        for (auto const &entry : intermediatePoints)
+        {
+            addConstrainedEdge(previous, entry.second);
+            previous = entry.second;
+        }
+        addConstrainedEdge(previous, b);
+        return;
+    }
+
     // Check if the edge already exists in the triangulation
     bool edgeExists = false;
     for (Triangle const &t : _triangles)
