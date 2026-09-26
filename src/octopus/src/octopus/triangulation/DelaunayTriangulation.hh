@@ -63,7 +63,7 @@ class DelaunayTriangulation
 public:
     DelaunayTriangulation();
 
-    /// Insert a new point. Returns the index of the point.
+    /// Insert a new point, or return the existing index if its coordinates are already present.
     PointIdx addPoint(Fixed x, Fixed y);
 
     /// Remove a point by index. The point must have been previously inserted

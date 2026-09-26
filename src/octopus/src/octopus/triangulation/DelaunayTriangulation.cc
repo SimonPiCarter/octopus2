@@ -234,8 +234,15 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
 
 PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
 {
+    TriPoint point{ x.to_int(), y.to_int() };
+    for (PointIdx idx = 0; idx < _points.size(); ++idx)
+    {
+        if (_points[idx] == point)
+            return idx;
+    }
+
     PointIdx idx = _points.size();
-    _points.push_back({ x.to_int(), y.to_int() });
+    _points.push_back(point);
     bowyerWatsonInsert(idx);
     return idx;
 }
