@@ -22,6 +22,7 @@
 #include "octopus/components/advanced/production/PlayerProduction.hh"
 #include "octopus/systems/input/Input.hh"
 #include "octopus/world/path/PathFindingCache.hh"
+#include "octopus/triangulation/DelaunayPathFindingCache.hh"
 #include "octopus/world/player/PlayerInfo.hh"
 #include "octopus/world/resources/CostReduction.hh"
 #include "octopus/world/resources/ResourceStock.hh"
@@ -40,6 +41,7 @@ void basic_components_support(flecs::world& ecs)
 	utils_support(ecs);
 
     ecs.component<PathFindingCache>();
+    ecs.component<DelaunayPathFindingCache>();
 
     ecs.component<Armor>()
         .member("qty", &Armor::qty);

@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include "octopus/utils/triangulation/Triangulation.hh"
+#include "octopus/triangulation/DelaunayPathFindingCache.hh"
 #include "octopus/triangulation/DelaunayTriangulationNavigator.hh"
 #include "octopus/world/path/PathFindingCache.hh"
+#include "octopus/world/path/direction.hh"
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/systems/Systems.hh"
 
@@ -58,6 +60,57 @@ TEST(path_finding_cache, delaunay_navigator_uses_caller_built_mesh)
     EXPECT_TRUE(navigator.compute_path({10, 30}, {30, 30}).empty());
     EXPECT_TRUE(navigator.compute_path_from_idx(9999, 0).empty());
     EXPECT_EQ(1, navigator.debug_funnel({10, 30}, {50, 30}, 1).steps);
+}
+
+TEST(path_finding_cache, delaunay_cache_defers_and_drives_direction)
+{
+    DelaunayTriangulation mesh;
+    std::vector<PointIdx> const boundary = {
+        mesh.addPoint(Fixed(-100), Fixed(-100)),
+        mesh.addPoint(Fixed(600), Fixed(-100)),
+        mesh.addPoint(Fixed(600), Fixed(600)),
+        mesh.addPoint(Fixed(-100), Fixed(600))
+    };
+    for (std::size_t i = 0; i < boundary.size(); ++i)
+        mesh.addConstrainedEdge(boundary[i], boundary[(i + 1) % boundary.size()]);
+
+    std::vector<PointIdx> const obstacle = {
+        mesh.addPoint(Fixed(20), Fixed(20)),
+        mesh.addPoint(Fixed(40), Fixed(20)),
+        mesh.addPoint(Fixed(40), Fixed(40)),
+        mesh.addPoint(Fixed(20), Fixed(40))
+    };
+    mesh.markHole(obstacle);
+
+    DelaunayTriangulationNavigator navigator(mesh);
+    DelaunayPathFindingCache cache(navigator);
+    TimeStats stats;
+    flecs::world ecs;
+    set_up_phases(ecs);
+    cache.declare_cache_update_system(ecs, stats);
+
+    Position pos {{10, 30}};
+    DelaunayPathQuery query = cache.query_path(pos, {50, 30});
+    EXPECT_FALSE(query.is_valid());
+
+    ecs.progress();
+
+    ASSERT_TRUE(query.is_valid());
+    EXPECT_EQ(Vector(10, -10), query.get_direction());
+
+    flecs::world movement_ecs;
+    set_up_phases(movement_ecs);
+    movement_ecs.add<DelaunayPathFindingCache>();
+    DelaunayPathFindingCache *movement_cache =
+        movement_ecs.try_get_mut<DelaunayPathFindingCache>();
+    movement_cache->set_navigator(navigator);
+    movement_cache->declare_cache_update_system(movement_ecs, stats);
+
+    EXPECT_EQ(Vector(40, 0),
+              get_speed_direction(movement_ecs, pos, {50, 30}, Fixed(100)));
+    movement_ecs.progress();
+    EXPECT_EQ(Vector(10, -10),
+              get_speed_direction(movement_ecs, pos, {50, 30}, Fixed(100)));
 }
 
 struct TestGrid

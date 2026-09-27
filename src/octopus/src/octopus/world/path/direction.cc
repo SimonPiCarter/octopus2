@@ -1,5 +1,5 @@
 #include "direction.hh"
-#include "PathFindingCache.hh"
+#include "octopus/triangulation/DelaunayPathFindingCache.hh"
 
 namespace octopus
 {
@@ -13,13 +13,14 @@ Vector get_direction(flecs::world &ecs, Position const &pos_p, Vector const &tar
 Vector get_speed_direction(flecs::world &ecs, Position const &pos_p, Vector const &target_p, Fixed const &speed_p)
 {
 	// Query path finding
-	PathFindingCache const * cache = ecs.try_get<PathFindingCache>();
+	DelaunayPathFindingCache const * cache =
+		ecs.try_get<DelaunayPathFindingCache>();
 	// if not found -> direct path
 	Vector dir_l = target_p - pos_p.pos;
 	// if found -> use 'quick' funnel
 	if(cache)
 	{
-		PathQuery query = cache->query_path(pos_p, target_p);
+		DelaunayPathQuery query = cache->query_path(pos_p, target_p);
 		if(query.is_valid())
 		{
 			dir_l = query.get_direction();
