@@ -93,6 +93,22 @@ std::size_t DelaunayTriangulationNavigator::find_triangle(Vector const &point,
 	return SIZE_MAX;
 }
 
+bool DelaunayTriangulationNavigator::find_triangle_centroid(
+	Vector const &point, Vector &centroid) const
+{
+	std::size_t const index = find_triangle(point, true);
+	if (index == SIZE_MAX)
+		return false;
+
+	Triangle const &triangle = _mesh.triangles()[index];
+	TriPoint const &a = _mesh.point(triangle.v[0]);
+	TriPoint const &b = _mesh.point(triangle.v[1]);
+	TriPoint const &c = _mesh.point(triangle.v[2]);
+	centroid = Vector(Fixed(a.x + b.x + c.x) / 3,
+	                 Fixed(a.y + b.y + c.y) / 3);
+	return true;
+}
+
 std::vector<std::size_t> DelaunayTriangulationNavigator::compute_path(
 	Vector const &orig, Vector const &dest) const
 {

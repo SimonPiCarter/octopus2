@@ -113,6 +113,64 @@ TEST(path_finding_cache, delaunay_cache_defers_and_drives_direction)
               get_speed_direction(movement_ecs, pos, {50, 30}, Fixed(100)));
 }
 
+TEST(path_finding_cache, delaunay_cache_reuses_triangle_pair_for_nearby_queries)
+{
+    DelaunayTriangulation mesh;
+    std::vector<PointIdx> const boundary = {
+        mesh.addPoint(Fixed(-100), Fixed(-100)),
+        mesh.addPoint(Fixed(600), Fixed(-100)),
+        mesh.addPoint(Fixed(600), Fixed(600)),
+        mesh.addPoint(Fixed(-100), Fixed(600))
+    };
+    for (std::size_t i = 0; i < boundary.size(); ++i)
+        mesh.addConstrainedEdge(boundary[i], boundary[(i + 1) % boundary.size()]);
+
+    std::vector<PointIdx> const obstacle = {
+        mesh.addPoint(Fixed(20), Fixed(20)),
+        mesh.addPoint(Fixed(40), Fixed(20)),
+        mesh.addPoint(Fixed(40), Fixed(40)),
+        mesh.addPoint(Fixed(20), Fixed(40))
+    };
+    mesh.markHole(obstacle);
+
+    DelaunayTriangulationNavigator navigator(mesh);
+    Vector orig_centroid;
+    Vector dest_centroid;
+    ASSERT_TRUE(navigator.find_triangle_centroid({10, 30}, orig_centroid));
+    ASSERT_TRUE(navigator.find_triangle_centroid({50, 30}, dest_centroid));
+
+    Vector const nearby_orig = orig_centroid + Vector(1, 0);
+    Vector nearby_centroid;
+    ASSERT_TRUE(navigator.find_triangle_centroid(nearby_orig, nearby_centroid));
+    ASSERT_EQ(orig_centroid, nearby_centroid);
+
+    DelaunayPathFindingCache cache(navigator);
+    TimeStats stats;
+    flecs::world ecs;
+    set_up_phases(ecs);
+    cache.declare_cache_update_system(ecs, stats);
+
+    Position const hole_position {{30, 30}};
+    DelaunayPathQuery const invalid = cache.query_path(hole_position, dest_centroid);
+    EXPECT_FALSE(invalid.is_valid());
+
+    Position orig {{orig_centroid}};
+    Position nearby {{nearby_orig}};
+    DelaunayPathQuery const first = cache.query_path(orig, dest_centroid);
+    DelaunayPathQuery const second = cache.query_path(nearby, dest_centroid);
+    EXPECT_EQ(first.result, second.result);
+    EXPECT_FALSE(first.is_valid());
+    EXPECT_FALSE(second.is_valid());
+
+    ecs.progress();
+
+    ASSERT_TRUE(first.is_valid());
+    ASSERT_TRUE(second.is_valid());
+    EXPECT_NE(first.get_direction(), second.get_direction());
+    EXPECT_EQ(orig_centroid, first.orig);
+    EXPECT_EQ(nearby_orig, second.orig);
+}
+
 struct TestGrid
 {
 

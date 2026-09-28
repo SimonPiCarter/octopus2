@@ -26,7 +26,16 @@ DelaunayPathQuery DelaunayPathFindingCache::query_path(
 		return {};
 	}
 
-	RequestKey const key {pos.pos, target};
+	Vector orig_centroid;
+	Vector dest_centroid;
+	if(!navigator->find_triangle_centroid(pos.pos, orig_centroid) ||
+	   !navigator->find_triangle_centroid(target, dest_centroid))
+	{
+		END_TIME_PTR(query_path, stats)
+		return {this, nullptr, pos.pos, target};
+	}
+
+	RequestKey const key {orig_centroid, dest_centroid};
 	auto const found = results_by_request.find(key);
 	if(found != results_by_request.end())
 	{
@@ -37,7 +46,7 @@ DelaunayPathQuery DelaunayPathFindingCache::query_path(
 	results.emplace_back();
 	DelaunayPathResult *result = &results.back();
 	results_by_request.emplace(key, result);
-	requests.push_back({result, pos.pos, target});
+	requests.push_back({result, orig_centroid, dest_centroid});
 	END_TIME_PTR(query_path, stats)
 	return {this, result, pos.pos, target};
 }
@@ -59,25 +68,17 @@ void DelaunayPathFindingCache::compute_paths()
 			requests.pop_front();
 		}
 
-		std::vector<Vector> funnel;
+		std::vector<std::size_t> path;
 		if(navigator)
 		{
-			funnel = navigator->compute_funnel(request.orig, request.dest);
+			path = navigator->compute_path(request.orig_centroid,
+			                               request.dest_centroid);
 		}
 
 		{
 			std::lock_guard<std::mutex> lock(mutex);
-			if(funnel.empty())
-			{
-				request.result->has_path = false;
-			}
-			else
-			{
-				request.result->has_path = true;
-				request.result->direction =
-					funnel.size() <= 2 ? request.dest - request.orig
-					                   : funnel[1] - request.orig;
-			}
+			request.result->has_path = !path.empty();
+			request.result->path = std::move(path);
 			request.result->computed.store(true, std::memory_order_release);
 		}
 		++run;
@@ -120,8 +121,24 @@ Vector DelaunayPathQuery::get_direction() const
 		END_TIME_PTR(path_funnelling, cache->stats)
 		return {};
 	}
+
+	if(!cache->navigator)
+	{
+		END_TIME_PTR(path_funnelling, cache->stats)
+		return {};
+	}
+
+	std::vector<Vector> const funnel =
+		cache->navigator->compute_funnel_from_path(orig, dest, result->path);
+	if(funnel.empty())
+	{
+		END_TIME_PTR(path_funnelling, cache->stats)
+		return {};
+	}
+	Vector const direction =
+		funnel.size() <= 2 ? dest - orig : funnel[1] - orig;
 	END_TIME_PTR(path_funnelling, cache->stats)
-	return result->direction;
+	return direction;
 }
 
 }

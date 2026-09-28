@@ -21,7 +21,7 @@ struct DelaunayPathResult
 {
 	std::atomic_bool computed = false;
 	bool has_path = false;
-	Vector direction;
+	std::vector<std::size_t> path;
 };
 
 struct DelaunayPathQuery
@@ -77,8 +77,8 @@ private:
 	struct Request
 	{
 		DelaunayPathResult *result = nullptr;
-		Vector orig;
-		Vector dest;
+		Vector orig_centroid;
+		Vector dest_centroid;
 	};
 
 	DelaunayTriangulationNavigator const *navigator = nullptr;

@@ -34,6 +34,7 @@ public:
 	std::vector<Vector> compute_funnel(Vector const &orig, Vector const &dest) const;
 	std::vector<Vector> compute_funnel_from_path(Vector const &orig, Vector const &dest,
 	                                             std::vector<std::size_t> const &path) const;
+	bool find_triangle_centroid(Vector const &point, Vector &centroid) const;
 	FunnelDebug debug_funnel(Vector const &orig, Vector const &dest, int step) const;
 
 private:
