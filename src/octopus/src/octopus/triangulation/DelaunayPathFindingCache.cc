@@ -12,7 +12,7 @@ void DelaunayPathFindingCache::set_navigator(
 	navigator = &value;
 	requests.clear();
 	results.clear();
-	results_by_destination.clear();
+	results_by_request.clear();
 }
 
 DelaunayPathQuery DelaunayPathFindingCache::query_path(
@@ -26,8 +26,9 @@ DelaunayPathQuery DelaunayPathFindingCache::query_path(
 		return {};
 	}
 
-	auto const found = results_by_destination.find(target);
-	if(found != results_by_destination.end())
+	RequestKey const key {pos.pos, target};
+	auto const found = results_by_request.find(key);
+	if(found != results_by_request.end())
 	{
 		END_TIME_PTR(query_path, stats)
 		return {this, found->second, pos.pos, target};
@@ -35,7 +36,7 @@ DelaunayPathQuery DelaunayPathFindingCache::query_path(
 
 	results.emplace_back();
 	DelaunayPathResult *result = &results.back();
-	results_by_destination.emplace(target, result);
+	results_by_request.emplace(key, result);
 	requests.push_back({result, pos.pos, target});
 	END_TIME_PTR(query_path, stats)
 	return {this, result, pos.pos, target};

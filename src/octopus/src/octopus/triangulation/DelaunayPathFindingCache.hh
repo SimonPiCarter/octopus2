@@ -52,6 +52,28 @@ struct DelaunayPathFindingCache
 	void declare_cache_update_system(flecs::world &ecs, TimeStats &st);
 
 private:
+	struct RequestKey
+	{
+		Vector orig;
+		Vector dest;
+
+		bool operator==(RequestKey const &other) const
+		{
+			return orig == other.orig && dest == other.dest;
+		}
+	};
+
+	struct RequestKeyHash
+	{
+		std::size_t operator()(RequestKey const &key) const
+		{
+			std::size_t const orig_hash = std::hash<Vector>()(key.orig);
+			std::size_t const dest_hash = std::hash<Vector>()(key.dest);
+			return orig_hash ^ (dest_hash + 0x9e3779b9 + (orig_hash << 6) +
+			                    (orig_hash >> 2));
+		}
+	};
+
 	struct Request
 	{
 		DelaunayPathResult *result = nullptr;
@@ -64,7 +86,8 @@ private:
 	mutable std::mutex mutex;
 	mutable std::list<Request> requests;
 	mutable std::list<DelaunayPathResult> results;
-	mutable std::unordered_map<Vector, DelaunayPathResult *> results_by_destination;
+	mutable std::unordered_map<RequestKey, DelaunayPathResult *, RequestKeyHash>
+		results_by_request;
 
 	friend struct DelaunayPathQuery;
 };

@@ -60,6 +60,7 @@ target_sources (unit_tests
 	src/step/components/extended/extented_component_loop.test.cc
 	src/step/entity/entity_creation_step.test.cc
 	src/triangulation/path_finding_cache.test.cc
+	src/triangulation/path_finding_cache_moving_entity.test.cc
 	src/triangulation/projection.test.cc
 	src/triangulation/triangulation.test.cc
 	src/command_queue_chaining.test.cc
