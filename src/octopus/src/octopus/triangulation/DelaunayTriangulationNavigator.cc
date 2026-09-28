@@ -12,11 +12,10 @@ namespace
 long long orient(Fixed const &x, Fixed const &y, TriPoint const &a,
                  TriPoint const &b)
 {
-	long long const scale = Fixed::OneAsLong();
-	long long const ax = a.x * scale;
-	long long const ay = a.y * scale;
-	long long const bx = b.x * scale;
-	long long const by = b.y * scale;
+	long long const ax = to_fixed(a.x).data();
+	long long const ay = to_fixed(a.y).data();
+	long long const bx = to_fixed(b.x).data();
+	long long const by = to_fixed(b.y).data();
 	return (bx - ax) * (y.data() - ay) - (by - ay) * (x.data() - ax);
 }
 
@@ -71,7 +70,7 @@ bool same_point(Vector const &a, Vector const &b)
 
 Vector to_vector(TriPoint const &point)
 {
-	return { Fixed(point.x), Fixed(point.y) };
+	return { to_fixed(point.x), to_fixed(point.y) };
 }
 
 }
@@ -104,8 +103,8 @@ bool DelaunayTriangulationNavigator::find_triangle_centroid(
 	TriPoint const &a = _mesh.point(triangle.v[0]);
 	TriPoint const &b = _mesh.point(triangle.v[1]);
 	TriPoint const &c = _mesh.point(triangle.v[2]);
-	centroid = Vector(Fixed(a.x + b.x + c.x) / 3,
-	                 Fixed(a.y + b.y + c.y) / 3);
+	centroid = Vector(to_fixed(a.x + b.x + c.x) / 3,
+	                 to_fixed(a.y + b.y + c.y) / 3);
 	return true;
 }
 

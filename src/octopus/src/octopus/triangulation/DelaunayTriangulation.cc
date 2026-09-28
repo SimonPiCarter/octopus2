@@ -12,9 +12,9 @@ DelaunayTriangulation::DelaunayTriangulation()
 {
     // Super-triangle vertices — large enough to contain all user points in [-1000, 1000]².
     // Verified CCW; circumcircle contains the entire user-coordinate range.
-    _baseA = { -4000LL, -2000LL };
-    _baseB = {  4000LL, -2000LL };
-    _baseC = {     0LL,  4000LL };
+    _baseA = { -4000LL * TriPointScale, -2000LL * TriPointScale };
+    _baseB = {  4000LL * TriPointScale, -2000LL * TriPointScale };
+    _baseC = {     0LL,                 4000LL * TriPointScale };
 
     // Single CCW super-triangle bootstrapping the triangulation
     _triangles.push_back({ { BASE_A, BASE_B, BASE_C } });
@@ -65,23 +65,21 @@ bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p)
     TriPoint const &b = getPoint(t.v[1]);
     TriPoint const &c = getPoint(t.v[2]);
 
-    // Fields are already long long; with bounding vertices at ±1001 the max
-    // coordinate difference is 2002, and the 4th-degree determinant stays well
-    // within int64_t range (~3.2×10¹³).
-    long long ax = a.x - p.x;
-    long long ay = a.y - p.y;
-    long long bx = b.x - p.x;
-    long long by = b.y - p.y;
-    long long cx = c.x - p.x;
-    long long cy = c.y - p.y;
+    // The determinant is fourth degree in coordinates and needs wider intermediates at this scale.
+    __int128_t const ax = static_cast<__int128_t>(a.x) - p.x;
+    __int128_t const ay = static_cast<__int128_t>(a.y) - p.y;
+    __int128_t const bx = static_cast<__int128_t>(b.x) - p.x;
+    __int128_t const by = static_cast<__int128_t>(b.y) - p.y;
+    __int128_t const cx = static_cast<__int128_t>(c.x) - p.x;
+    __int128_t const cy = static_cast<__int128_t>(c.y) - p.y;
 
-    long long az = ax*ax + ay*ay;
-    long long bz = bx*bx + by*by;
-    long long cz = cx*cx + cy*cy;
+    __int128_t const az = ax * ax + ay * ay;
+    __int128_t const bz = bx * bx + by * by;
+    __int128_t const cz = cx * cx + cy * cy;
 
-    long long det = ax * (by * cz - bz * cy)
-                  - ay * (bx * cz - bz * cx)
-                  + az * (bx * cy - by * cx);
+    __int128_t const det = ax * (by * cz - bz * cy)
+                         - ay * (bx * cz - bz * cx)
+                         + az * (bx * cy - by * cx);
 
     return det > 0;
 }
@@ -268,7 +266,7 @@ void DelaunayTriangulation::bowyerWatsonInsert(PointIdx pidx)
 
 PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
 {
-    TriPoint point{ x.to_int(), y.to_int() };
+    TriPoint point{ to_tri_coord(x), to_tri_coord(y) };
     for (PointIdx idx = 0; idx < _points.size(); ++idx)
     {
         if (_points[idx] == point)

@@ -29,6 +29,21 @@ TEST(path_finding_cache, only_triangulation)
     EXPECT_EQ(Vector(50,30), funnel[3]);
 }
 
+TEST(path_finding_cache, delaunay_navigator_preserves_hundredth_coordinates)
+{
+    DelaunayTriangulation mesh;
+    mesh.addPoint(Fixed(0), Fixed(0));
+    mesh.addPoint(Fixed(4), Fixed(0));
+    mesh.addPoint(Fixed(0), Fixed(4) + Fixed(1) / 100);
+
+    DelaunayTriangulationNavigator navigator(mesh);
+    Vector centroid;
+    ASSERT_TRUE(navigator.find_triangle_centroid({1, 1}, centroid));
+    EXPECT_EQ(Vector(Fixed(4) / 3,
+                     (Fixed(4) + Fixed(1) / 100) / 3),
+              centroid);
+}
+
 TEST(path_finding_cache, delaunay_navigator_uses_caller_built_mesh)
 {
     DelaunayTriangulation mesh;

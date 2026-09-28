@@ -12,10 +12,22 @@
 namespace octopus
 {
 
+static constexpr long long TriPointScale = 100;
+
+inline long long to_tri_coord(Fixed const &p)
+{
+    return p.data() / (Fixed::OneAsLong() / TriPointScale);
+}
+
+inline Fixed to_fixed(long long p)
+{
+    return Fixed(p) / TriPointScale;
+}
+
 struct TriPoint
 {
-    long long x;
-    long long y;
+    long long x; ///< X coordinate in hundredths of a world unit
+    long long y; ///< Y coordinate in hundredths of a world unit
 
     bool operator==(TriPoint const &o) const { return x == o.x && y == o.y; }
     bool operator!=(TriPoint const &o) const { return !(*this == o); }

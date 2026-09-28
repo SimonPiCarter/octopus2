@@ -27,13 +27,18 @@ static bool inCircumcircle(octopus::TriPoint const &a,
                            octopus::TriPoint const &c,
                            octopus::TriPoint const &p)
 {
-    long long ax = a.x - p.x, ay = a.y - p.y;
-    long long bx = b.x - p.x, by = b.y - p.y;
-    long long cx = c.x - p.x, cy = c.y - p.y;
-    long long az = ax*ax + ay*ay;
-    long long bz = bx*bx + by*by;
-    long long cz = cx*cx + cy*cy;
-    long long det = ax*(by*cz - bz*cy) - ay*(bx*cz - bz*cx) + az*(bx*cy - by*cx);
+    __int128_t const ax = static_cast<__int128_t>(a.x) - p.x;
+    __int128_t const ay = static_cast<__int128_t>(a.y) - p.y;
+    __int128_t const bx = static_cast<__int128_t>(b.x) - p.x;
+    __int128_t const by = static_cast<__int128_t>(b.y) - p.y;
+    __int128_t const cx = static_cast<__int128_t>(c.x) - p.x;
+    __int128_t const cy = static_cast<__int128_t>(c.y) - p.y;
+    __int128_t const az = ax * ax + ay * ay;
+    __int128_t const bz = bx * bx + by * by;
+    __int128_t const cz = cx * cx + cy * cy;
+    __int128_t const det = ax * (by * cz - bz * cy)
+                         - ay * (bx * cz - bz * cx)
+                         + az * (bx * cy - by * cx);
     return det > 0;
 }
 
@@ -87,7 +92,7 @@ static long long visibleArea2(DelaunayTriangulation const &tri)
     long long area2 = 0;
     for (Triangle const &t : tri.triangles())
         area2 += orient2d(tri.point(t.v[0]), tri.point(t.v[1]), tri.point(t.v[2]));
-    return area2;
+    return area2 / (octopus::TriPointScale * octopus::TriPointScale);
 }
 
 // ─── add point tests ──────────────────────────────────────────────────────────
@@ -186,8 +191,37 @@ TEST(triangulation_add, point_coordinates_accessible)
 {
     DelaunayTriangulation tri;
     PointIdx idx = tri.addPoint(Fixed(7), Fixed(3));
-    EXPECT_EQ(7LL, tri.point(idx).x);
-    EXPECT_EQ(3LL, tri.point(idx).y);
+    EXPECT_EQ(700LL, tri.point(idx).x);
+    EXPECT_EQ(300LL, tri.point(idx).y);
+
+    PointIdx fractional_idx =
+        tri.addPoint(Fixed(7) + Fixed(1) / 100, Fixed(3) + Fixed(1) / 100);
+    EXPECT_EQ(701LL, tri.point(fractional_idx).x);
+    EXPECT_EQ(301LL, tri.point(fractional_idx).y);
+    EXPECT_EQ(Fixed(7) + Fixed(1) / 100,
+              octopus::to_fixed(tri.point(fractional_idx).x));
+
+    PointIdx truncated_idx =
+        tri.addPoint(Fixed(7) + Fixed(19) / 1000, Fixed(3) + Fixed(19) / 1000);
+    EXPECT_EQ(fractional_idx, truncated_idx);
+}
+
+TEST(triangulation_add, inserts_distinct_points_at_hundredth_precision)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(0), Fixed(0));
+    tri.addPoint(Fixed(4), Fixed(0));
+    tri.addPoint(Fixed(0), Fixed(4));
+    tri.addPoint(Fixed(1), Fixed(1));
+    PointIdx nearby = tri.addPoint(
+        Fixed(1) + Fixed(1) / 100, Fixed(1) + Fixed(2) / 100);
+
+    EXPECT_EQ(5u, tri.pointCount());
+    EXPECT_EQ(101LL, tri.point(nearby).x);
+    EXPECT_EQ(102LL, tri.point(nearby).y);
+    EXPECT_GT(tri.triangles().size(), 0u);
+    expectAllCCW(tri);
+    expectDelaunay(tri);
 }
 
 TEST(triangulation_add, insert_point_inside_existing_triangle_ccw_delaunay)
@@ -9092,10 +9126,10 @@ TEST(triangulation_remove, remove_points_batch_orders_and_deduplicates_indices)
     EXPECT_EQ(3u, tri.pointCount());
     EXPECT_EQ(0LL, tri.point(0).x);
     EXPECT_EQ(0LL, tri.point(0).y);
-    EXPECT_EQ(10LL, tri.point(1).x);
-    EXPECT_EQ(10LL, tri.point(1).y);
+    EXPECT_EQ(1000LL, tri.point(1).x);
+    EXPECT_EQ(1000LL, tri.point(1).y);
     EXPECT_EQ(0LL, tri.point(2).x);
-    EXPECT_EQ(10LL, tri.point(2).y);
+    EXPECT_EQ(1000LL, tri.point(2).y);
     EXPECT_EQ(1u, tri.triangles().size());
     expectAllCCW(tri);
 }
