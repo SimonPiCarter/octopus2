@@ -51,6 +51,17 @@ struct DelaunayPathFindingCache
 	void compute_paths();
 	void declare_cache_update_system(flecs::world &ecs, TimeStats &st);
 
+	DelaunayPathFindingCache &operator=(DelaunayPathFindingCache const &) = default;
+	DelaunayPathFindingCache &operator=(DelaunayPathFindingCache &&o) {
+		if (this != &o) {
+			navigator = o.navigator;
+			stats = o.stats;
+			requests = std::move(o.requests);
+			results = std::move(o.results);
+			results_by_request = std::move(o.results_by_request);
+		}
+		return *this;
+	}
 private:
 	struct RequestKey
 	{

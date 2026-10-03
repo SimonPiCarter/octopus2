@@ -2,7 +2,8 @@
 
 #include "octopus/utils/ThreadPool.hh"
 #include "octopus/utils/RandomGenerator.hh"
-#include "octopus/utils/triangulation/Triangulation.hh"
+#include "octopus/triangulation/DelaunayTriangulation.hh"
+#include "octopus/triangulation/DelaunayTriangulationNavigator.hh"
 #include "octopus/world/position/PositionContext.hh"
 #include "octopus/world/stats/TimeStats.hh"
 #include "octopus/world/ability/AbilityTemplateLibrary.hh"
@@ -21,7 +22,7 @@ namespace octopus
 template<class StepManager_t=DefaultStepManager>
 struct WorldContext
 {
-	WorldContext(unsigned long seed=42) : pool(12), position_context(ecs), rng(seed)
+	WorldContext(unsigned long seed=42) : pool(12), position_context(ecs), rng(seed), triangulation_navigator(triangulation)
 	{
 		ecs.set_threads(12);
 	}
@@ -41,7 +42,8 @@ struct WorldContext
 	PositionContext position_context;
 	TimeStats time_stats;
 	RandomGenerator rng;
-	Triangulation triangulation;
+	DelaunayTriangulation triangulation;
+	DelaunayTriangulationNavigator triangulation_navigator;
 	std::unique_ptr<DamageModifier> damage_modifier = std::make_unique<ArmorDamageModifier>();
 
 	/// @brief tell if the AttackSystems should wait for
@@ -56,4 +58,3 @@ struct WorldContext
 };
 
 } // namespace octopus
-
