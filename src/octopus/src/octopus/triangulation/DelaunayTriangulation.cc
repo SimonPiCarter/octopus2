@@ -65,19 +65,20 @@ bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p)
     TriPoint const &b = getPoint(t.v[1]);
     TriPoint const &c = getPoint(t.v[2]);
 
+    using big_int_t = int64_t;
     // The determinant is fourth degree in coordinates and needs wider intermediates at this scale.
-    __int128_t const ax = static_cast<__int128_t>(a.x) - p.x;
-    __int128_t const ay = static_cast<__int128_t>(a.y) - p.y;
-    __int128_t const bx = static_cast<__int128_t>(b.x) - p.x;
-    __int128_t const by = static_cast<__int128_t>(b.y) - p.y;
-    __int128_t const cx = static_cast<__int128_t>(c.x) - p.x;
-    __int128_t const cy = static_cast<__int128_t>(c.y) - p.y;
+    big_int_t const ax = static_cast<big_int_t>(a.x) - p.x;
+    big_int_t const ay = static_cast<big_int_t>(a.y) - p.y;
+    big_int_t const bx = static_cast<big_int_t>(b.x) - p.x;
+    big_int_t const by = static_cast<big_int_t>(b.y) - p.y;
+    big_int_t const cx = static_cast<big_int_t>(c.x) - p.x;
+    big_int_t const cy = static_cast<big_int_t>(c.y) - p.y;
 
-    __int128_t const az = ax * ax + ay * ay;
-    __int128_t const bz = bx * bx + by * by;
-    __int128_t const cz = cx * cx + cy * cy;
+    big_int_t const az = ax * ax + ay * ay;
+    big_int_t const bz = bx * bx + by * by;
+    big_int_t const cz = cx * cx + cy * cy;
 
-    __int128_t const det = ax * (by * cz - bz * cy)
+    big_int_t const det = ax * (by * cz - bz * cy)
                          - ay * (bx * cz - bz * cx)
                          + az * (bx * cy - by * cx);
 
