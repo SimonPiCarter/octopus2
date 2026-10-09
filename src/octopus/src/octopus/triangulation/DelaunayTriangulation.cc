@@ -5,6 +5,8 @@
 #include <queue>
 #include <unordered_map>
 
+#include "boost/int128.hpp"
+
 namespace octopus
 {
 
@@ -65,7 +67,7 @@ bool DelaunayTriangulation::inCircumcircle(Triangle const &t, TriPoint const &p)
     TriPoint const &b = getPoint(t.v[1]);
     TriPoint const &c = getPoint(t.v[2]);
 
-    using big_int_t = int64_t;
+    using big_int_t = boost::int128::int128;
     // The determinant is fourth degree in coordinates and needs wider intermediates at this scale.
     big_int_t const ax = static_cast<big_int_t>(a.x) - p.x;
     big_int_t const ay = static_cast<big_int_t>(a.y) - p.y;
