@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -99,6 +100,9 @@ public:
     /// Number of user points (excluding base vertices).
     std::size_t pointCount() const { return _points.size(); }
 
+    /// Revision of the triangulation state used by navigation.
+    std::uint64_t revision() const { return _revision; }
+
     // ── Constrained edges ────────────────────────────────────────────────────
 
     /// Insert a constraint edge between two existing points. The edge will be
@@ -114,6 +118,9 @@ public:
     /// Return true if the edge (a,b) is currently constrained.
     bool isConstrained(PointIdx a, PointIdx b) const;
 
+    /// Return true if the point participates in any constrained edge.
+    bool isPointConstrained(PointIdx idx) const;
+
     // ── Holes ────────────────────────────────────────────────────────────────
 
     /// Mark all triangles strictly inside the given closed polygon as holes.
@@ -121,6 +128,11 @@ public:
     /// in order (CCW or CW; the implementation determines the inside).
     /// Each polygon edge is automatically added as a constrained edge.
     void markHole(std::vector<PointIdx> const &polygon);
+
+    /// Remove one polygon's hole flag while leaving its points and constraints
+    /// untouched. Callers that replace or delete a footprint must release its
+    /// boundary constraints before removing its points.
+    void removeHole(std::vector<PointIdx> const &polygon);
 
     /// Reset all hole flags and remove all constrained edges.
     void clearHoles();
@@ -133,10 +145,14 @@ private:
     mutable std::vector<Triangle> _visibleCache;
     mutable std::vector<Triangle> _holeCache;
     mutable bool _cacheDirty = true;
+    std::uint64_t _revision = 0;
 
     std::unordered_set<Edge, EdgeHash> _constrainedEdges; ///< edges that must not be crossed
+    std::vector<std::vector<PointIdx>> _holePolygons;
 
     TriPoint const &getPoint(PointIdx idx) const;
+    void markHoleTriangles(std::vector<PointIdx> const &polygon);
+    void rebuildHoleFlags();
 
     /// Circumcircle test: is point p strictly inside the circumcircle of triangle t?
     bool inCircumcircle(Triangle const &t, TriPoint const &p) const;
@@ -174,7 +190,10 @@ private:
     /// of the surrounding polygon.
     void retriangulateHole(std::vector<PointIdx> const &polygon, PointIdx removed);
 
-    void markDirty() { _cacheDirty = true; }
+    void markDirty() {
+        _cacheDirty = true;
+        ++_revision;
+    }
 };
 
 } // namespace octopus

@@ -9311,6 +9311,89 @@ TEST(hole, hole_boundary_edges_are_constrained)
     EXPECT_TRUE(tri.isConstrained(h3, h0));
 }
 
+TEST(hole, removing_one_hole_preserves_and_remaps_another)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(0), Fixed(0));
+    tri.addPoint(Fixed(30), Fixed(0));
+    tri.addPoint(Fixed(30), Fixed(20));
+    tri.addPoint(Fixed(0), Fixed(20));
+
+    std::vector<PointIdx> first = {
+        tri.addPoint(Fixed(5), Fixed(5)),
+        tri.addPoint(Fixed(10), Fixed(5)),
+        tri.addPoint(Fixed(10), Fixed(10)),
+        tri.addPoint(Fixed(5), Fixed(10)),
+    };
+    std::vector<PointIdx> second = {
+        tri.addPoint(Fixed(20), Fixed(5)),
+        tri.addPoint(Fixed(25), Fixed(5)),
+        tri.addPoint(Fixed(25), Fixed(10)),
+        tri.addPoint(Fixed(20), Fixed(10)),
+    };
+
+    tri.markHole(first);
+    tri.markHole(second);
+    std::size_t const holeCount = tri.holeTriangles().size();
+    ASSERT_GT(holeCount, 0u);
+
+    tri.removeHole(first);
+    for (std::size_t i = 0; i < first.size(); ++i)
+        tri.removeConstrainedEdge(first[i], first[(i + 1) % first.size()]);
+    tri.removePoints(first);
+
+    std::vector<PointIdx> remappedSecond = { 4, 5, 6, 7 };
+    EXPECT_EQ(tri.pointCount(), 8u);
+    EXPECT_EQ(tri.point(remappedSecond[0]).x, octopus::to_tri_coord(Fixed(20)));
+    for (std::size_t i = 0; i < remappedSecond.size(); ++i)
+        EXPECT_TRUE(tri.isConstrained(remappedSecond[i], remappedSecond[(i + 1) % remappedSecond.size()]));
+    EXPECT_LT(tri.holeTriangles().size(), holeCount);
+    expectAllCCW(tri);
+
+    for (std::size_t i = 0; i < remappedSecond.size(); ++i)
+        tri.removeConstrainedEdge(remappedSecond[i], remappedSecond[(i + 1) % remappedSecond.size()]);
+    tri.removePoints(remappedSecond);
+
+    EXPECT_TRUE(tri.holeTriangles().empty());
+    expectAllCCW(tri);
+}
+
+TEST(hole, adding_a_point_keeps_existing_hole_flags)
+{
+    DelaunayTriangulation tri;
+    tri.addPoint(Fixed(0), Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(0));
+    tri.addPoint(Fixed(20), Fixed(20));
+    tri.addPoint(Fixed(0), Fixed(20));
+    std::vector<PointIdx> hole = {
+        tri.addPoint(Fixed(5), Fixed(5)),
+        tri.addPoint(Fixed(15), Fixed(5)),
+        tri.addPoint(Fixed(15), Fixed(15)),
+        tri.addPoint(Fixed(5), Fixed(15)),
+    };
+
+    tri.markHole(hole);
+    tri.addPoint(Fixed(10), Fixed(10));
+
+    EXPECT_GT(tri.holeTriangles().size(), 0u);
+    for (Triangle const &triangle : tri.triangles())
+    {
+        octopus::TriPoint const &a = tri.point(triangle.v[0]);
+        octopus::TriPoint const &b = tri.point(triangle.v[1]);
+        octopus::TriPoint const &c = tri.point(triangle.v[2]);
+        long long const centroidX = (a.x + b.x + c.x) / 3;
+        long long const centroidY = (a.y + b.y + c.y) / 3;
+        EXPECT_FALSE(centroidX > 500 && centroidX < 1500 &&
+                     centroidY > 500 && centroidY < 1500);
+    }
+
+    tri.removeHole(hole);
+    for (std::size_t i = 0; i < hole.size(); ++i)
+        tri.removeConstrainedEdge(hole[i], hole[(i + 1) % hole.size()]);
+    EXPECT_TRUE(tri.holeTriangles().empty());
+    EXPECT_GT(tri.triangles().size(), 0u);
+}
+
 TEST(constrained_edge, walk_segment_reaches_endpoint_past_non_adjacent_triangle)
 {
     // Regression test: forcing in a constrained edge whose triangle-walk

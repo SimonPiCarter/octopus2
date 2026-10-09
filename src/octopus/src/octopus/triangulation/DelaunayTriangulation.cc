@@ -279,6 +279,7 @@ PointIdx DelaunayTriangulation::addPoint(Fixed x, Fixed y)
     PointIdx idx = _points.size();
     _points.push_back(point);
     bowyerWatsonInsert(idx);
+    rebuildHoleFlags();
     return idx;
 }
 
@@ -451,6 +452,16 @@ void DelaunayTriangulation::removePoint(PointIdx idx)
     // (we remove the point from _points so indices shift)
     _points.erase(_points.begin() + idx);
 
+    std::unordered_set<Edge, EdgeHash> remappedConstrainedEdges;
+    remappedConstrainedEdges.reserve(_constrainedEdges.size());
+    for (Edge const &edge : _constrainedEdges)
+    {
+        PointIdx const a = edge.a > idx ? edge.a - 1 : edge.a;
+        PointIdx const b = edge.b > idx ? edge.b - 1 : edge.b;
+        remappedConstrainedEdges.insert(makeEdge(a, b));
+    }
+    _constrainedEdges.swap(remappedConstrainedEdges);
+
     for (Triangle &t : _triangles)
     {
         for (int i = 0; i < 3; ++i)
@@ -460,7 +471,22 @@ void DelaunayTriangulation::removePoint(PointIdx idx)
         }
     }
 
-    markDirty();
+    for (auto hole = _holePolygons.begin(); hole != _holePolygons.end();)
+    {
+        if (std::find(hole->begin(), hole->end(), idx) != hole->end())
+        {
+            hole = _holePolygons.erase(hole);
+            continue;
+        }
+        for (PointIdx &point : *hole)
+        {
+            if (point > idx)
+                --point;
+        }
+        ++hole;
+    }
+
+    rebuildHoleFlags();
 }
 
 void DelaunayTriangulation::removePoints(std::vector<PointIdx> const &indices)
@@ -506,6 +532,16 @@ std::vector<Triangle> const &DelaunayTriangulation::holeTriangles() const
 bool DelaunayTriangulation::isConstrained(PointIdx a, PointIdx b) const
 {
     return _constrainedEdges.count(makeEdge(a, b)) > 0;
+}
+
+bool DelaunayTriangulation::isPointConstrained(PointIdx idx) const
+{
+    for (Edge const &edge : _constrainedEdges)
+    {
+        if (edge.a == idx || edge.b == idx)
+            return true;
+    }
+    return false;
 }
 
 std::vector<PointIdx> DelaunayTriangulation::collinearIntermediatePoints(PointIdx a, PointIdx b) const
@@ -872,6 +908,7 @@ void DelaunayTriangulation::addConstrainedEdge(PointIdx a, PointIdx b)
     if (edgeExists)
     {
         _constrainedEdges.insert(ce);
+        rebuildHoleFlags();
         return;
     }
 
@@ -884,6 +921,7 @@ void DelaunayTriangulation::addConstrainedEdge(PointIdx a, PointIdx b)
     {
         // Nothing to do (degenerate case)
         _constrainedEdges.insert(ce);
+        rebuildHoleFlags();
         return;
     }
 
@@ -905,27 +943,16 @@ void DelaunayTriangulation::addConstrainedEdge(PointIdx a, PointIdx b)
     retriangulatePolygon(rightPoly, a, b);
 
     _constrainedEdges.insert(ce);
-    markDirty();
+    rebuildHoleFlags();
 }
 
 // ── Holes ─────────────────────────────────────────────────────────────────────
 
-void DelaunayTriangulation::markHole(std::vector<PointIdx> const &polygon)
+void DelaunayTriangulation::markHoleTriangles(std::vector<PointIdx> const &polygon)
 {
     if (polygon.size() < 3)
         return;
 
-    // Constrain all polygon boundary edges
-    for (std::size_t i = 0; i < polygon.size(); ++i)
-    {
-        PointIdx a = polygon[i];
-        PointIdx b = polygon[(i + 1) % polygon.size()];
-        addConstrainedEdge(a, b);
-    }
-
-    // Find a seed triangle inside the polygon.
-    // We look for a triangle whose centroid is inside the polygon using
-    // a point-in-polygon winding-number test against the polygon boundary.
     auto pointInPolygon = [&](TriPoint const &pt) -> bool {
         int winding = 0;
         std::size_t n = polygon.size();
@@ -953,77 +980,57 @@ void DelaunayTriangulation::markHole(std::vector<PointIdx> const &polygon)
         return winding != 0;
     };
 
-    std::size_t seed = SIZE_MAX;
-    for (std::size_t i = 0; i < _triangles.size(); ++i)
+    for (Triangle &triangle : _triangles)
     {
-        Triangle const &t = _triangles[i];
-        if (touchesBaseVertex(t)) continue;
-        TriPoint const &ta = getPoint(t.v[0]);
-        TriPoint const &tb = getPoint(t.v[1]);
-        TriPoint const &tc = getPoint(t.v[2]);
-        // Centroid
+        if (touchesBaseVertex(triangle))
+            continue;
+        TriPoint const &ta = getPoint(triangle.v[0]);
+        TriPoint const &tb = getPoint(triangle.v[1]);
+        TriPoint const &tc = getPoint(triangle.v[2]);
         TriPoint centroid{
             (ta.x + tb.x + tc.x) / 3,
             (ta.y + tb.y + tc.y) / 3
         };
         if (pointInPolygon(centroid))
-        {
-            seed = i;
-            break;
-        }
+            triangle.hole = true;
     }
+}
 
-    if (seed == SIZE_MAX)
-        return; // polygon has no interior triangles
-
-    // BFS flood-fill from seed, stopping at constrained edges, marking as hole
-    std::unordered_map<Edge, std::vector<std::size_t>, EdgeHash> edgeToTri;
-    for (std::size_t i = 0; i < _triangles.size(); ++i)
-    {
-        Triangle const &t = _triangles[i];
-        edgeToTri[makeEdge(t.v[0], t.v[1])].push_back(i);
-        edgeToTri[makeEdge(t.v[1], t.v[2])].push_back(i);
-        edgeToTri[makeEdge(t.v[2], t.v[0])].push_back(i);
-    }
-
-    std::vector<bool> visited(_triangles.size(), false);
-    std::queue<std::size_t> q;
-    q.push(seed);
-    visited[seed] = true;
-    _triangles[seed].hole = true;
-
-    while (!q.empty())
-    {
-        std::size_t cur = q.front();
-        q.pop();
-        Triangle const &t = _triangles[cur];
-        std::array<Edge, 3> edges = {
-            makeEdge(t.v[0], t.v[1]),
-            makeEdge(t.v[1], t.v[2]),
-            makeEdge(t.v[2], t.v[0])
-        };
-        for (Edge const &e : edges)
-        {
-            if (_constrainedEdges.count(e)) continue; // boundary: stop here
-            auto it = edgeToTri.find(e);
-            if (it == edgeToTri.end()) continue;
-            for (std::size_t nb : it->second)
-            {
-                if (!visited[nb])
-                {
-                    visited[nb] = true;
-                    _triangles[nb].hole = true;
-                    q.push(nb);
-                }
-            }
-        }
-    }
-
+void DelaunayTriangulation::rebuildHoleFlags()
+{
+    for (Triangle &triangle : _triangles)
+        triangle.hole = false;
+    for (std::vector<PointIdx> const &polygon : _holePolygons)
+        markHoleTriangles(polygon);
     markDirty();
+}
+
+void DelaunayTriangulation::markHole(std::vector<PointIdx> const &polygon)
+{
+    if (polygon.size() < 3)
+        return;
+
+    for (std::size_t i = 0; i < polygon.size(); ++i)
+        addConstrainedEdge(polygon[i], polygon[(i + 1) % polygon.size()]);
+
+    if (std::find(_holePolygons.begin(), _holePolygons.end(), polygon) == _holePolygons.end())
+        _holePolygons.push_back(polygon);
+
+    rebuildHoleFlags();
+}
+
+void DelaunayTriangulation::removeHole(std::vector<PointIdx> const &polygon)
+{
+    auto const hole = std::find(_holePolygons.begin(), _holePolygons.end(), polygon);
+    if (hole != _holePolygons.end())
+        _holePolygons.erase(hole);
+
+    rebuildHoleFlags();
 }
 
 void DelaunayTriangulation::clearHoles()
 {
+    _holePolygons.clear();
     for (Triangle &t : _triangles)
         t.hole = false;
     _constrainedEdges.clear();

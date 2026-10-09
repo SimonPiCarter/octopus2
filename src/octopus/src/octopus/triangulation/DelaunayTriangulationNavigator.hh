@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "octopus/triangulation/DelaunayTriangulation.hh"
@@ -36,6 +37,7 @@ public:
 	                                             std::vector<std::size_t> const &path) const;
 	bool find_triangle_centroid(Vector const &point, Vector &centroid) const;
 	FunnelDebug debug_funnel(Vector const &orig, Vector const &dest, int step) const;
+	std::uint64_t mesh_revision() const { return _mesh.revision(); }
 
 private:
 	std::size_t find_triangle(Vector const &point, bool visible_only) const;

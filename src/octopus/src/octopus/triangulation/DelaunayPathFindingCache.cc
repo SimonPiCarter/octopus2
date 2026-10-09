@@ -10,9 +10,37 @@ void DelaunayPathFindingCache::set_navigator(
 {
 	std::lock_guard<std::mutex> lock(mutex);
 	navigator = &value;
+	mesh_revision = value.mesh_revision();
+	++generation;
 	requests.clear();
-	results.clear();
 	results_by_request.clear();
+}
+
+void DelaunayPathFindingCache::synchronize_mesh_revision() const
+{
+	if (!navigator)
+	{
+		return;
+	}
+
+	std::uint64_t const current_revision = navigator->mesh_revision();
+	if (current_revision == mesh_revision)
+	{
+		return;
+	}
+
+	mesh_revision = current_revision;
+	++generation;
+	requests.clear();
+	results_by_request.clear();
+}
+
+bool DelaunayPathFindingCache::is_generation_current(
+	std::uint64_t result_generation) const
+{
+	std::lock_guard<std::mutex> lock(mutex);
+	synchronize_mesh_revision();
+	return navigator && generation == result_generation;
 }
 
 DelaunayPathQuery DelaunayPathFindingCache::query_path(
@@ -20,6 +48,7 @@ DelaunayPathQuery DelaunayPathFindingCache::query_path(
 {
 	START_TIME(query_path)
 	std::lock_guard<std::mutex> lock(mutex);
+	synchronize_mesh_revision();
 	if(!navigator)
 	{
 		END_TIME_PTR(query_path, stats)
@@ -43,10 +72,11 @@ DelaunayPathQuery DelaunayPathFindingCache::query_path(
 		return {this, found->second, pos.pos, target};
 	}
 
-	results.emplace_back();
-	DelaunayPathResult *result = &results.back();
+	std::shared_ptr<DelaunayPathResult> result =
+		std::make_shared<DelaunayPathResult>();
+	result->generation = generation;
 	results_by_request.emplace(key, result);
-	requests.push_back({result, orig_centroid, dest_centroid});
+	requests.push_back({result, orig_centroid, dest_centroid, mesh_revision, generation});
 	END_TIME_PTR(query_path, stats)
 	return {this, result, pos.pos, target};
 }
@@ -58,25 +88,35 @@ void DelaunayPathFindingCache::compute_paths()
 	while(run < 10)
 	{
 		Request request;
+		DelaunayTriangulationNavigator const *navigator_snapshot = nullptr;
 		{
 			std::lock_guard<std::mutex> lock(mutex);
+			synchronize_mesh_revision();
 			if(requests.empty())
 			{
 				break;
 			}
 			request = requests.front();
 			requests.pop_front();
+			navigator_snapshot = navigator;
 		}
 
 		std::vector<std::size_t> path;
-		if(navigator)
+		if(navigator_snapshot &&
+		   navigator_snapshot->mesh_revision() == request.mesh_revision)
 		{
-			path = navigator->compute_path(request.orig_centroid,
-			                               request.dest_centroid);
+			path = navigator_snapshot->compute_path(request.orig_centroid,
+			                                        request.dest_centroid);
 		}
 
 		{
 			std::lock_guard<std::mutex> lock(mutex);
+			synchronize_mesh_revision();
+			if (request.generation != generation ||
+				request.mesh_revision != mesh_revision)
+			{
+				continue;
+			}
 			request.result->has_path = !path.empty();
 			request.result->path = std::move(path);
 			request.result->computed.store(true, std::memory_order_release);
@@ -97,12 +137,11 @@ void DelaunayPathFindingCache::declare_cache_update_system(
 
 bool DelaunayPathQuery::is_valid() const
 {
-	if(!cache)
+	if(!cache || !result || !cache->is_generation_current(result->generation))
 	{
 		return false;
 	}
-	return result &&
-	       result->computed.load(std::memory_order_acquire) &&
+	return result->computed.load(std::memory_order_acquire) &&
 	       result->has_path;
 }
 
@@ -114,9 +153,7 @@ Vector DelaunayPathQuery::get_direction() const
 		return {};
 	}
 
-	if(!result ||
-	   !result->computed.load(std::memory_order_acquire) ||
-	   !result->has_path)
+	if(!is_valid())
 	{
 		END_TIME_PTR(path_funnelling, cache->stats)
 		return {};

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <list>
+#include <memory>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -22,12 +24,13 @@ struct DelaunayPathResult
 	std::atomic_bool computed = false;
 	bool has_path = false;
 	std::vector<std::size_t> path;
+	std::uint64_t generation = 0;
 };
 
 struct DelaunayPathQuery
 {
 	DelaunayPathFindingCache const *cache = nullptr;
-	DelaunayPathResult const *result = nullptr;
+	std::shared_ptr<DelaunayPathResult const> result;
 	Vector orig;
 	Vector dest;
 
@@ -41,7 +44,7 @@ struct DelaunayPathFindingCache
 {
 	DelaunayPathFindingCache() = default;
 	explicit DelaunayPathFindingCache(DelaunayTriangulationNavigator const &value)
-		: navigator(&value)
+		: navigator(&value), mesh_revision(value.mesh_revision())
 	{
 	}
 
@@ -56,8 +59,9 @@ struct DelaunayPathFindingCache
 		if (this != &o) {
 			navigator = o.navigator;
 			stats = o.stats;
+			mesh_revision = o.mesh_revision;
+			generation = o.generation;
 			requests = std::move(o.requests);
-			results = std::move(o.results);
 			results_by_request = std::move(o.results_by_request);
 		}
 		return *this;
@@ -87,18 +91,24 @@ private:
 
 	struct Request
 	{
-		DelaunayPathResult *result = nullptr;
+		std::shared_ptr<DelaunayPathResult> result;
 		Vector orig_centroid;
 		Vector dest_centroid;
+		std::uint64_t mesh_revision = 0;
+		std::uint64_t generation = 0;
 	};
 
 	DelaunayTriangulationNavigator const *navigator = nullptr;
 	TimeStats *stats = nullptr;
+	mutable std::uint64_t mesh_revision = 0;
+	mutable std::uint64_t generation = 0;
 	mutable std::mutex mutex;
 	mutable std::list<Request> requests;
-	mutable std::list<DelaunayPathResult> results;
-	mutable std::unordered_map<RequestKey, DelaunayPathResult *, RequestKeyHash>
+	mutable std::unordered_map<RequestKey, std::shared_ptr<DelaunayPathResult>, RequestKeyHash>
 		results_by_request;
+
+	void synchronize_mesh_revision() const;
+	bool is_generation_current(std::uint64_t result_generation) const;
 
 	friend struct DelaunayPathQuery;
 };
